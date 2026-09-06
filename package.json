@@ -1,0 +1,8 @@
+{
+  "name": "neo4j-connection-test",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "neo4j-driver": "^5.28.0"
+  }
+}
