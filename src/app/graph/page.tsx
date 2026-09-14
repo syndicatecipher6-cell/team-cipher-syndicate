@@ -1,0 +1,139 @@
+"use client";
+
+import dynamic from 'next/dynamic';
+import { useState, useCallback, useRef } from 'react';
+import styles from './page.module.css';
+
+// Dynamically import ForceGraph2D to avoid SSR issues with canvas
+const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
+
+// Initial empty graph data - will be populated from Neo4j
+const emptyGraphData = {
+  nodes: [],
+  links: []
+};
+
+export default function GraphExplorer() {
+  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const fgRef = useRef<any>(null);
+
+  const handleNodeClick = useCallback((node: any) => {
+    setSelectedNode(node);
+    
+    // Optional: center view on clicked node
+    if (fgRef.current) {
+      // @ts-ignore
+      fgRef.current.centerAt(node.x, node.y, 1000);
+      // @ts-ignore
+      fgRef.current.zoom(2, 1000);
+    }
+  }, []);
+
+  return (
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <div>
+          <h1>Relationship Mapping</h1>
+          <p>Hidden Network Discovery & Key Influencer Identification</p>
+        </div>
+        <div className={styles.actions}>
+          <button className="btn-secondary">Export Graph</button>
+          <button className="btn-primary">Run PageRank Algorithm</button>
+        </div>
+      </header>
+
+      <div className={styles.graphLayout}>
+        <div className={`glass-panel ${styles.graphContainer}`}>
+          <div className={styles.graphToolbar}>
+            <div className={styles.legend}>
+              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#ef4444'}}></span> High Risk</span>
+              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#f59e0b'}}></span> Medium Risk</span>
+              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#10b981'}}></span> Low Risk</span>
+            </div>
+            <div className={styles.filters}>
+              <select className={styles.filterSelect}>
+                <option>All Entities</option>
+                <option>Only People</option>
+                <option>Only Organizations</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className={styles.canvasWrapper}>
+            <ForceGraph2D
+              ref={fgRef}
+              graphData={emptyGraphData}
+              nodeLabel="name"
+              nodeColor={node => 
+                node.risk === 'high' ? '#ef4444' : 
+                node.risk === 'medium' ? '#f59e0b' : '#10b981'
+              }
+              nodeRelSize={6}
+              linkColor={() => '#94a3b8'}
+              linkWidth={link => link.weight}
+              onNodeClick={handleNodeClick}
+              width={800} // This would ideally be responsive
+              height={600}
+            />
+          </div>
+        </div>
+
+        <div className={`glass-panel ${styles.sidebar}`}>
+          <h3>Entity Details</h3>
+          {selectedNode ? (
+            <div className={styles.entityDetails}>
+              <div className={styles.entityHeader}>
+                <div className={styles.avatar} style={{
+                  backgroundColor: selectedNode.risk === 'high' ? 'var(--danger-light)' : 'var(--bg-tertiary)',
+                  color: selectedNode.risk === 'high' ? 'var(--danger)' : 'var(--text-primary)'
+                }}>
+                  {selectedNode.type === 'person' ? '👤' : selectedNode.type === 'organization' ? '🏢' : '📍'}
+                </div>
+                <div>
+                  <h4>{selectedNode.name}</h4>
+                  <span className={styles.entityType}>{selectedNode.type}</span>
+                </div>
+              </div>
+              
+              <div className={styles.detailSection}>
+                <h5>Risk Profile</h5>
+                <div className={styles.riskBadge} data-risk={selectedNode.risk}>
+                  {selectedNode.risk.toUpperCase()}
+                </div>
+              </div>
+
+              <div className={styles.detailSection}>
+                <h5>Network Influence</h5>
+                <div className={styles.metric}>
+                  <span>Centrality Score:</span>
+                  <strong>{selectedNode.val * 3.5}</strong>
+                </div>
+                <div className={styles.metric}>
+                  <span>Direct Connections:</span>
+                  <strong>
+                    {emptyGraphData.links.filter(l => 
+                      // @ts-ignore
+                      l.source.id === selectedNode.id || l.target.id === selectedNode.id || 
+                      l.source === selectedNode.id || l.target === selectedNode.id
+                    ).length}
+                  </strong>
+                </div>
+              </div>
+
+              {selectedNode.risk === 'high' && (
+                <div className={styles.alertBox}>
+                  <strong>Action Recommended</strong>
+                  <p>This entity acts as a central hub. Investigating this node could disrupt network operations.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <p>No entities found in the graph. Connect Neo4j database to load relationships.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

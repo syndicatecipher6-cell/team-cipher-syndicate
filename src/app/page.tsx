@@ -1,69 +1,91 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import styles from './page.module.css';
 
-export default function Home() {
+export default function Dashboard() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className={styles.dashboard}>
+      <header className={styles.header}>
+        <div>
+          <h1>Crime & Network Analytics</h1>
+          <p>Overview of active investigations and detected network patterns.</p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className={styles.actions}>
+          <select className={styles.timeFilter}>
+            <option>Last 7 Days</option>
+            <option>Last 30 Days</option>
+            <option>This Year</option>
+          </select>
+          <button className="btn-primary">Generate Report</button>
         </div>
-      </main>
+      </header>
+
+      <div className={styles.statsGrid}>
+        <div className={`glass-panel hover-lift ${styles.statCard}`}>
+          <div className={styles.statHeader}>
+            <span className={styles.statIcon}>📂</span>
+            <span className={styles.statTitle}>Active Cases</span>
+          </div>
+          <div className={styles.statValue}>0</div>
+          <div className={styles.statTrend} data-trend="neutral">Waiting for data</div>
+        </div>
+        <div className={`glass-panel hover-lift ${styles.statCard}`}>
+          <div className={styles.statHeader}>
+            <span className={styles.statIcon}>👤</span>
+            <span className={styles.statTitle}>Tracked Entities</span>
+          </div>
+          <div className={styles.statValue}>0</div>
+          <div className={styles.statTrend} data-trend="neutral">Waiting for data</div>
+        </div>
+        <div className={`glass-panel hover-lift ${styles.statCard}`}>
+          <div className={styles.statHeader}>
+            <span className={styles.statIcon}>🕸️</span>
+            <span className={styles.statTitle}>Identified Networks</span>
+          </div>
+          <div className={styles.statValue}>0</div>
+          <div className={styles.statTrend} data-trend="neutral">Waiting for data</div>
+        </div>
+        <div className={`glass-panel hover-lift ${styles.statCard}`}>
+          <div className={styles.statHeader}>
+            <span className={styles.statIcon}>⚠️</span>
+            <span className={styles.statTitle}>High Risk Alerts</span>
+          </div>
+          <div className={styles.statValue}>0</div>
+          <div className={styles.statTrend} data-trend="neutral">Waiting for data</div>
+        </div>
+      </div>
+
+      <div className={styles.mainGrid}>
+        <div className={`glass-panel ${styles.chartSection}`}>
+          <div className={styles.sectionHeader}>
+            <h3>Entity Resolution Trends</h3>
+            <button className="btn-secondary">View Details</button>
+          </div>
+          <div className={styles.placeholderChart}>
+            {/* Placeholder for actual chart component */}
+            <div className={styles.barContainer}>
+              <div className={styles.bar} style={{ height: '40%' }}></div>
+              <div className={styles.bar} style={{ height: '60%' }}></div>
+              <div className={styles.bar} style={{ height: '30%' }}></div>
+              <div className={styles.bar} style={{ height: '80%' }}></div>
+              <div className={styles.bar} style={{ height: '50%' }}></div>
+              <div className={styles.bar} style={{ height: '90%' }}></div>
+              <div className={styles.bar} style={{ height: '70%' }}></div>
+            </div>
+            <p className={styles.chartCaption}>New entities extracted vs. resolved aliases over time.</p>
+          </div>
+        </div>
+
+        <div className={`glass-panel ${styles.alertsSection}`}>
+          <div className={styles.sectionHeader}>
+            <h3>Suspicious Activity Alerts</h3>
+            <span className={styles.badge}>Live</span>
+          </div>
+          <div className={styles.alertsList}>
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No alerts generated yet. Ensure databases are connected.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
