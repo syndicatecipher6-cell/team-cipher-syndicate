@@ -1,21 +1,32 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import styles from './page.module.css';
 
 // Dynamically import ForceGraph2D to avoid SSR issues with canvas
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 
-// Initial empty graph data - will be populated from Neo4j
-const emptyGraphData = {
-  nodes: [],
-  links: []
-};
-
 export default function GraphExplorer() {
   const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [graphData, setGraphData] = useState<{ nodes: any[], links: any[] }>({ nodes: [], links: [] });
+  const [isLoading, setIsLoading] = useState(true);
   const fgRef = useRef<any>(null);
+
+  useEffect(() => {
+    fetch('/api/graph')
+      .then(res => res.json())
+      .then(data => {
+        if (data.nodes && data.links) {
+          setGraphData(data);
+        }
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch graph data", err);
+        setIsLoading(false);
+      });
+  }, []);
 
   const handleNodeClick = useCallback((node: any) => {
     setSelectedNode(node);
@@ -60,10 +71,13 @@ export default function GraphExplorer() {
           </div>
           
           <div className={styles.canvasWrapper}>
-            <ForceGraph2D
-              ref={fgRef}
-              graphData={emptyGraphData}
-              nodeLabel="name"
+            {isLoading ? (
+              <div style={{ color: 'var(--text-muted)' }}>Loading network graph...</div>
+            ) : (
+              <ForceGraph2D
+                ref={fgRef}
+                graphData={graphData}
+                nodeLabel="name"
               nodeColor={node => 
                 node.risk === 'high' ? '#ef4444' : 
                 node.risk === 'medium' ? '#f59e0b' : '#10b981'
@@ -111,7 +125,7 @@ export default function GraphExplorer() {
                 <div className={styles.metric}>
                   <span>Direct Connections:</span>
                   <strong>
-                    {emptyGraphData.links.filter(l => 
+                    {graphData.links.filter((l: any) => 
                       // @ts-ignore
                       l.source.id === selectedNode.id || l.target.id === selectedNode.id || 
                       l.source === selectedNode.id || l.target === selectedNode.id

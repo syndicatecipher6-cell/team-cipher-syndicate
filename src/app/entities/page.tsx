@@ -1,6 +1,13 @@
 import styles from './page.module.css';
+import { supabase } from '@/lib/supabase';
 
-export default function Entities() {
+export const revalidate = 0;
+
+export default async function Entities() {
+  const { data: entities } = await supabase
+    .from('extracted_entities')
+    .select('*')
+    .order('extracted_date', { ascending: false });
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -45,11 +52,35 @@ export default function Entities() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
-                    No entities extracted yet.
-                  </td>
-                </tr>
+                {entities && entities.length > 0 ? (
+                  entities.map((entity: any) => (
+                    <tr key={entity.id}>
+                      <td>
+                        <div className={styles.entityName}>
+                          <div className={styles.avatar}>
+                            {entity.type === 'Person' ? '👤' : entity.type === 'Organization' ? '🏢' : entity.type === 'Location' ? '📍' : '🚗'}
+                          </div>
+                          <span>{entity.name}</span>
+                        </div>
+                      </td>
+                      <td><span className={styles.tag}>{entity.type}</span></td>
+                      <td>
+                        <span className={entity.risk_score > 80 ? styles.riskHigh : entity.risk_score > 50 ? styles.riskMedium : styles.riskLow}>
+                          {entity.risk_score} {entity.risk_score > 80 ? '(High)' : entity.risk_score > 50 ? '(Medium)' : '(Low)'}
+                        </span>
+                      </td>
+                      <td>{entity.source}</td>
+                      <td>{entity.extracted_date}</td>
+                      <td><button className={styles.actionBtn}>View</button></td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+                      No entities extracted yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

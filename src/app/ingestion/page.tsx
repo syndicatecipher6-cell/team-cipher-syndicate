@@ -1,6 +1,13 @@
 import styles from './page.module.css';
+import { supabase } from '@/lib/supabase';
 
-export default function DataIngestion() {
+export const revalidate = 0;
+
+export default async function DataIngestion() {
+  const { data: jobs } = await supabase
+    .from('processing_jobs')
+    .select('*')
+    .order('id', { ascending: false });
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -45,9 +52,40 @@ export default function DataIngestion() {
           </div>
           
           <div className={styles.pipelineList}>
-            <div className={styles.emptyState}>
-              <p>No active processing jobs. Upload data or connect a source to begin.</p>
-            </div>
+            {jobs && jobs.length > 0 ? (
+              jobs.map((job: any) => (
+                <div key={job.id} className={styles.pipelineJob}>
+                  <div className={styles.jobHeader}>
+                    <div className={styles.jobInfo}>
+                      <span className={styles.jobIcon}>
+                        {job.type === 'FIR' ? '📄' : job.type === 'CDR' ? '📊' : '🏦'}
+                      </span>
+                      <strong>{job.filename}</strong>
+                    </div>
+                    <span className={styles.statusBadge} data-status={job.status}>
+                      {job.status === 'processing' ? `Processing (${job.progress}%)` : job.status === 'completed' ? 'Completed' : 'Failed'}
+                    </span>
+                  </div>
+                  <div className={styles.progressBar}>
+                    <div 
+                      className={styles.progressFill} 
+                      style={{
+                        width: `${job.progress}%`, 
+                        backgroundColor: job.status === 'completed' ? 'var(--success)' : job.status === 'error' ? 'var(--danger)' : 'var(--accent-primary)'
+                      }}
+                    ></div>
+                  </div>
+                  <div className={styles.jobDetails}>
+                    <span style={{color: job.status === 'error' ? 'var(--danger)' : 'inherit'}}>{job.details}</span>
+                    {job.status === 'error' && <button className={styles.textBtn}>View Logs</button>}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.emptyState}>
+                <p>No active processing jobs. Upload data or connect a source to begin.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
