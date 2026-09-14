@@ -89,6 +89,7 @@ export default function GraphExplorer() {
               width={800} // This would ideally be responsive
               height={600}
             />
+            )}
           </div>
         </div>
 
