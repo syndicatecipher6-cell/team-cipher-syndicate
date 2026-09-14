@@ -12,6 +12,29 @@ export default function GraphExplorer() {
   const [graphData, setGraphData] = useState<{ nodes: any[], links: any[] }>({ nodes: [], links: [] });
   const [isLoading, setIsLoading] = useState(true);
   const fgRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setDimensions({
+        width: containerRef.current.clientWidth,
+        height: containerRef.current.clientHeight
+      });
+      
+      const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+          setDimensions({
+            width: entry.contentRect.width,
+            height: entry.contentRect.height
+          });
+        }
+      });
+      
+      resizeObserver.observe(containerRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/api/graph')
@@ -19,6 +42,14 @@ export default function GraphExplorer() {
       .then(data => {
         if (data.nodes && data.links) {
           setGraphData(data);
+          
+          // Apply custom forces after data is loaded
+          setTimeout(() => {
+            if (fgRef.current) {
+              fgRef.current.d3Force('charge').strength(-400); // Stronger repulsion
+              fgRef.current.d3Force('link').distance(60); // Longer links
+            }
+          }, 100);
         }
         setIsLoading(false);
       })
@@ -70,7 +101,7 @@ export default function GraphExplorer() {
             </div>
           </div>
           
-          <div className={styles.canvasWrapper}>
+          <div className={styles.canvasWrapper} ref={containerRef}>
             {isLoading ? (
               <div style={{ color: 'var(--text-muted)' }}>Loading network graph...</div>
             ) : (
@@ -78,17 +109,47 @@ export default function GraphExplorer() {
                 ref={fgRef}
                 graphData={graphData}
                 nodeLabel="name"
-              nodeColor={node => 
-                node.risk === 'high' ? '#ef4444' : 
-                node.risk === 'medium' ? '#f59e0b' : '#10b981'
-              }
-              nodeRelSize={6}
-              linkColor={() => '#94a3b8'}
-              linkWidth={link => link.weight}
-              onNodeClick={handleNodeClick}
-              width={800} // This would ideally be responsive
-              height={600}
-            />
+                nodeRelSize={6}
+                linkColor={() => '#cbd5e1'}
+                linkWidth={link => (link.weight || 1) * 1.5}
+                linkDirectionalArrowLength={3.5}
+                linkDirectionalArrowRelPos={1}
+                linkCurvature={0.1}
+                onNodeClick={handleNodeClick}
+                width={dimensions.width}
+                height={dimensions.height}
+                nodeCanvasObject={(node: any, ctx, globalScale) => {
+                  const label = node.name || 'Unknown';
+                  const fontSize = 12 / globalScale;
+                  ctx.font = `${fontSize}px Sans-Serif`;
+                  
+                  // Calculate radius based on node val
+                  const val = node.val || 10;
+                  const r = Math.sqrt(val) * 2;
+                  
+                  // Draw circle
+                  ctx.beginPath();
+                  ctx.arc(node.x, node.y, r, 0, 2 * Math.PI, false);
+                  ctx.fillStyle = node.risk === 'high' ? '#ef4444' : node.risk === 'medium' ? '#f59e0b' : '#10b981';
+                  ctx.fill();
+                  
+                  // Draw border
+                  ctx.lineWidth = 1 / globalScale;
+                  ctx.strokeStyle = '#ffffff';
+                  ctx.stroke();
+
+                  // Draw label
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillStyle = '#1e293b';
+                  ctx.fillText(label, node.x, node.y + r + fontSize);
+                }}
+                onEngineStop={() => {
+                  if (fgRef.current) {
+                    fgRef.current.zoomToFit(400, 50);
+                  }
+                }}
+              />
             )}
           </div>
         </div>
