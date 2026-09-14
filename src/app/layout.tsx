@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
-import Navbar from "@/components/layout/Navbar";
+import ClientLayout from "@/components/layout/ClientLayout";
 
 export const metadata: Metadata = {
   title: "NexusNet | AI Criminal Network Analysis",
@@ -16,15 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="page-container">
-          <Sidebar />
-          <div className="main-content">
-            <Navbar />
-            <main className="content-wrapper">
-              {children}
-            </main>
-          </div>
-        </div>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

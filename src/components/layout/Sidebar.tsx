@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { signOut } from '@/app/login/actions';
 import styles from './Sidebar.module.css';
 
 const navItems = [
@@ -39,6 +40,11 @@ export default function Sidebar() {
             <div className={styles.userRole}>Admin</div>
           </div>
         </div>
+        <form action={signOut} style={{ marginTop: '1rem' }}>
+          <button type="submit" className="btn-secondary" style={{ width: '100%', fontSize: '0.8rem', padding: '0.5rem' }}>
+            Sign Out
+          </button>
+        </form>
       </div>
     </aside>
   );
