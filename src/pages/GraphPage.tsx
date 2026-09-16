@@ -199,7 +199,7 @@ export function GraphPage() {
             </div>
           ) : (
             <div className={styles.emptyState}>
-              <p>No entities found in the graph. Connect Neo4j database to load relationships.</p>
+              <p>Select an entity from the graph to view its detailed profile, risk score, and network connections.</p>
             </div>
           )}
         </div>
