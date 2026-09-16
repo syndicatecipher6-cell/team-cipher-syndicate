@@ -109,6 +109,99 @@ export interface AssistantResponse {
   cases: string[];
   evidenceIds: string[];
   suggestedQuestions: string[];
+  findings?: InvestigationFinding[];
+  contradictions?: string[];
+  unresolved?: string[];
+  queryPlan?: string[];
+  provider?: string;
+  model?: string;
+  warnings?: string[];
+}
+
+export type FindingStatus = 'Verified Fact' | 'Corroborated' | 'Inferred' | 'Unresolved';
+
+export interface EvidenceCitation {
+  evidence_id: string;
+  source_dataset: string;
+  source_record_id: string;
+  record_type: string;
+  excerpt: string;
+}
+
+export interface InvestigationFinding {
+  status: FindingStatus;
+  statement: string;
+  confidence: number;
+  citations: EvidenceCitation[];
+}
+
+export interface CaseIntelligenceBrief {
+  case_id: string;
+  overview: string;
+  key_entities: string[];
+  relationships: string[];
+  linked_cases: string[];
+  evidence: EvidenceCitation[];
+  timeline: string[];
+  contradictions: string[];
+  gaps: string[];
+  hypotheses: InvestigationFinding[];
+  priorities: string[];
+  generated_by: string;
+  warnings: string[];
+}
+
+export type SandboxOperation =
+  | 'IDENTITY_MERGE'
+  | 'RELATIONSHIP_ADD'
+  | 'RELATIONSHIP_REMOVE'
+  | 'EVIDENCE_DISPUTE'
+  | 'ENTITY_SPLIT'
+  | 'TIMELINE_CHANGE';
+
+export interface SandboxModificationInput {
+  operation: SandboxOperation;
+  parameters: Record<string, unknown>;
+  rationale?: string;
+  evidence_ids?: string[];
+}
+
+export interface SandboxModification extends SandboxModificationInput {
+  modification_id: string;
+  created_at: string;
+  created_by: string;
+}
+
+export interface SandboxMetrics {
+  node_count: number;
+  relationship_count: number;
+  community_count: number;
+  affected_cases: string[];
+  multi_hop_path_count: number;
+  lpi: Record<string, number>;
+  timeline_change_count: number;
+}
+
+export interface SandboxComparison {
+  before: SandboxMetrics;
+  after: SandboxMetrics;
+  added_nodes: string[];
+  removed_nodes: string[];
+  added_relationships: string[];
+  removed_relationships: string[];
+  impact_summary: string[];
+}
+
+export interface SandboxSession {
+  sandbox_id: string;
+  base_case_id: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  status: 'active' | 'closed';
+  label: 'HYPOTHETICAL / SANDBOX';
+  modifications: SandboxModification[];
+  comparison?: SandboxComparison;
 }
 
 export interface HiddenConnectionResponse {

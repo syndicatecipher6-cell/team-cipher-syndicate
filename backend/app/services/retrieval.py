@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Tuple
 from rank_bm25 import BM25Okapi
 from app.services.data_processing import data_processor
 from app.models.schemas import Evidence
+from app.config import settings
 
 class HybridRetrievalService:
     """
@@ -12,6 +13,25 @@ class HybridRetrievalService:
         self.bm25 = None
         self.corpus: List[Dict[str, Any]] = []
         self.tokenized_corpus: List[List[str]] = []
+        self._reranker = None
+        self._reranker_attempted = False
+
+    def _get_cross_encoder(self):
+        """Load the cross-encoder only when explicitly enabled.
+
+        This avoids surprise model downloads and keeps the existing ingestion
+        pipeline lightweight. If unavailable, deterministic lexical reranking
+        remains active and is reported by the API.
+        """
+        if not settings.ENABLE_LOCAL_TRANSFORMERS or self._reranker_attempted:
+            return self._reranker
+        self._reranker_attempted = True
+        try:
+            from sentence_transformers import CrossEncoder
+            self._reranker = CrossEncoder(settings.RERANKER_MODEL)
+        except Exception:
+            self._reranker = None
+        return self._reranker
 
     def build_index(self):
         """Indexes all active evidence records and case summaries for hybrid search."""
@@ -25,7 +45,9 @@ class HybridRetrievalService:
                 "id": ev.evidence_id,
                 "text": text,
                 "type": "evidence",
-                "obj": ev
+                "obj": ev,
+                "provenance": ev.provenance.model_dump(),
+                "case_id": ev.case_id,
             })
             self.tokenized_corpus.append(text.lower().split())
 
@@ -39,7 +61,13 @@ class HybridRetrievalService:
                 "id": cid,
                 "text": text,
                 "type": "case",
-                "obj": row.to_dict()
+                "obj": row.to_dict(),
+                "provenance": {
+                    "sourceDataset": str(row.get("source", "uploaded case record")),
+                    "sourceRecordId": cid,
+                    "recordType": "Case",
+                },
+                "case_id": cid,
             })
             self.tokenized_corpus.append(text.lower().split())
 
@@ -84,6 +112,18 @@ class HybridRetrievalService:
                 })
 
         results.sort(key=lambda x: x["score"], reverse=True)
-        return results[:top_k]
+        candidates = results[: max(top_k * 3, top_k)]
+
+        cross_encoder = self._get_cross_encoder()
+        if cross_encoder and candidates:
+            try:
+                scores = cross_encoder.predict([(query, item["text"]) for item in candidates])
+                for item, score in zip(candidates, scores):
+                    item["crossEncoderScore"] = float(score)
+                candidates.sort(key=lambda item: item.get("crossEncoderScore", 0.0), reverse=True)
+            except Exception:
+                pass
+
+        return candidates[:top_k]
 
 retrieval_service = HybridRetrievalService()

@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, PageHeader, Panel, SourceBadge } from '../components/ui';
 import { useInvestigation } from '../context/InvestigationContext';
 import type { AssistantResponse } from '../types/domain';
+import { investigationService } from '../services';
 
 export function AssistantPage() {
   const { dataset, isDataLoaded } = useInvestigation();
@@ -21,6 +22,7 @@ export function AssistantPage() {
   const [asked, setAsked] = useState('');
   const [answer, setAnswer] = useState<AssistantResponse>();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const dynamicPrompts = isDataLoaded
@@ -38,33 +40,15 @@ export function AssistantPage() {
     if (!text.trim()) return;
     setAsked(text);
     setLoading(true);
-
-    // AI answer generation grounded in the uploaded dataset
-    setTimeout(() => {
-      const caseCount = dataset.cases.length;
-      const personCount = dataset.persons.length;
-      const sampleEntities = dataset.persons.slice(0, 4).map((p) => p.name || p.person_id);
-      const sampleCaseIds = dataset.cases.slice(0, 3).map((c) => c.case_id);
-
-      const generatedAnswer: AssistantResponse = {
-        answer: `Analysis based on the ${dataset.graphData.nodes.length} uploaded graph nodes and ${dataset.graphData.edges.length} connections:
-Found ${caseCount} active cases connecting ${personCount} tracked entities.
-The most prominent cross-case linkages involve ${sampleEntities.join(', ') || 'recorded suspects'} with multiple phone and financial account interactions.
-These leads represent automated link intelligence and require investigator corroboration.`,
-        recordCount: dataset.graphData.edges.length,
-        entities: dataset.graphData.nodes.slice(0, 6).map((n) => n.id),
-        cases: sampleCaseIds,
-        evidenceIds: dataset.evidence.slice(0, 5).map((e) => e.evidence_id),
-        suggestedQuestions: [
-          'What phone numbers are linked to the primary suspect?',
-          'Highlight any cross-border or high-value fund movements.',
-          'Show chronological timeline of events for this case module.',
-        ],
-      };
-
-      setAnswer(generatedAnswer);
+    setError('');
+    try {
+      const response = await investigationService.askInvestigator(text);
+      setAnswer(response);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Investigation AI request failed.');
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   };
 
   return (
@@ -140,6 +124,13 @@ These leads represent automated link intelligence and require investigator corro
                       answer && (
                         <>
                           <p style={{ whiteSpace: 'pre-line' }}>{answer.answer}</p>
+                          {answer.findings?.map((finding, index) => (
+                            <div className={`ai-finding ai-finding--${finding.status.toLowerCase().replaceAll(' ', '-')}`} key={`${finding.status}-${index}`}>
+                              <strong>{finding.status}</strong>
+                              <span>{finding.statement}</span>
+                              <small>{Math.round(finding.confidence * 100)}% confidence · {finding.citations.length} citation(s)</small>
+                            </div>
+                          ))}
                           <div className="grounding-label">
                             <ShieldCheck size={15} />
                             Based on {answer.recordCount} records · Requires investigator verification
@@ -151,6 +142,8 @@ These leads represent automated link intelligence and require investigator corro
                 </div>
               </div>
             )}
+
+            {error && <p className="service-disclaimer">{error}</p>}
 
             <form
               className="assistant-input"
@@ -186,6 +179,13 @@ These leads represent automated link intelligence and require investigator corro
                     ))}
                   </div>
                 </section>
+
+                {answer.warnings && answer.warnings.length > 0 && (
+                  <section>
+                    <h3>Safety and model status</h3>
+                    {answer.warnings.map((warning) => <p className="service-disclaimer" key={warning}>{warning}</p>)}
+                  </section>
+                )}
 
                 <section>
                   <h3>Cases</h3>

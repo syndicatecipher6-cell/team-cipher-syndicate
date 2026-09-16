@@ -1,5 +1,6 @@
 import re
 from typing import List, Dict, Any
+from app.config import settings
 
 class NLPEntityExtractor:
     """
@@ -7,6 +8,7 @@ class NLPEntityExtractor:
     """
     def __init__(self):
         self.nlp = None
+        self.gliner = None
         try:
             import spacy
             try:
@@ -15,6 +17,13 @@ class NLPEntityExtractor:
                 pass
         except Exception:
             pass
+
+        if settings.ENABLE_LOCAL_TRANSFORMERS:
+            try:
+                from gliner import GLiNER
+                self.gliner = GLiNER.from_pretrained(settings.GLINER_MODEL)
+            except Exception:
+                self.gliner = None
 
     def extract_entities(self, text: str) -> Dict[str, List[str]]:
         results = {
@@ -41,7 +50,25 @@ class NLPEntityExtractor:
             except Exception:
                 pass
 
-        # 2. Regex Patterns for Law Enforcement Identifiers
+        # 2. GLiNER augments spaCy for open-label person, organization, and
+        # location extraction when the optional local model pack is enabled.
+        if self.gliner:
+            try:
+                labels = ["person", "organization", "location"]
+                for entity in self.gliner.predict_entities(text[:20000], labels, threshold=0.45):
+                    label = entity.get("label")
+                    value = str(entity.get("text", "")).strip()
+                    target = {
+                        "person": "persons",
+                        "organization": "organizations",
+                        "location": "locations",
+                    }.get(label)
+                    if target and value:
+                        results[target].append(value)
+            except Exception:
+                pass
+
+        # 3. Regex Patterns for Law Enforcement Identifiers
         # Indian Phone numbers
         phone_matches = re.findall(r'(?:\+91[\s-]?)?[6789]\d{9}', text)
         results["phones"].extend([p.strip() for p in phone_matches])

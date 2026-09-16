@@ -1,0 +1,7 @@
+-r requirements.txt
+
+# Optional local semantic extraction and cross-encoder reranking.
+# These models are loaded only when ENABLE_LOCAL_TRANSFORMERS=true.
+spacy>=3.7.0
+gliner>=0.2.20
+sentence-transformers>=3.0.0

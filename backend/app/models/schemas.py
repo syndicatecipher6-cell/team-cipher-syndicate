@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any, Union, Literal
 from pydantic import BaseModel, Field
 
 class Provenance(BaseModel):
@@ -124,6 +124,98 @@ class AssistantResponse(BaseModel):
     cases: List[str]
     evidenceIds: List[str]
     suggestedQuestions: List[str]
+    findings: List["InvestigationFinding"] = Field(default_factory=list)
+    contradictions: List[str] = Field(default_factory=list)
+    unresolved: List[str] = Field(default_factory=list)
+    queryPlan: List[str] = Field(default_factory=list)
+    provider: str = "deterministic-grounded"
+    model: str = "none"
+    warnings: List[str] = Field(default_factory=list)
+
+class EvidenceCitation(BaseModel):
+    evidence_id: str
+    source_dataset: str = ""
+    source_record_id: str = ""
+    record_type: str = ""
+    excerpt: str = ""
+
+class InvestigationFinding(BaseModel):
+    status: Literal["Verified Fact", "Corroborated", "Inferred", "Unresolved"]
+    statement: str
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    citations: List[EvidenceCitation] = Field(default_factory=list)
+
+class AssistantQueryRequest(BaseModel):
+    question: str = Field(min_length=2, max_length=2000)
+    case_id: Optional[str] = None
+    sandbox_id: Optional[str] = None
+
+class CaseIntelligenceBrief(BaseModel):
+    case_id: str
+    overview: str
+    key_entities: List[str] = Field(default_factory=list)
+    relationships: List[str] = Field(default_factory=list)
+    linked_cases: List[str] = Field(default_factory=list)
+    evidence: List[EvidenceCitation] = Field(default_factory=list)
+    timeline: List[str] = Field(default_factory=list)
+    contradictions: List[str] = Field(default_factory=list)
+    gaps: List[str] = Field(default_factory=list)
+    hypotheses: List[InvestigationFinding] = Field(default_factory=list)
+    priorities: List[str] = Field(default_factory=list)
+    generated_by: str = "deterministic-grounded"
+    warnings: List[str] = Field(default_factory=list)
+
+SandboxOperation = Literal[
+    "IDENTITY_MERGE",
+    "RELATIONSHIP_ADD",
+    "RELATIONSHIP_REMOVE",
+    "EVIDENCE_DISPUTE",
+    "ENTITY_SPLIT",
+    "TIMELINE_CHANGE",
+]
+
+class SandboxModificationInput(BaseModel):
+    operation: SandboxOperation
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+    rationale: str = Field(default="", max_length=1000)
+    evidence_ids: List[str] = Field(default_factory=list)
+
+class SandboxModification(SandboxModificationInput):
+    modification_id: str
+    created_at: str
+    created_by: str
+
+class SandboxCreateRequest(BaseModel):
+    base_case_id: str
+
+class SandboxMetrics(BaseModel):
+    node_count: int = 0
+    relationship_count: int = 0
+    community_count: int = 0
+    affected_cases: List[str] = Field(default_factory=list)
+    multi_hop_path_count: int = 0
+    lpi: Dict[str, float] = Field(default_factory=dict)
+    timeline_change_count: int = 0
+
+class SandboxComparison(BaseModel):
+    before: SandboxMetrics
+    after: SandboxMetrics
+    added_nodes: List[str] = Field(default_factory=list)
+    removed_nodes: List[str] = Field(default_factory=list)
+    added_relationships: List[str] = Field(default_factory=list)
+    removed_relationships: List[str] = Field(default_factory=list)
+    impact_summary: List[str] = Field(default_factory=list)
+
+class SandboxSession(BaseModel):
+    sandbox_id: str
+    base_case_id: str
+    created_by: str
+    created_at: str
+    updated_at: str
+    status: Literal["active", "closed"] = "active"
+    label: str = "HYPOTHETICAL / SANDBOX"
+    modifications: List[SandboxModification] = Field(default_factory=list)
+    comparison: Optional[SandboxComparison] = None
 
 class PipelineJob(BaseModel):
     id: str
@@ -137,3 +229,6 @@ class PipelineJob(BaseModel):
     stageMessage: Optional[str] = None
     errorMessage: Optional[str] = None
     timestamp: str
+
+
+AssistantResponse.model_rebuild()

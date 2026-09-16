@@ -14,6 +14,7 @@ import { CasesPage, NotFoundPage } from './pages/OverviewPages';
 import { PersonPage } from './pages/PersonPage';
 import { RetrievalPage } from './pages/RetrievalPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { SandboxPage } from './pages/SandboxPage';
 import { TimelinePage } from './pages/TimelinePage';
 import { hasValidDemoSession } from './security/demoSession';
 
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/entities" element={<EntitiesIdentitiesPage />} />
           <Route path="/graph" element={<GraphPage />} />
           <Route path="/assistant" element={<AssistantPage />} />
+          <Route path="/sandbox" element={<SandboxPage />} />
           <Route path="/settings" element={<SettingsPage />} />
 
           {/* Additional investigative views and detail profiles */}

@@ -4,6 +4,7 @@ import {
   BarChart3,
   Bot,
   ChevronDown,
+  FlaskConical,
   Inbox,
   LogOut,
   Menu,
@@ -45,6 +46,8 @@ export function AppShell() {
     if (searchOpen && query.trim()) {
       void searchEntities(query).then(setResults);
     } else if (searchOpen) {
+      // Search results mirror the investigation context when the modal opens.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults(dataset.searchResults.slice(0, 8));
     }
   }, [query, searchOpen, searchEntities, dataset.searchResults]);
@@ -104,6 +107,7 @@ export function AppShell() {
           <NavItem to="/entities" icon={Users} label="Entities & Identities" onClick={closeSidebar} />
           <NavItem to="/graph" icon={Network} label="Network Graph" onClick={closeSidebar} />
           <NavItem to="/assistant" icon={Bot} label="Investigation AI" onClick={closeSidebar} />
+          <NavItem to="/sandbox" icon={FlaskConical} label="Investigation Sandbox" onClick={closeSidebar} />
         </nav>
 
         <div className="sidebar-footer">

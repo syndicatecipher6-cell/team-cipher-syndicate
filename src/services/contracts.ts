@@ -1,4 +1,4 @@
-import type { AssistantResponse, CaseRecord, CrossCaseResponse, DashboardStats, DataSource, Evidence, GraphData, HiddenConnectionResponse, Person, SearchResult, TimelineEvent } from '../types/domain';
+import type { AssistantResponse, CaseIntelligenceBrief, CaseRecord, CrossCaseResponse, DashboardStats, DataSource, Evidence, GraphData, HiddenConnectionResponse, Person, SandboxModificationInput, SandboxSession, SearchResult, TimelineEvent } from '../types/domain';
 
 export interface InvestigationService {
   getDashboardStats(): Promise<DashboardStats>;
@@ -13,5 +13,9 @@ export interface InvestigationService {
   getDataSources(): Promise<DataSource[]>;
   findHiddenConnection(startEntityId: string, endEntityId: string): Promise<HiddenConnectionResponse>;
   findCrossCaseConnections(caseIds: string[]): Promise<CrossCaseResponse>;
-  askInvestigator(question: string): Promise<AssistantResponse>;
+  askInvestigator(question: string, options?: { caseId?: string; sandboxId?: string }): Promise<AssistantResponse>;
+  getCaseIntelligenceBrief(caseId: string): Promise<CaseIntelligenceBrief>;
+  createSandbox(baseCaseId: string): Promise<SandboxSession>;
+  getSandbox(sandboxId: string): Promise<SandboxSession>;
+  applySandboxModification(sandboxId: string, change: SandboxModificationInput): Promise<SandboxSession>;
 }

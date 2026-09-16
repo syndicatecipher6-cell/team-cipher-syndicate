@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import ingest, investigations, analysis, analytics_routes, federated_routes
+from app.routers import ingest, investigations, analysis, analytics_routes, federated_routes, sandbox
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -9,10 +9,11 @@ app = FastAPI(
     description="Python FastAPI backend for SIH Criminal Network Analysis with Pandas, NumPy, spaCy, Neo4j, BM25/BGE-M3, GraphRAG, Plotly, and Flower/FedProx."
 )
 
-# CORS middleware for local frontend connectivity
+# CORS middleware for explicitly configured frontend origins. Wildcard CORS
+# with credentials is intentionally avoided.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,6 +25,7 @@ app.include_router(investigations.router, prefix=settings.API_PREFIX)
 app.include_router(analysis.router, prefix=settings.API_PREFIX)
 app.include_router(analytics_routes.router, prefix=settings.API_PREFIX)
 app.include_router(federated_routes.router, prefix=settings.API_PREFIX)
+app.include_router(sandbox.router, prefix=settings.API_PREFIX)
 
 @app.get("/")
 def root():
