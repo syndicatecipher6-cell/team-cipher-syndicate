@@ -1,0 +1,81 @@
+case_id,fir_number,crime_type,district,state,date_filed,status,summary
+CASE-001,FIR-1409/2026,Financial Fraud,Nagpur,TN,2026-08-02,Under Investigation,Extortion case reported in Sambalpur involving multiple suspects.
+CASE-002,FIR-2424/2023,Smuggling,Kolhapur,RJ,2023-07-29,Open,Robbery case reported in Bongaigaon involving multiple suspects.
+CASE-003,FIR-4811/2023,Money Laundering,Gudivada,MP,2023-07-11,Open,Money Laundering case reported in Patna involving multiple suspects.
+CASE-004,FIR-9928/2024,Kidnapping,Tiruchirappalli,TN,2024-02-12,Cold,Smuggling case reported in Muzaffarpur involving multiple suspects.
+CASE-005,FIR-3615/2024,Kidnapping,Kishanganj,GJ,2024-07-23,Closed,Extortion case reported in Bongaigaon involving multiple suspects.
+CASE-006,FIR-2674/2024,Cybercrime,Muzaffarnagar,RJ,2024-03-16,Open,Assault case reported in Giridih involving multiple suspects.
+CASE-007,FIR-5333/2024,Robbery,Chennai,WB,2024-12-05,Open,Kidnapping case reported in Bhusawal involving multiple suspects.
+CASE-008,FIR-5803/2023,Smuggling,Alwar,GJ,2023-06-11,Under Investigation,Cybercrime case reported in Thrissur involving multiple suspects.
+CASE-009,FIR-5741/2023,Cybercrime,Kota,TN,2023-04-04,Open,Kidnapping case reported in Nadiad involving multiple suspects.
+CASE-010,FIR-6977/2024,Extortion,Secunderabad,GJ,2024-07-23,Closed,Vehicle Theft case reported in Mahbubnagar involving multiple suspects.
+CASE-011,FIR-2169/2026,Smuggling,Varanasi,KA,2026-10-04,Under Investigation,Extortion case reported in Jorhat involving multiple suspects.
+CASE-012,FIR-5422/2025,Money Laundering,Burhanpur,TN,2025-08-04,Closed,Robbery case reported in Suryapet involving multiple suspects.
+CASE-013,FIR-6168/2024,Kidnapping,Tadipatri,UP,2024-04-14,Open,Vehicle Theft case reported in Gangtok involving multiple suspects.
+CASE-014,FIR-4483/2026,Drug Trafficking,Coimbatore,RJ,2026-03-07,Cold,Extortion case reported in Ambattur involving multiple suspects.
+CASE-015,FIR-5040/2024,Money Laundering,Vijayawada,PB,2024-06-26,Closed,Smuggling case reported in Salem involving multiple suspects.
+CASE-016,FIR-7543/2025,Assault,Alwar,TN,2025-05-27,Under Investigation,Money Laundering case reported in Bharatpur involving multiple suspects.
+CASE-017,FIR-1771/2025,Cybercrime,Uluberia,KA,2025-10-07,Under Investigation,Kidnapping case reported in Bhagalpur involving multiple suspects.
+CASE-018,FIR-7304/2026,Kidnapping,Madurai,MP,2026-05-06,Cold,Money Laundering case reported in Deoghar involving multiple suspects.
+CASE-019,FIR-1188/2024,Cybercrime,Ujjain,PB,2024-05-29,Closed,Assault case reported in Nadiad involving multiple suspects.
+CASE-020,FIR-8123/2023,Extortion,Proddatur,WB,2023-08-17,Open,Financial Fraud case reported in Anantapur involving multiple suspects.
+CASE-021,FIR-9317/2025,Cybercrime,Berhampur,UP,2025-10-22,Under Investigation,Extortion case reported in Satna involving multiple suspects.
+CASE-022,FIR-9837/2025,Money Laundering,Agartala,MH,2025-02-04,Closed,Drug Trafficking case reported in Rajpur Sonarpur involving multiple suspects.
+CASE-023,FIR-6947/2023,Financial Fraud,Rajpur Sonarpur,TN,2023-02-09,Open,Vehicle Theft case reported in Tenali involving multiple suspects.
+CASE-024,FIR-2403/2026,Drug Trafficking,Asansol,DL,2026-03-07,Under Investigation,Extortion case reported in Kolhapur involving multiple suspects.
+CASE-025,FIR-3705/2026,Financial Fraud,Kishanganj,PB,2026-09-13,Cold,Vehicle Theft case reported in Bhimavaram involving multiple suspects.
+CASE-026,FIR-6107/2026,Kidnapping,Ballia,GJ,2026-01-09,Cold,Money Laundering case reported in Mirzapur involving multiple suspects.
+CASE-027,FIR-5061/2025,Vehicle Theft,Durgapur,DL,2025-07-13,Closed,Robbery case reported in Mysore involving multiple suspects.
+CASE-028,FIR-4770/2026,Smuggling,Bhubaneswar,TN,2026-04-19,Open,Cybercrime case reported in Kozhikode involving multiple suspects.
+CASE-029,FIR-1964/2026,Vehicle Theft,Kavali,DL,2026-12-20,Open,Assault case reported in Kharagpur involving multiple suspects.
+CASE-030,FIR-4899/2023,Financial Fraud,Kavali,WB,2023-05-26,Under Investigation,Money Laundering case reported in Dehri involving multiple suspects.
+CASE-031,FIR-8744/2023,Vehicle Theft,Begusarai,WB,2023-09-28,Cold,Vehicle Theft case reported in Raipur involving multiple suspects.
+CASE-032,FIR-8062/2023,Assault,Mau,RJ,2023-07-13,Cold,Drug Trafficking case reported in Durg involving multiple suspects.
+CASE-033,FIR-2612/2023,Robbery,Sangli-Miraj & Kupwad,RJ,2023-04-21,Closed,Cybercrime case reported in Delhi involving multiple suspects.
+CASE-034,FIR-4116/2024,Money Laundering,Orai,WB,2024-05-24,Under Investigation,Kidnapping case reported in Guna involving multiple suspects.
+CASE-035,FIR-8579/2024,Vehicle Theft,Bihar Sharif,DL,2024-01-11,Cold,Money Laundering case reported in Jamnagar involving multiple suspects.
+CASE-036,FIR-9856/2023,Robbery,Nanded,DL,2023-07-20,Under Investigation,Extortion case reported in Khora  involving multiple suspects.
+CASE-037,FIR-8886/2025,Vehicle Theft,Unnao,RJ,2025-04-12,Open,Extortion case reported in Gorakhpur involving multiple suspects.
+CASE-038,FIR-7396/2025,Financial Fraud,Aizawl,WB,2025-02-15,Closed,Kidnapping case reported in Howrah involving multiple suspects.
+CASE-039,FIR-8973/2026,Extortion,Tezpur,TN,2026-11-27,Closed,Vehicle Theft case reported in Guwahati involving multiple suspects.
+CASE-040,FIR-9883/2023,Robbery,Coimbatore,GJ,2023-04-30,Open,Robbery case reported in Warangal involving multiple suspects.
+CASE-041,FIR-9238/2026,Money Laundering,Jamalpur,KA,2026-04-11,Open,Money Laundering case reported in Bilaspur involving multiple suspects.
+CASE-042,FIR-2122/2023,Smuggling,Rajpur Sonarpur,DL,2023-06-14,Under Investigation,Kidnapping case reported in Bijapur involving multiple suspects.
+CASE-043,FIR-5033/2023,Smuggling,Dindigul,MP,2023-09-03,Open,Smuggling case reported in Hazaribagh involving multiple suspects.
+CASE-044,FIR-9565/2023,Assault,Jamshedpur,UP,2023-06-17,Under Investigation,Assault case reported in Kamarhati involving multiple suspects.
+CASE-045,FIR-7484/2024,Extortion,Sonipat,UP,2024-05-03,Cold,Assault case reported in Giridih involving multiple suspects.
+CASE-046,FIR-8508/2023,Smuggling,Giridih,MP,2023-05-29,Open,Cybercrime case reported in Chennai involving multiple suspects.
+CASE-047,FIR-9288/2026,Financial Fraud,Allahabad,KA,2026-01-06,Closed,Cybercrime case reported in Jabalpur involving multiple suspects.
+CASE-048,FIR-5669/2024,Extortion,Bathinda,WB,2024-05-15,Closed,Smuggling case reported in Kottayam involving multiple suspects.
+CASE-049,FIR-1128/2026,Money Laundering,Alwar,UP,2026-09-01,Open,Extortion case reported in Kakinada involving multiple suspects.
+CASE-050,FIR-2753/2024,Money Laundering,Aurangabad,KA,2024-06-25,Closed,Financial Fraud case reported in Latur involving multiple suspects.
+CASE-051,FIR-6617/2026,Vehicle Theft,Vellore,UP,2026-05-23,Cold,Financial Fraud case reported in Bareilly involving multiple suspects.
+CASE-052,FIR-7939/2023,Financial Fraud,Chinsurah,MH,2023-04-15,Open,Assault case reported in Bhusawal involving multiple suspects.
+CASE-053,FIR-5291/2023,Extortion,Bhind,WB,2023-09-25,Cold,Money Laundering case reported in Navi Mumbai involving multiple suspects.
+CASE-054,FIR-2232/2023,Extortion,Sambhal,PB,2023-01-20,Open,Assault case reported in Moradabad involving multiple suspects.
+CASE-055,FIR-3426/2026,Kidnapping,Nellore,KA,2026-04-07,Open,Financial Fraud case reported in Jorhat involving multiple suspects.
+CASE-056,FIR-6862/2025,Vehicle Theft,Kolhapur,TN,2025-01-16,Open,Assault case reported in South Dumdum involving multiple suspects.
+CASE-057,FIR-3532/2026,Vehicle Theft,Surendranagar Dudhrej,KA,2026-02-20,Under Investigation,Kidnapping case reported in Aurangabad involving multiple suspects.
+CASE-058,FIR-6442/2023,Kidnapping,Jamalpur,TN,2023-02-20,Closed,Extortion case reported in Dhanbad involving multiple suspects.
+CASE-059,FIR-7267/2026,Robbery,Tiruchirappalli,WB,2026-12-07,Under Investigation,Vehicle Theft case reported in Rourkela involving multiple suspects.
+CASE-060,FIR-6000/2025,Vehicle Theft,Shivpuri,TN,2025-07-31,Open,Vehicle Theft case reported in Kakinada involving multiple suspects.
+CASE-061,FIR-5564/2025,Cybercrime,Allahabad,UP,2025-03-27,Closed,Money Laundering case reported in Nadiad involving multiple suspects.
+CASE-062,FIR-6425/2025,Robbery,Pali,DL,2025-03-29,Closed,Extortion case reported in Malda involving multiple suspects.
+CASE-063,FIR-1626/2026,Cybercrime,Bhusawal,MP,2026-04-04,Cold,Assault case reported in Bhatpara involving multiple suspects.
+CASE-064,FIR-9379/2024,Cybercrime,Sagar,RJ,2024-10-04,Under Investigation,Financial Fraud case reported in Howrah involving multiple suspects.
+CASE-065,FIR-1027/2023,Money Laundering,Satara,PB,2023-04-01,Under Investigation,Assault case reported in Dhanbad involving multiple suspects.
+CASE-066,FIR-6409/2025,Smuggling,Ambala,GJ,2025-06-02,Open,Financial Fraud case reported in Howrah involving multiple suspects.
+CASE-067,FIR-7691/2025,Assault,Gaya,RJ,2025-11-04,Closed,Money Laundering case reported in Hindupur involving multiple suspects.
+CASE-068,FIR-7888/2023,Kidnapping,Noida,KA,2023-09-18,Closed,Kidnapping case reported in Jamshedpur involving multiple suspects.
+CASE-069,FIR-5978/2026,Financial Fraud,Adoni,TN,2026-01-27,Cold,Smuggling case reported in Udupi involving multiple suspects.
+CASE-070,FIR-6279/2026,Drug Trafficking,Gurgaon,WB,2026-05-27,Cold,Vehicle Theft case reported in Bhilwara involving multiple suspects.
+CASE-071,FIR-3780/2025,Cybercrime,Satara,UP,2025-11-12,Closed,Cybercrime case reported in Bilaspur involving multiple suspects.
+CASE-072,FIR-4680/2024,Vehicle Theft,Mira-Bhayandar,KA,2024-04-26,Open,Robbery case reported in Berhampore involving multiple suspects.
+CASE-073,FIR-2193/2024,Drug Trafficking,Srinagar,RJ,2024-05-16,Under Investigation,Kidnapping case reported in Berhampore involving multiple suspects.
+CASE-074,FIR-4997/2025,Extortion,Srinagar,MH,2025-10-09,Open,Kidnapping case reported in Guna involving multiple suspects.
+CASE-075,FIR-9486/2024,Drug Trafficking,Mira-Bhayandar,MH,2024-03-24,Under Investigation,Cybercrime case reported in Coimbatore involving multiple suspects.
+CASE-076,FIR-8612/2025,Money Laundering,Uluberia,PB,2025-07-23,Closed,Drug Trafficking case reported in Sangli-Miraj & Kupwad involving multiple suspects.
+CASE-077,FIR-7991/2026,Money Laundering,Tinsukia,WB,2026-06-08,Under Investigation,Drug Trafficking case reported in Pudukkottai involving multiple suspects.
+CASE-078,FIR-5050/2025,Financial Fraud,Begusarai,PB,2025-07-10,Cold,Vehicle Theft case reported in Vasai-Virar involving multiple suspects.
+CASE-079,FIR-2269/2024,Financial Fraud,Bilaspur,TN,2024-07-16,Closed,Assault case reported in Aligarh involving multiple suspects.
+CASE-080,FIR-2320/2024,Extortion,Darbhanga,KA,2024-10-16,Under Investigation,Kidnapping case reported in Mahbubnagar involving multiple suspects.

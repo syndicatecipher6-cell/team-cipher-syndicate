@@ -1,0 +1,261 @@
+event_id,case_id,person_id,event_type,timestamp,location,notes
+EVT-0001,CASE-070,P-0426,Call Made,2026-05-27 06:00:00,Bhatpara,Call Made recorded during Drug Trafficking investigation.
+EVT-0002,CASE-054,P-0480,Location Ping,2023-01-25 00:00:00,Nizamabad,Evidence Collected recorded during Extortion investigation.
+EVT-0003,CASE-076,P-0007,Money Transfer,2025-07-25 15:00:00,Hindupur,Vehicle Sighted recorded during Money Laundering investigation.
+EVT-0004,CASE-068,P-0133,Location Ping,2023-09-27 03:00:00,Satna,Evidence Collected recorded during Kidnapping investigation.
+EVT-0005,CASE-014,P-0249,Evidence Collected,2026-03-12 15:00:00,Vadodara,Money Transfer recorded during Drug Trafficking investigation.
+EVT-0006,CASE-051,P-0335,Suspect Movement,2026-05-30 20:00:00,Bally,Suspect Movement recorded during Vehicle Theft investigation.
+EVT-0007,CASE-064,P-0062,Evidence Collected,2024-10-11 02:00:00,Gwalior,Vehicle Sighted recorded during Cybercrime investigation.
+EVT-0008,CASE-017,P-0298,Call Made,2025-10-13 18:00:00,Anantapur,Location Ping recorded during Cybercrime investigation.
+EVT-0009,CASE-071,P-0076,Witness Statement,2025-11-15 07:00:00,Loni,Vehicle Sighted recorded during Cybercrime investigation.
+EVT-0010,CASE-048,P-0325,Location Ping,2024-05-09 21:00:00,Bathinda,Location Ping recorded during Extortion investigation.
+EVT-0011,CASE-049,P-0450,Witness Statement,2026-09-06 17:00:00,Hapur,Suspect Movement recorded during Money Laundering investigation.
+EVT-0012,CASE-001,P-0308,Call Made,2026-08-02 23:00:00,Delhi,Call Made recorded during Financial Fraud investigation.
+EVT-0013,CASE-055,P-0096,Call Made,2026-04-09 19:00:00,Durg,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0014,CASE-027,P-0325,Money Transfer,2025-07-12 00:00:00,Chandrapur,Evidence Collected recorded during Vehicle Theft investigation.
+EVT-0015,CASE-039,P-0617,Evidence Collected,2026-11-21 13:00:00,Gurgaon,Witness Statement recorded during Extortion investigation.
+EVT-0016,CASE-053,P-0584,Location Ping,2023-10-03 13:00:00,Sambalpur,Location Ping recorded during Extortion investigation.
+EVT-0017,CASE-067,P-0585,Evidence Collected,2025-11-07 19:00:00,Mangalore,Call Made recorded during Assault investigation.
+EVT-0018,CASE-007,P-0179,Witness Statement,2024-12-09 17:00:00,Bhiwandi,Evidence Collected recorded during Robbery investigation.
+EVT-0019,CASE-016,P-0268,Call Made,2025-05-29 00:00:00,Pondicherry,Evidence Collected recorded during Assault investigation.
+EVT-0020,CASE-032,P-0435,Vehicle Sighted,2023-07-18 18:00:00,Ambala,Suspect Movement recorded during Assault investigation.
+EVT-0021,CASE-006,P-0493,Call Made,2024-03-15 18:00:00,Mehsana,Money Transfer recorded during Cybercrime investigation.
+EVT-0022,CASE-071,P-0098,Call Made,2025-11-09 09:00:00,Jammu,Money Transfer recorded during Cybercrime investigation.
+EVT-0023,CASE-009,P-0379,Vehicle Sighted,2023-03-28 02:00:00,Delhi,Location Ping recorded during Cybercrime investigation.
+EVT-0024,CASE-062,P-0552,Money Transfer,2025-03-20 02:00:00,Pune,Call Made recorded during Robbery investigation.
+EVT-0025,CASE-061,P-0628,Call Made,2025-04-02 09:00:00,Mysore,Witness Statement recorded during Cybercrime investigation.
+EVT-0026,CASE-024,P-0387,Call Made,2026-03-05 11:00:00,Tadepalligudem,Suspect Movement recorded during Drug Trafficking investigation.
+EVT-0027,CASE-080,P-0156,Call Made,2024-10-15 07:00:00,Kanpur,Call Made recorded during Extortion investigation.
+EVT-0028,CASE-026,P-0132,Money Transfer,2025-12-31 04:00:00,Aligarh,Witness Statement recorded during Kidnapping investigation.
+EVT-0029,CASE-032,P-0278,Call Made,2023-07-23 11:00:00,Hospet,Money Transfer recorded during Assault investigation.
+EVT-0030,CASE-048,P-0239,Evidence Collected,2024-05-19 02:00:00,Surendranagar Dudhrej,Money Transfer recorded during Extortion investigation.
+EVT-0031,CASE-072,P-0498,Money Transfer,2024-04-24 08:00:00,Aizawl,Suspect Movement recorded during Vehicle Theft investigation.
+EVT-0032,CASE-060,P-0134,Evidence Collected,2025-08-07 02:00:00,Mangalore,Call Made recorded during Vehicle Theft investigation.
+EVT-0033,CASE-077,P-0321,Suspect Movement,2026-06-10 20:00:00,Begusarai,Evidence Collected recorded during Money Laundering investigation.
+EVT-0034,CASE-062,P-0088,Vehicle Sighted,2025-03-26 11:00:00,Panchkula,Suspect Movement recorded during Robbery investigation.
+EVT-0035,CASE-037,P-0050,Suspect Movement,2025-04-20 12:00:00,Srikakulam,Location Ping recorded during Vehicle Theft investigation.
+EVT-0036,CASE-056,P-0446,Location Ping,2025-01-07 14:00:00,Varanasi,Vehicle Sighted recorded during Vehicle Theft investigation.
+EVT-0037,CASE-063,P-0279,Money Transfer,2026-03-27 04:00:00,Pudukkottai,Vehicle Sighted recorded during Cybercrime investigation.
+EVT-0038,CASE-052,P-0226,Vehicle Sighted,2023-04-25 17:00:00,Berhampur,Witness Statement recorded during Financial Fraud investigation.
+EVT-0039,CASE-042,P-0467,Vehicle Sighted,2023-06-13 18:00:00,Adoni,Call Made recorded during Smuggling investigation.
+EVT-0040,CASE-043,P-0536,Evidence Collected,2023-09-08 19:00:00,Erode,Call Made recorded during Smuggling investigation.
+EVT-0041,CASE-004,P-0238,Money Transfer,2024-02-12 16:00:00,Sultan Pur Majra,Location Ping recorded during Kidnapping investigation.
+EVT-0042,CASE-075,P-0244,Location Ping,2024-03-29 20:00:00,Akola,Call Made recorded during Drug Trafficking investigation.
+EVT-0043,CASE-056,P-0061,Call Made,2025-01-13 23:00:00,Patna,Location Ping recorded during Vehicle Theft investigation.
+EVT-0044,CASE-078,P-0159,Evidence Collected,2025-07-16 20:00:00,Narasaraopet,Suspect Movement recorded during Financial Fraud investigation.
+EVT-0045,CASE-012,P-0345,Witness Statement,2025-07-26 19:00:00,Bijapur,Money Transfer recorded during Money Laundering investigation.
+EVT-0046,CASE-064,P-0239,Money Transfer,2024-10-11 07:00:00,Kalyan-Dombivli,Witness Statement recorded during Cybercrime investigation.
+EVT-0047,CASE-043,P-0385,Evidence Collected,2023-09-12 23:00:00,Kumbakonam,Witness Statement recorded during Smuggling investigation.
+EVT-0048,CASE-030,P-0120,Call Made,2023-05-24 10:00:00,Vijayanagaram,Location Ping recorded during Financial Fraud investigation.
+EVT-0049,CASE-010,P-0355,Call Made,2024-07-14 12:00:00,Hindupur,Vehicle Sighted recorded during Extortion investigation.
+EVT-0050,CASE-013,P-0154,Evidence Collected,2024-04-10 16:00:00,Bardhaman,Money Transfer recorded during Kidnapping investigation.
+EVT-0051,CASE-022,P-0630,Evidence Collected,2025-02-07 04:00:00,Ambala,Money Transfer recorded during Money Laundering investigation.
+EVT-0052,CASE-049,P-0562,Money Transfer,2026-09-01 16:00:00,Avadi,Evidence Collected recorded during Money Laundering investigation.
+EVT-0053,CASE-036,P-0396,Evidence Collected,2023-07-29 19:00:00,Hapur,Call Made recorded during Robbery investigation.
+EVT-0054,CASE-043,P-0310,Witness Statement,2023-08-28 01:00:00,Surendranagar Dudhrej,Witness Statement recorded during Smuggling investigation.
+EVT-0055,CASE-019,P-0390,Evidence Collected,2024-05-29 04:00:00,Sambalpur,Suspect Movement recorded during Cybercrime investigation.
+EVT-0056,CASE-060,P-0198,Evidence Collected,2025-08-09 02:00:00,Bhubaneswar,Witness Statement recorded during Vehicle Theft investigation.
+EVT-0057,CASE-065,P-0364,Witness Statement,2023-04-02 02:00:00,Davanagere,Location Ping recorded during Money Laundering investigation.
+EVT-0058,CASE-074,P-0628,Vehicle Sighted,2025-10-08 01:00:00,Rourkela,Evidence Collected recorded during Extortion investigation.
+EVT-0059,CASE-066,P-0542,Witness Statement,2025-06-06 02:00:00,Ambala,Evidence Collected recorded during Smuggling investigation.
+EVT-0060,CASE-018,P-0083,Suspect Movement,2026-05-15 19:00:00,Akola,Location Ping recorded during Kidnapping investigation.
+EVT-0061,CASE-069,P-0402,Location Ping,2026-01-17 15:00:00,Thrissur,Call Made recorded during Financial Fraud investigation.
+EVT-0062,CASE-047,P-0532,Suspect Movement,2026-01-04 11:00:00,Malegaon,Call Made recorded during Financial Fraud investigation.
+EVT-0063,CASE-055,P-0452,Call Made,2026-03-31 16:00:00,Burhanpur,Call Made recorded during Kidnapping investigation.
+EVT-0064,CASE-011,P-0322,Call Made,2026-09-30 13:00:00,Pondicherry,Money Transfer recorded during Smuggling investigation.
+EVT-0065,CASE-024,P-0432,Money Transfer,2026-02-25 02:00:00,Deoghar,Vehicle Sighted recorded during Drug Trafficking investigation.
+EVT-0066,CASE-058,P-0108,Money Transfer,2023-02-22 19:00:00,Warangal,Location Ping recorded during Kidnapping investigation.
+EVT-0067,CASE-040,P-0187,Evidence Collected,2023-05-10 14:00:00,Farrukhabad,Suspect Movement recorded during Robbery investigation.
+EVT-0068,CASE-043,P-0365,Location Ping,2023-09-11 17:00:00,Haldia,Witness Statement recorded during Smuggling investigation.
+EVT-0069,CASE-035,P-0176,Money Transfer,2024-01-06 03:00:00,Tiruvottiyur,Witness Statement recorded during Vehicle Theft investigation.
+EVT-0070,CASE-078,P-0214,Evidence Collected,2025-07-16 10:00:00,Allahabad,Vehicle Sighted recorded during Financial Fraud investigation.
+EVT-0071,CASE-033,P-0251,Call Made,2023-04-14 08:00:00,Ludhiana,Call Made recorded during Robbery investigation.
+EVT-0072,CASE-074,P-0406,Evidence Collected,2025-10-07 05:00:00,Bhatpara,Location Ping recorded during Extortion investigation.
+EVT-0073,CASE-030,P-0153,Vehicle Sighted,2023-05-28 06:00:00,Dewas,Evidence Collected recorded during Financial Fraud investigation.
+EVT-0074,CASE-014,P-0094,Call Made,2026-03-08 07:00:00,Yamunanagar,Suspect Movement recorded during Drug Trafficking investigation.
+EVT-0075,CASE-034,P-0024,Witness Statement,2024-06-03 07:00:00,Khammam,Call Made recorded during Money Laundering investigation.
+EVT-0076,CASE-038,P-0092,Call Made,2025-02-15 07:00:00,Secunderabad,Evidence Collected recorded during Financial Fraud investigation.
+EVT-0077,CASE-005,P-0625,Call Made,2024-07-18 10:00:00,Begusarai,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0078,CASE-058,P-0493,Location Ping,2023-02-21 09:00:00,Thrissur,Witness Statement recorded during Kidnapping investigation.
+EVT-0079,CASE-012,P-0226,Vehicle Sighted,2025-08-08 03:00:00,Kulti,Witness Statement recorded during Money Laundering investigation.
+EVT-0080,CASE-042,P-0520,Vehicle Sighted,2023-06-06 20:00:00,Thoothukudi,Location Ping recorded during Smuggling investigation.
+EVT-0081,CASE-075,P-0154,Witness Statement,2024-03-17 15:00:00,Bellary,Vehicle Sighted recorded during Drug Trafficking investigation.
+EVT-0082,CASE-061,P-0463,Call Made,2025-03-19 04:00:00,Munger,Witness Statement recorded during Cybercrime investigation.
+EVT-0083,CASE-077,P-0176,Evidence Collected,2026-06-02 15:00:00,Kottayam,Vehicle Sighted recorded during Money Laundering investigation.
+EVT-0084,CASE-011,P-0499,Witness Statement,2026-10-13 17:00:00,Mira-Bhayandar,Evidence Collected recorded during Smuggling investigation.
+EVT-0085,CASE-026,P-0217,Call Made,2026-01-06 07:00:00,Bharatpur,Location Ping recorded during Kidnapping investigation.
+EVT-0086,CASE-047,P-0636,Evidence Collected,2026-01-07 21:00:00,Arrah,Evidence Collected recorded during Financial Fraud investigation.
+EVT-0087,CASE-058,P-0248,Vehicle Sighted,2023-02-22 02:00:00,Mahbubnagar,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0088,CASE-017,P-0158,Money Transfer,2025-10-01 00:00:00,Kolkata,Evidence Collected recorded during Cybercrime investigation.
+EVT-0089,CASE-057,P-0102,Suspect Movement,2026-03-01 13:00:00,Srikakulam,Location Ping recorded during Vehicle Theft investigation.
+EVT-0090,CASE-059,P-0090,Evidence Collected,2026-11-27 01:00:00,Gorakhpur,Money Transfer recorded during Robbery investigation.
+EVT-0091,CASE-069,P-0353,Evidence Collected,2026-01-18 17:00:00,Muzaffarpur,Suspect Movement recorded during Financial Fraud investigation.
+EVT-0092,CASE-044,P-0187,Suspect Movement,2023-06-09 14:00:00,Sikar,Witness Statement recorded during Assault investigation.
+EVT-0093,CASE-035,P-0611,Witness Statement,2024-01-18 17:00:00,Pudukkottai,Money Transfer recorded during Vehicle Theft investigation.
+EVT-0094,CASE-029,P-0577,Witness Statement,2026-12-13 02:00:00,Ambarnath,Witness Statement recorded during Vehicle Theft investigation.
+EVT-0095,CASE-056,P-0372,Vehicle Sighted,2025-01-23 07:00:00,Ongole,Call Made recorded during Vehicle Theft investigation.
+EVT-0096,CASE-048,P-0332,Suspect Movement,2024-05-09 21:00:00,Navi Mumbai,Location Ping recorded during Extortion investigation.
+EVT-0097,CASE-033,P-0396,Call Made,2023-04-11 23:00:00,Hubli–Dharwad,Suspect Movement recorded during Robbery investigation.
+EVT-0098,CASE-044,P-0214,Money Transfer,2023-06-19 09:00:00,Vijayawada,Witness Statement recorded during Assault investigation.
+EVT-0099,CASE-002,P-0563,Witness Statement,2023-07-20 16:00:00,Dehri,Vehicle Sighted recorded during Smuggling investigation.
+EVT-0100,CASE-002,P-0343,Location Ping,2023-08-06 02:00:00,Nadiad,Suspect Movement recorded during Smuggling investigation.
+EVT-0101,CASE-023,P-0004,Evidence Collected,2023-02-14 10:00:00,Rajpur Sonarpur,Evidence Collected recorded during Financial Fraud investigation.
+EVT-0102,CASE-056,P-0423,Money Transfer,2025-01-13 21:00:00,Raichur,Money Transfer recorded during Vehicle Theft investigation.
+EVT-0103,CASE-078,P-0166,Vehicle Sighted,2025-07-17 05:00:00,Phagwara,Call Made recorded during Financial Fraud investigation.
+EVT-0104,CASE-045,P-0401,Vehicle Sighted,2024-04-30 16:00:00,Nanded,Evidence Collected recorded during Extortion investigation.
+EVT-0105,CASE-025,P-0201,Vehicle Sighted,2026-09-05 04:00:00,Gorakhpur,Witness Statement recorded during Financial Fraud investigation.
+EVT-0106,CASE-035,P-0272,Money Transfer,2024-01-17 22:00:00,Bongaigaon,Call Made recorded during Vehicle Theft investigation.
+EVT-0107,CASE-074,P-0537,Vehicle Sighted,2025-10-07 02:00:00,Machilipatnam,Vehicle Sighted recorded during Extortion investigation.
+EVT-0108,CASE-036,P-0161,Evidence Collected,2023-07-23 22:00:00,Agra,Call Made recorded during Robbery investigation.
+EVT-0109,CASE-035,P-0346,Suspect Movement,2024-01-06 09:00:00,Gandhinagar,Location Ping recorded during Vehicle Theft investigation.
+EVT-0110,CASE-075,P-0459,Money Transfer,2024-03-28 05:00:00,Ghaziabad,Evidence Collected recorded during Drug Trafficking investigation.
+EVT-0111,CASE-012,P-0628,Money Transfer,2025-08-01 21:00:00,Bharatpur,Evidence Collected recorded during Money Laundering investigation.
+EVT-0112,CASE-012,P-0522,Call Made,2025-07-28 20:00:00,Arrah,Witness Statement recorded during Money Laundering investigation.
+EVT-0113,CASE-021,P-0556,Call Made,2025-10-30 07:00:00,Medininagar,Location Ping recorded during Cybercrime investigation.
+EVT-0114,CASE-036,P-0352,Evidence Collected,2023-07-16 16:00:00,Jamshedpur,Suspect Movement recorded during Robbery investigation.
+EVT-0115,CASE-059,P-0047,Money Transfer,2026-12-02 19:00:00,Rajkot,Money Transfer recorded during Robbery investigation.
+EVT-0116,CASE-011,P-0126,Evidence Collected,2026-10-07 10:00:00,Mahbubnagar,Vehicle Sighted recorded during Smuggling investigation.
+EVT-0117,CASE-047,P-0467,Money Transfer,2026-01-09 20:00:00,Ghaziabad,Suspect Movement recorded during Financial Fraud investigation.
+EVT-0118,CASE-025,P-0075,Call Made,2026-09-17 12:00:00,Adoni,Location Ping recorded during Financial Fraud investigation.
+EVT-0119,CASE-018,P-0571,Evidence Collected,2026-05-10 14:00:00,Durg,Suspect Movement recorded during Kidnapping investigation.
+EVT-0120,CASE-063,P-0338,Suspect Movement,2026-04-07 20:00:00,Kanpur,Suspect Movement recorded during Cybercrime investigation.
+EVT-0121,CASE-078,P-0156,Vehicle Sighted,2025-07-15 07:00:00,Kolhapur,Location Ping recorded during Financial Fraud investigation.
+EVT-0122,CASE-004,P-0488,Evidence Collected,2024-02-13 21:00:00,Morbi,Evidence Collected recorded during Kidnapping investigation.
+EVT-0123,CASE-005,P-0140,Suspect Movement,2024-07-24 00:00:00,Durgapur,Call Made recorded during Kidnapping investigation.
+EVT-0124,CASE-013,P-0339,Call Made,2024-04-23 04:00:00,Gandhinagar,Suspect Movement recorded during Kidnapping investigation.
+EVT-0125,CASE-048,P-0224,Location Ping,2024-05-21 21:00:00,Sikar,Suspect Movement recorded during Extortion investigation.
+EVT-0126,CASE-067,P-0067,Location Ping,2025-10-30 10:00:00,Ulhasnagar,Evidence Collected recorded during Assault investigation.
+EVT-0127,CASE-007,P-0287,Suspect Movement,2024-12-15 04:00:00,Haridwar,Evidence Collected recorded during Robbery investigation.
+EVT-0128,CASE-046,P-0380,Suspect Movement,2023-06-08 23:00:00,Begusarai,Evidence Collected recorded during Smuggling investigation.
+EVT-0129,CASE-019,P-0262,Location Ping,2024-05-31 14:00:00,Hajipur,Witness Statement recorded during Cybercrime investigation.
+EVT-0130,CASE-031,P-0195,Money Transfer,2023-09-27 09:00:00,Eluru,Evidence Collected recorded during Vehicle Theft investigation.
+EVT-0131,CASE-017,P-0197,Location Ping,2025-10-02 17:00:00,Dehradun,Evidence Collected recorded during Cybercrime investigation.
+EVT-0132,CASE-022,P-0009,Money Transfer,2025-01-27 06:00:00,Raiganj,Suspect Movement recorded during Money Laundering investigation.
+EVT-0133,CASE-064,P-0129,Evidence Collected,2024-09-30 05:00:00,Kamarhati,Call Made recorded during Cybercrime investigation.
+EVT-0134,CASE-039,P-0296,Call Made,2026-11-26 17:00:00,Chandigarh,Suspect Movement recorded during Extortion investigation.
+EVT-0135,CASE-004,P-0364,Money Transfer,2024-02-02 08:00:00,Shahjahanpur,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0136,CASE-037,P-0190,Evidence Collected,2025-04-10 12:00:00,Ghaziabad,Money Transfer recorded during Vehicle Theft investigation.
+EVT-0137,CASE-064,P-0513,Call Made,2024-10-13 04:00:00,Sonipat,Location Ping recorded during Cybercrime investigation.
+EVT-0138,CASE-020,P-0283,Evidence Collected,2023-08-22 05:00:00,Kavali,Money Transfer recorded during Extortion investigation.
+EVT-0139,CASE-026,P-0459,Money Transfer,2026-01-07 14:00:00,Vijayawada,Suspect Movement recorded during Kidnapping investigation.
+EVT-0140,CASE-003,P-0270,Vehicle Sighted,2023-07-09 17:00:00,Moradabad,Money Transfer recorded during Money Laundering investigation.
+EVT-0141,CASE-063,P-0566,Evidence Collected,2026-04-06 04:00:00,Gaya,Money Transfer recorded during Cybercrime investigation.
+EVT-0142,CASE-044,P-0619,Vehicle Sighted,2023-06-18 18:00:00,Jalna,Evidence Collected recorded during Assault investigation.
+EVT-0143,CASE-072,P-0167,Suspect Movement,2024-04-25 17:00:00,Guntakal,Evidence Collected recorded during Vehicle Theft investigation.
+EVT-0144,CASE-064,P-0397,Vehicle Sighted,2024-10-05 18:00:00,Ludhiana,Vehicle Sighted recorded during Cybercrime investigation.
+EVT-0145,CASE-077,P-0445,Evidence Collected,2026-06-15 15:00:00,Bardhaman,Suspect Movement recorded during Money Laundering investigation.
+EVT-0146,CASE-074,P-0244,Call Made,2025-10-07 03:00:00,Gorakhpur,Call Made recorded during Extortion investigation.
+EVT-0147,CASE-065,P-0055,Location Ping,2023-04-05 02:00:00,Davanagere,Money Transfer recorded during Money Laundering investigation.
+EVT-0148,CASE-029,P-0113,Location Ping,2026-12-20 19:00:00,Guna,Witness Statement recorded during Vehicle Theft investigation.
+EVT-0149,CASE-028,P-0189,Suspect Movement,2026-04-12 16:00:00,Haridwar,Evidence Collected recorded during Smuggling investigation.
+EVT-0150,CASE-034,P-0295,Witness Statement,2024-05-22 12:00:00,Dewas,Vehicle Sighted recorded during Money Laundering investigation.
+EVT-0151,CASE-052,P-0342,Location Ping,2023-04-17 21:00:00,Panvel,Suspect Movement recorded during Financial Fraud investigation.
+EVT-0152,CASE-054,P-0029,Location Ping,2023-01-10 05:00:00,Bijapur,Location Ping recorded during Extortion investigation.
+EVT-0153,CASE-019,P-0321,Call Made,2024-05-27 23:00:00,Raurkela Industrial Township,Money Transfer recorded during Cybercrime investigation.
+EVT-0154,CASE-008,P-0115,Evidence Collected,2023-06-19 13:00:00,Bhalswa Jahangir Pur,Evidence Collected recorded during Smuggling investigation.
+EVT-0155,CASE-019,P-0232,Vehicle Sighted,2024-06-02 23:00:00,Shahjahanpur,Suspect Movement recorded during Cybercrime investigation.
+EVT-0156,CASE-067,P-0614,Evidence Collected,2025-11-04 15:00:00,Unnao,Suspect Movement recorded during Assault investigation.
+EVT-0157,CASE-040,P-0077,Evidence Collected,2023-05-09 09:00:00,Guntur,Witness Statement recorded during Robbery investigation.
+EVT-0158,CASE-037,P-0447,Vehicle Sighted,2025-04-11 05:00:00,Nanded,Suspect Movement recorded during Vehicle Theft investigation.
+EVT-0159,CASE-036,P-0328,Money Transfer,2023-07-28 20:00:00,Thoothukudi,Location Ping recorded during Robbery investigation.
+EVT-0160,CASE-006,P-0360,Vehicle Sighted,2024-03-17 15:00:00,Phusro,Witness Statement recorded during Cybercrime investigation.
+EVT-0161,CASE-038,P-0525,Location Ping,2025-02-07 10:00:00,Gaya,Vehicle Sighted recorded during Financial Fraud investigation.
+EVT-0162,CASE-035,P-0350,Suspect Movement,2024-01-20 03:00:00,Mau,Call Made recorded during Vehicle Theft investigation.
+EVT-0163,CASE-023,P-0611,Vehicle Sighted,2023-02-03 05:00:00,Sagar,Call Made recorded during Financial Fraud investigation.
+EVT-0164,CASE-070,P-0576,Witness Statement,2026-05-28 21:00:00,Parbhani,Location Ping recorded during Drug Trafficking investigation.
+EVT-0165,CASE-049,P-0077,Location Ping,2026-09-07 02:00:00,Bhilai,Suspect Movement recorded during Money Laundering investigation.
+EVT-0166,CASE-041,P-0535,Witness Statement,2026-04-12 00:00:00,Bangalore,Call Made recorded during Money Laundering investigation.
+EVT-0167,CASE-040,P-0537,Location Ping,2023-05-09 01:00:00,Dewas,Location Ping recorded during Robbery investigation.
+EVT-0168,CASE-078,P-0381,Location Ping,2025-07-18 03:00:00,Kochi,Vehicle Sighted recorded during Financial Fraud investigation.
+EVT-0169,CASE-071,P-0310,Suspect Movement,2025-11-02 01:00:00,Bhalswa Jahangir Pur,Witness Statement recorded during Cybercrime investigation.
+EVT-0170,CASE-055,P-0538,Suspect Movement,2026-04-15 01:00:00,Hajipur,Call Made recorded during Kidnapping investigation.
+EVT-0171,CASE-020,P-0527,Money Transfer,2023-08-19 15:00:00,Parbhani,Money Transfer recorded during Extortion investigation.
+EVT-0172,CASE-033,P-0617,Evidence Collected,2023-04-29 00:00:00,Dhule,Money Transfer recorded during Robbery investigation.
+EVT-0173,CASE-040,P-0276,Witness Statement,2023-04-24 15:00:00,Sri Ganganagar,Location Ping recorded during Robbery investigation.
+EVT-0174,CASE-065,P-0329,Money Transfer,2023-03-31 14:00:00,Udupi,Money Transfer recorded during Money Laundering investigation.
+EVT-0175,CASE-065,P-0346,Call Made,2023-03-24 11:00:00,Yamunanagar,Vehicle Sighted recorded during Money Laundering investigation.
+EVT-0176,CASE-052,P-0306,Witness Statement,2023-04-10 20:00:00,Chinsurah,Witness Statement recorded during Financial Fraud investigation.
+EVT-0177,CASE-030,P-0607,Witness Statement,2023-05-31 04:00:00,Thrissur,Vehicle Sighted recorded during Financial Fraud investigation.
+EVT-0178,CASE-018,P-0212,Call Made,2026-04-27 08:00:00,Tezpur,Call Made recorded during Kidnapping investigation.
+EVT-0179,CASE-052,P-0143,Evidence Collected,2023-04-06 09:00:00,New Delhi,Location Ping recorded during Financial Fraud investigation.
+EVT-0180,CASE-030,P-0640,Witness Statement,2023-05-31 11:00:00,Patna,Suspect Movement recorded during Financial Fraud investigation.
+EVT-0181,CASE-062,P-0519,Vehicle Sighted,2025-03-24 18:00:00,Sri Ganganagar,Location Ping recorded during Robbery investigation.
+EVT-0182,CASE-067,P-0350,Location Ping,2025-11-05 16:00:00,Thiruvananthapuram,Location Ping recorded during Assault investigation.
+EVT-0183,CASE-004,P-0330,Location Ping,2024-02-13 00:00:00,South Dumdum,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0184,CASE-077,P-0370,Suspect Movement,2026-06-16 15:00:00,Silchar,Money Transfer recorded during Money Laundering investigation.
+EVT-0185,CASE-080,P-0085,Witness Statement,2024-10-11 18:00:00,Malda,Witness Statement recorded during Extortion investigation.
+EVT-0186,CASE-014,P-0042,Vehicle Sighted,2026-03-16 08:00:00,Bellary,Vehicle Sighted recorded during Drug Trafficking investigation.
+EVT-0187,CASE-065,P-0367,Money Transfer,2023-03-30 13:00:00,Akola,Witness Statement recorded during Money Laundering investigation.
+EVT-0188,CASE-011,P-0200,Vehicle Sighted,2026-10-11 18:00:00,Sangli-Miraj & Kupwad,Witness Statement recorded during Smuggling investigation.
+EVT-0189,CASE-007,P-0203,Call Made,2024-12-06 17:00:00,Mirzapur,Location Ping recorded during Robbery investigation.
+EVT-0190,CASE-050,P-0002,Vehicle Sighted,2024-07-02 04:00:00,Patna,Vehicle Sighted recorded during Money Laundering investigation.
+EVT-0191,CASE-018,P-0145,Evidence Collected,2026-05-08 00:00:00,Korba,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0192,CASE-036,P-0124,Call Made,2023-07-14 22:00:00,Bhiwandi,Location Ping recorded during Robbery investigation.
+EVT-0193,CASE-030,P-0630,Location Ping,2023-06-01 09:00:00,Raiganj,Money Transfer recorded during Financial Fraud investigation.
+EVT-0194,CASE-058,P-0422,Witness Statement,2023-02-18 07:00:00,Bhilai,Evidence Collected recorded during Kidnapping investigation.
+EVT-0195,CASE-040,P-0035,Location Ping,2023-05-07 11:00:00,Patiala,Call Made recorded during Robbery investigation.
+EVT-0196,CASE-009,P-0310,Money Transfer,2023-04-01 22:00:00,Bharatpur,Evidence Collected recorded during Cybercrime investigation.
+EVT-0197,CASE-023,P-0325,Suspect Movement,2023-02-06 10:00:00,Bulandshahr,Call Made recorded during Financial Fraud investigation.
+EVT-0198,CASE-036,P-0026,Vehicle Sighted,2023-07-19 22:00:00,Durg,Location Ping recorded during Robbery investigation.
+EVT-0199,CASE-015,P-0442,Money Transfer,2024-06-17 21:00:00,Amravati,Call Made recorded during Money Laundering investigation.
+EVT-0200,CASE-066,P-0157,Call Made,2025-06-12 01:00:00,Chandigarh,Call Made recorded during Smuggling investigation.
+EVT-0201,CASE-014,P-0091,Money Transfer,2026-02-26 08:00:00,Haldia,Vehicle Sighted recorded during Drug Trafficking investigation.
+EVT-0202,CASE-066,P-0046,Vehicle Sighted,2025-06-08 13:00:00,Bijapur,Witness Statement recorded during Smuggling investigation.
+EVT-0203,CASE-051,P-0166,Vehicle Sighted,2026-05-13 04:00:00,Begusarai,Call Made recorded during Vehicle Theft investigation.
+EVT-0204,CASE-080,P-0032,Call Made,2024-10-11 21:00:00,Motihari,Call Made recorded during Extortion investigation.
+EVT-0205,CASE-079,P-0333,Vehicle Sighted,2024-07-23 16:00:00,Coimbatore,Money Transfer recorded during Financial Fraud investigation.
+EVT-0206,CASE-051,P-0144,Witness Statement,2026-05-15 15:00:00,Coimbatore,Evidence Collected recorded during Vehicle Theft investigation.
+EVT-0207,CASE-018,P-0131,Suspect Movement,2026-05-11 01:00:00,North Dumdum,Location Ping recorded during Kidnapping investigation.
+EVT-0208,CASE-016,P-0578,Money Transfer,2025-05-21 11:00:00,Karnal,Evidence Collected recorded during Assault investigation.
+EVT-0209,CASE-057,P-0416,Call Made,2026-02-28 15:00:00,Pimpri-Chinchwad,Vehicle Sighted recorded during Vehicle Theft investigation.
+EVT-0210,CASE-006,P-0113,Witness Statement,2024-03-11 14:00:00,Alwar,Evidence Collected recorded during Cybercrime investigation.
+EVT-0211,CASE-028,P-0012,Call Made,2026-04-09 03:00:00,Bathinda,Witness Statement recorded during Smuggling investigation.
+EVT-0212,CASE-035,P-0151,Vehicle Sighted,2024-01-19 11:00:00,Kozhikode,Vehicle Sighted recorded during Vehicle Theft investigation.
+EVT-0213,CASE-005,P-0217,Vehicle Sighted,2024-07-13 23:00:00,Kakinada,Suspect Movement recorded during Kidnapping investigation.
+EVT-0214,CASE-015,P-0631,Money Transfer,2024-07-03 16:00:00,Parbhani,Vehicle Sighted recorded during Money Laundering investigation.
+EVT-0215,CASE-041,P-0291,Witness Statement,2026-04-16 12:00:00,Panihati,Vehicle Sighted recorded during Money Laundering investigation.
+EVT-0216,CASE-057,P-0606,Location Ping,2026-02-26 21:00:00,Chinsurah,Witness Statement recorded during Vehicle Theft investigation.
+EVT-0217,CASE-020,P-0594,Suspect Movement,2023-08-19 22:00:00,Jamnagar,Call Made recorded during Extortion investigation.
+EVT-0218,CASE-011,P-0082,Location Ping,2026-10-06 20:00:00,Khora ,Suspect Movement recorded during Smuggling investigation.
+EVT-0219,CASE-034,P-0403,Suspect Movement,2024-05-26 12:00:00,Jamalpur,Suspect Movement recorded during Money Laundering investigation.
+EVT-0220,CASE-028,P-0441,Money Transfer,2026-04-14 13:00:00,Deoghar,Suspect Movement recorded during Smuggling investigation.
+EVT-0221,CASE-011,P-0139,Witness Statement,2026-10-10 17:00:00,Proddatur,Location Ping recorded during Smuggling investigation.
+EVT-0222,CASE-065,P-0392,Witness Statement,2023-04-11 14:00:00,Jamnagar,Suspect Movement recorded during Money Laundering investigation.
+EVT-0223,CASE-020,P-0533,Suspect Movement,2023-08-16 11:00:00,Ongole,Vehicle Sighted recorded during Extortion investigation.
+EVT-0224,CASE-065,P-0404,Location Ping,2023-04-01 02:00:00,Kota,Money Transfer recorded during Money Laundering investigation.
+EVT-0225,CASE-055,P-0451,Evidence Collected,2026-04-04 10:00:00,Korba,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0226,CASE-038,P-0338,Money Transfer,2025-02-21 09:00:00,Gandhidham,Vehicle Sighted recorded during Financial Fraud investigation.
+EVT-0227,CASE-004,P-0116,Location Ping,2024-02-13 08:00:00,Nashik,Witness Statement recorded during Kidnapping investigation.
+EVT-0228,CASE-026,P-0272,Money Transfer,2026-01-05 03:00:00,Raichur,Call Made recorded during Kidnapping investigation.
+EVT-0229,CASE-040,P-0244,Evidence Collected,2023-05-04 05:00:00,Yamunanagar,Witness Statement recorded during Robbery investigation.
+EVT-0230,CASE-005,P-0462,Call Made,2024-07-19 05:00:00,Tadepalligudem,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0231,CASE-043,P-0009,Money Transfer,2023-09-02 08:00:00,Warangal,Location Ping recorded during Smuggling investigation.
+EVT-0232,CASE-038,P-0257,Money Transfer,2025-02-07 05:00:00,Tenali,Money Transfer recorded during Financial Fraud investigation.
+EVT-0233,CASE-001,P-0607,Suspect Movement,2026-08-02 16:00:00,Buxar,Money Transfer recorded during Financial Fraud investigation.
+EVT-0234,CASE-004,P-0016,Suspect Movement,2024-02-17 19:00:00,Jalna,Vehicle Sighted recorded during Kidnapping investigation.
+EVT-0235,CASE-020,P-0447,Call Made,2023-08-19 21:00:00,Bidar,Suspect Movement recorded during Extortion investigation.
+EVT-0236,CASE-032,P-0479,Location Ping,2023-07-15 20:00:00,Aurangabad,Money Transfer recorded during Assault investigation.
+EVT-0237,CASE-040,P-0371,Money Transfer,2023-05-10 16:00:00,Tiruppur,Witness Statement recorded during Robbery investigation.
+EVT-0238,CASE-042,P-0323,Evidence Collected,2023-06-08 19:00:00,Gwalior,Witness Statement recorded during Smuggling investigation.
+EVT-0239,CASE-001,P-0098,Money Transfer,2026-07-29 22:00:00,Imphal,Call Made recorded during Financial Fraud investigation.
+EVT-0240,CASE-015,P-0173,Suspect Movement,2024-06-23 23:00:00,Hosur,Location Ping recorded during Money Laundering investigation.
+EVT-0241,CASE-078,P-0347,Vehicle Sighted,2025-07-12 16:00:00,Bijapur,Evidence Collected recorded during Financial Fraud investigation.
+EVT-0242,CASE-073,P-0647,Money Transfer,2024-05-18 10:00:00,Tirunelveli,Call Made recorded during Drug Trafficking investigation.
+EVT-0243,CASE-012,P-0565,Evidence Collected,2025-08-09 15:00:00,Cuttack,Call Made recorded during Money Laundering investigation.
+EVT-0244,CASE-002,P-0116,Evidence Collected,2023-07-24 16:00:00,Kadapa,Call Made recorded during Smuggling investigation.
+EVT-0245,CASE-041,P-0620,Call Made,2026-04-19 06:00:00,Singrauli,Evidence Collected recorded during Money Laundering investigation.
+EVT-0246,CASE-032,P-0320,Evidence Collected,2023-07-04 12:00:00,Sambalpur,Suspect Movement recorded during Assault investigation.
+EVT-0247,CASE-016,P-0023,Money Transfer,2025-05-29 15:00:00,Kulti,Suspect Movement recorded during Assault investigation.
+EVT-0248,CASE-011,P-0191,Evidence Collected,2026-10-03 18:00:00,Ahmednagar,Suspect Movement recorded during Smuggling investigation.
+EVT-0249,CASE-080,P-0526,Money Transfer,2024-10-07 14:00:00,Bhilai,Vehicle Sighted recorded during Extortion investigation.
+EVT-0250,CASE-001,P-0473,Location Ping,2026-07-26 00:00:00,Tirunelveli,Suspect Movement recorded during Financial Fraud investigation.
+EVT-PLANT-CHAIN-01,CASE-070,P-0618,Vehicle Sighted,2026-11-11 20:32:02,Burhanpur,"Vehicle V-0294 sighted with person P-0618, previously linked to P-0645 (chain CHAIN-01)."
+EVT-PLANT-CHAIN-02,CASE-017,P-0066,Vehicle Sighted,2026-09-19 06:56:42,Latur,"Vehicle V-0097 sighted with person P-0066, previously linked to P-0210 (chain CHAIN-02)."
+EVT-PLANT-CHAIN-03,CASE-064,P-0584,Vehicle Sighted,2025-09-19 03:55:38,Panchkula,"Vehicle V-0156 sighted with person P-0584, previously linked to P-0337 (chain CHAIN-03)."
+EVT-PLANT-CHAIN-04,CASE-066,P-0567,Vehicle Sighted,2025-04-09 11:12:37,Chennai,"Vehicle V-0353 sighted with person P-0567, previously linked to P-0107 (chain CHAIN-04)."
+EVT-PLANT-CHAIN-05,CASE-077,P-0192,Vehicle Sighted,2026-12-22 01:22:32,Bhiwandi,"Vehicle V-0198 sighted with person P-0192, previously linked to P-0028 (chain CHAIN-05)."
+EVT-PLANT-CHAIN-06,CASE-017,P-0299,Vehicle Sighted,2026-02-26 02:46:53,Srikakulam,"Vehicle V-0036 sighted with person P-0299, previously linked to P-0239 (chain CHAIN-06)."
+EVT-PLANT-CHAIN-07,CASE-067,P-0531,Vehicle Sighted,2026-08-01 10:52:14,Vadodara,"Vehicle V-0168 sighted with person P-0531, previously linked to P-0378 (chain CHAIN-07)."
+EVT-PLANT-CHAIN-08,CASE-009,P-0114,Vehicle Sighted,2025-01-02 02:48:14,Burhanpur,"Vehicle V-0215 sighted with person P-0114, previously linked to P-0161 (chain CHAIN-08)."
+EVT-PLANT-CHAIN-09,CASE-016,P-0212,Vehicle Sighted,2026-12-14 00:50:05,Kolkata,"Vehicle V-0106 sighted with person P-0212, previously linked to P-0399 (chain CHAIN-09)."
+EVT-PLANT-CHAIN-10,CASE-050,P-0163,Vehicle Sighted,2025-12-12 13:25:23,Tadepalligudem,"Vehicle V-0159 sighted with person P-0163, previously linked to P-0487 (chain CHAIN-10)."

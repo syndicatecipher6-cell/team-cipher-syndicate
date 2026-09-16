@@ -1,0 +1,123 @@
+pattern_type,entity_1,entity_2,relation,detail,split
+identity_resolution,P-0044,P-0635,same_individual_alias,,train
+cross_case_link,CASE-011,CASE-041,shared_phone,PH-0811,train
+cross_case_link,CASE-043,CASE-033,shared_vehicle,V-0101,train
+identity_resolution,P-0085,P-0616,same_individual_alias,,train
+identity_resolution,P-0077,P-0640,same_individual_alias,,train
+identity_resolution,P-0329,P-0623,same_individual_alias,,train
+identity_resolution,P-0528,P-0592,same_individual_alias,,train
+cross_case_link,CASE-030,CASE-027,shared_vehicle,V-0204,train
+identity_resolution,P-0205,P-0588,same_individual_alias,,train
+identity_resolution,P-0509,P-0612,same_individual_alias,,train
+hidden_multi_hop_chain,P-0180,P-0256,2-hop chain,"CHAIN-18 (via PH-0184, A-0461)",train
+identity_resolution,P-0448,P-0606,same_individual_alias,,train
+identity_resolution,P-0196,P-0598,same_individual_alias,,train
+identity_resolution,P-0485,P-0595,same_individual_alias,,train
+identity_resolution,P-0164,P-0644,same_individual_alias,,train
+cross_case_link,CASE-011,CASE-038,shared_vehicle,V-0184,train
+identity_resolution,P-0336,P-0626,same_individual_alias,,train
+hidden_multi_hop_chain,P-0421,P-0114,3-hop chain,"CHAIN-08 (via PH-0133, A-0275, V-0215)",train
+identity_resolution,P-0081,P-0618,same_individual_alias,,train
+cross_case_link,CASE-025,CASE-055,shared_phone,PH-0867,train
+identity_resolution,P-0377,P-0605,same_individual_alias,,train
+cross_case_link,CASE-039,CASE-037,shared_vehicle,V-0005,train
+identity_resolution,P-0446,P-0637,same_individual_alias,,train
+identity_resolution,P-0362,P-0636,same_individual_alias,,train
+identity_resolution,P-0036,P-0648,same_individual_alias,,train
+identity_resolution,P-0441,P-0619,same_individual_alias,,train
+identity_resolution,P-0082,P-0625,same_individual_alias,,train
+hidden_multi_hop_chain,P-0487,P-0584,3-hop chain,"CHAIN-03 (via PH-0463, A-0328, V-0156)",train
+identity_resolution,P-0301,P-0622,same_individual_alias,,train
+cross_case_link,CASE-036,CASE-025,shared_vehicle,V-0155,train
+identity_resolution,P-0314,P-0628,same_individual_alias,,train
+cross_case_link,CASE-026,CASE-043,shared_vehicle,V-0280,train
+identity_resolution,P-0059,P-0639,same_individual_alias,,train
+identity_resolution,P-0303,P-0627,same_individual_alias,,train
+identity_resolution,P-0532,P-0614,same_individual_alias,,train
+identity_resolution,P-0293,P-0599,same_individual_alias,,train
+identity_resolution,P-0147,P-0646,same_individual_alias,,train
+hidden_multi_hop_chain,P-0644,P-0299,2-hop chain,"CHAIN-22 (via PH-0683, A-0470)",train
+hidden_multi_hop_chain,P-0108,P-0334,2-hop chain,"CHAIN-25 (via PH-0420, A-0231)",train
+hidden_multi_hop_chain,P-0069,P-0506,2-hop chain,"CHAIN-23 (via PH-0422, A-0391)",train
+identity_resolution,P-0069,P-0650,same_individual_alias,,train
+cross_case_link,CASE-011,CASE-036,shared_vehicle,V-0330,train
+identity_resolution,P-0396,P-0609,same_individual_alias,,train
+cross_case_link,CASE-002,CASE-064,shared_phone,PH-0756,train
+hidden_multi_hop_chain,P-0457,P-0409,2-hop chain,"CHAIN-13 (via PH-0620, A-0414)",train
+identity_resolution,P-0171,P-0631,same_individual_alias,,train
+hidden_multi_hop_chain,P-0470,P-0207,2-hop chain,"CHAIN-12 (via PH-0008, A-0074)",train
+hidden_multi_hop_chain,P-0045,P-0162,2-hop chain,"CHAIN-21 (via PH-0281, A-0452)",train
+cross_case_link,CASE-017,CASE-040,shared_phone,PH-0592,train
+cross_case_link,CASE-047,CASE-005,shared_vehicle,V-0037,train
+cross_case_link,CASE-073,CASE-005,shared_phone,PH-0024,train
+identity_resolution,P-0282,P-0638,same_individual_alias,,train
+identity_resolution,P-0410,P-0607,same_individual_alias,,train
+identity_resolution,P-0373,P-0642,same_individual_alias,,train
+cross_case_link,CASE-071,CASE-060,shared_phone,PH-0602,train
+identity_resolution,P-0043,P-0589,same_individual_alias,,train
+identity_resolution,P-0559,P-0621,same_individual_alias,,train
+cross_case_link,CASE-002,CASE-061,shared_vehicle,V-0388,train
+cross_case_link,CASE-042,CASE-076,shared_phone,PH-0307,train
+identity_resolution,P-0324,P-0590,same_individual_alias,,train
+hidden_multi_hop_chain,P-0503,P-0474,2-hop chain,"CHAIN-15 (via PH-0590, A-0021)",train
+identity_resolution,P-0130,P-0649,same_individual_alias,,train
+identity_resolution,P-0526,P-0643,same_individual_alias,,train
+identity_resolution,P-0106,P-0624,same_individual_alias,,train
+cross_case_link,CASE-066,CASE-070,shared_vehicle,V-0257,train
+cross_case_link,CASE-054,CASE-055,shared_phone,PH-0231,train
+identity_resolution,P-0458,P-0634,same_individual_alias,,train
+identity_resolution,P-0455,P-0632,same_individual_alias,,train
+hidden_multi_hop_chain,P-0094,P-0468,2-hop chain,"CHAIN-16 (via PH-0356, A-0359)",train
+identity_resolution,P-0366,P-0600,same_individual_alias,,train
+hidden_multi_hop_chain,P-0618,P-0192,3-hop chain,"CHAIN-05 (via PH-0204, A-0036, V-0198)",train
+hidden_multi_hop_chain,P-0253,P-0337,2-hop chain,"CHAIN-14 (via PH-0933, A-0292)",train
+hidden_multi_hop_chain,P-0339,P-0618,3-hop chain,"CHAIN-01 (via PH-0936, A-0312, V-0294)",train
+identity_resolution,P-0557,P-0594,same_individual_alias,,train
+hidden_multi_hop_chain,P-0318,P-0163,3-hop chain,"CHAIN-10 (via PH-0619, A-0295, V-0159)",train
+hidden_multi_hop_chain,P-0567,P-0378,2-hop chain,"CHAIN-24 (via PH-0079, A-0387)",train
+hidden_multi_hop_chain,P-0490,P-0212,3-hop chain,"CHAIN-09 (via PH-0134, A-0446, V-0106)",train
+identity_resolution,P-0260,P-0596,same_individual_alias,,train
+identity_resolution,P-0274,P-0615,same_individual_alias,,train
+cross_case_link,CASE-052,CASE-069,shared_phone,PH-0703,train
+cross_case_link,CASE-052,CASE-075,shared_vehicle,V-0178,train
+identity_resolution,P-0451,P-0608,same_individual_alias,,train
+cross_case_link,CASE-046,CASE-044,shared_phone,PH-0830,train
+identity_resolution,P-0032,P-0645,same_individual_alias,,train
+hidden_multi_hop_chain,P-0401,P-0066,3-hop chain,"CHAIN-02 (via PH-0548, A-0198, V-0097)",train
+identity_resolution,P-0449,P-0647,same_individual_alias,,test
+hidden_multi_hop_chain,P-0096,P-0567,3-hop chain,"CHAIN-04 (via PH-0182, A-0017, V-0353)",test
+hidden_multi_hop_chain,P-0188,P-0098,2-hop chain,"CHAIN-20 (via PH-0403, A-0358)",test
+cross_case_link,CASE-060,CASE-044,shared_phone,PH-0740,test
+cross_case_link,CASE-058,CASE-072,shared_phone,PH-0450,test
+cross_case_link,CASE-018,CASE-020,shared_phone,PH-0945,test
+hidden_multi_hop_chain,P-0291,P-0299,3-hop chain,"CHAIN-06 (via PH-0676, A-0269, V-0036)",test
+cross_case_link,CASE-070,CASE-034,shared_vehicle,V-0386,test
+identity_resolution,P-0348,P-0610,same_individual_alias,,test
+identity_resolution,P-0360,P-0633,same_individual_alias,,test
+identity_resolution,P-0435,P-0617,same_individual_alias,,test
+identity_resolution,P-0038,P-0597,same_individual_alias,,test
+cross_case_link,CASE-066,CASE-020,shared_vehicle,V-0335,test
+identity_resolution,P-0128,P-0604,same_individual_alias,,test
+hidden_multi_hop_chain,P-0602,P-0515,2-hop chain,"CHAIN-11 (via PH-0734, A-0351)",test
+hidden_multi_hop_chain,P-0633,P-0469,2-hop chain,"CHAIN-19 (via PH-0394, A-0467)",test
+identity_resolution,P-0192,P-0611,same_individual_alias,,test
+identity_resolution,P-0185,P-0620,same_individual_alias,,test
+cross_case_link,CASE-034,CASE-010,shared_vehicle,V-0120,test
+identity_resolution,P-0207,P-0586,same_individual_alias,,test
+cross_case_link,CASE-048,CASE-018,shared_phone,PH-0031,test
+identity_resolution,P-0416,P-0641,same_individual_alias,,test
+cross_case_link,CASE-030,CASE-067,shared_phone,PH-0486,test
+identity_resolution,P-0408,P-0593,same_individual_alias,,test
+identity_resolution,P-0510,P-0613,same_individual_alias,,test
+hidden_multi_hop_chain,P-0305,P-0628,2-hop chain,"CHAIN-17 (via PH-0844, A-0415)",test
+identity_resolution,P-0457,P-0629,same_individual_alias,,test
+cross_case_link,CASE-013,CASE-016,shared_vehicle,V-0117,test
+cross_case_link,CASE-078,CASE-018,shared_vehicle,V-0362,test
+identity_resolution,P-0318,P-0591,same_individual_alias,,test
+hidden_multi_hop_chain,P-0466,P-0531,3-hop chain,"CHAIN-07 (via PH-0012, A-0088, V-0168)",test
+identity_resolution,P-0049,P-0601,same_individual_alias,,test
+identity_resolution,P-0340,P-0602,same_individual_alias,,test
+identity_resolution,P-0045,P-0587,same_individual_alias,,test
+cross_case_link,CASE-054,CASE-027,shared_phone,PH-0789,test
+identity_resolution,P-0437,P-0630,same_individual_alias,,test
+identity_resolution,P-0280,P-0603,same_individual_alias,,test

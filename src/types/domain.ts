@@ -134,3 +134,17 @@ export interface CrossCaseResponse {
   graph: GraphData;
   connections: CrossCaseConnection[];
 }
+
+export interface PipelineJob {
+  id: string;
+  fileName: string;
+  fileType: 'csv' | 'json' | 'pdf' | 'text' | 'api';
+  status: 'processing' | 'completed' | 'failed';
+  progress: number;
+  nodesCreated?: number;
+  edgesCreated?: number;
+  errorMessage?: string;
+  timestamp: string;
+  fileSize?: string;
+  stageMessage?: string;
+}

@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Banknote, Bell, BookOpenCheck, BriefcaseBusiness, Building2, CalendarClock, ChevronDown, CircleUserRound, FileSearch, Fingerprint, Gauge, GitCompareArrows, Landmark, Link2, LocateFixed, Menu, Network, PanelLeftClose, Search, Settings, ShieldCheck, Sparkles, Upload, Users, X } from 'lucide-react';
-import { investigationService } from '../services';
+import {
+  BarChart3,
+  Inbox,
+  Users,
+  Network,
+  Bot,
+  Settings,
+  Search,
+  Bell,
+  Plus,
+  RotateCcw,
+  X,
+  Menu,
+} from 'lucide-react';
+import { useInvestigation } from '../context/InvestigationContext';
 import type { SearchResult } from '../types/domain';
 import { EntityBadge, EmptyState } from '../components/ui';
-
-const investigations = [
-  ['FIR Analysis', '/fir-analysis', FileSearch], ['Entity Search', '/search', Search], ['Knowledge Graph', '/graph', Network], ['Hidden Connections', '/hidden-connections', Link2], ['Cross-Case Finder', '/cross-case', GitCompareArrows], ['Timeline', '/timeline', CalendarClock], ['Evidence Explorer', '/evidence', BookOpenCheck], ['Retrieval', '/retrieval', Fingerprint], ['Priority Links', '/priority-links', Gauge], ['Investigator Assistant', '/assistant', Sparkles],
-] as const;
-const sources = [['FIRs', '/cases', BriefcaseBusiness], ['Persons', '/search?type=person', Users], ['Phones / CDRs', '/search?type=phone', CircleUserRound], ['Vehicles', '/search?type=vehicle', LocateFixed], ['Bank Accounts', '/search?type=account', Landmark], ['Transactions', '/search?type=transaction', Banknote], ['Locations', '/search?type=location', Building2], ['Evidence', '/evidence', ShieldCheck]] as const;
 
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,34 +24,228 @@ export function AppShell() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const navigate = useNavigate();
+  const { dataset, isDataLoaded, clearAllData, searchEntities } = useInvestigation();
 
   useEffect(() => {
-    const handler = (event: KeyboardEvent) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setSearchOpen(true); } if (event.key === 'Escape') setSearchOpen(false); };
-    window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
+    const handler = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+      if (event.key === 'Escape') setSearchOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
-  useEffect(() => { if (searchOpen) void investigationService.searchEntities(query).then(setResults); }, [query, searchOpen]);
-  const goToResult = (result: SearchResult) => { setSearchOpen(false); setQuery(''); navigate(result.type === 'person' ? `/persons/${result.id}` : result.type === 'case' ? `/cases/${result.id}` : `/search?q=${encodeURIComponent(result.id)}`); };
 
-  return <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
-    <aside className="sidebar">
-      <div className="brand"><div className="brand-mark"><Network size={23} /></div><div><strong>NEXUSNET</strong><span>INTELLIGENCE</span></div><button className="mobile-only" aria-label="Close navigation" onClick={() => setSidebarOpen(false)}><X size={19} /></button></div>
-      <p className="brand-subtitle">Investigative analysis platform</p>
-      <nav aria-label="Primary navigation">
-        <NavItem to="/dashboard" icon={Gauge} label="Dashboard" onClick={() => setSidebarOpen(false)} />
-        <NavGroup label="Investigations" items={investigations} onNavigate={() => setSidebarOpen(false)} />
-        <NavGroup label="Data sources" items={sources} onNavigate={() => setSidebarOpen(false)} />
-        <span className="nav-label">Settings</span><NavItem to="/settings" icon={Settings} label="Settings" onClick={() => setSidebarOpen(false)} />
-      </nav>
-      <div className="sidebar-footer"><span className="status-dot" />Mock data mode<strong>Backend not connected</strong></div>
-    </aside>
-    <div className="app-area">
-      <header className="top-header"><button className="menu-button" aria-label="Open navigation" onClick={() => setSidebarOpen(true)}><Menu /></button><button className="global-search-trigger" onClick={() => setSearchOpen(true)}><Search size={17} /><span>Search name, phone, vehicle, case ID, location, transaction...</span><kbd>Ctrl K</kbd></button><div className="header-actions"><button aria-label="Upload FIR" title="Upload FIR" onClick={() => navigate('/fir-analysis')}><Upload size={18} /></button><button aria-label="Notifications" title="Notifications"><Bell size={18} /><i /></button><button className="profile-button"><span>INV</span><div><strong>Investigator</strong><small>Analysis workspace</small></div><ChevronDown size={14} /></button></div></header>
-      <main><Outlet /></main>
+  useEffect(() => {
+    if (searchOpen && query.trim()) {
+      void searchEntities(query).then(setResults);
+    } else if (searchOpen) {
+      setResults(dataset.searchResults.slice(0, 8));
+    }
+  }, [query, searchOpen, searchEntities, dataset.searchResults]);
+
+  const goToResult = (result: SearchResult) => {
+    setSearchOpen(false);
+    setQuery('');
+    if (result.type === 'person') navigate(`/persons/${result.id}`);
+    else if (result.type === 'case') navigate(`/cases/${result.id}`);
+    else navigate(`/graph?entityId=${encodeURIComponent(result.id)}`);
+  };
+
+  const alertCount = dataset.stats.alerts;
+
+  return (
+    <div className={`nexus-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      {/* Left Sidebar (Exact match to Screenshots) */}
+      <aside className="nexus-sidebar">
+        {/* Brand */}
+        <div className="nexus-brand">
+          <div className="nexus-logo-box">
+            <span className="logo-letter">N</span>
+          </div>
+          <span className="nexus-brand-text">NexusNet</span>
+          <button className="mobile-only close-sidebar-btn" onClick={() => setSidebarOpen(false)}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Navigation Items */}
+        <nav className="nexus-nav" aria-label="Main navigation">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <BarChart3 size={19} className="nav-icon" />
+            <span>Dashboard</span>
+          </NavLink>
+
+          <NavLink
+            to="/ingestion"
+            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Inbox size={19} className="nav-icon" />
+            <span>Data Ingestion</span>
+          </NavLink>
+
+          <NavLink
+            to="/entities"
+            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Users size={19} className="nav-icon" />
+            <span>Entities & Identities</span>
+          </NavLink>
+
+          <NavLink
+            to="/graph"
+            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Network size={19} className="nav-icon" />
+            <span>Network Graph</span>
+          </NavLink>
+
+          <NavLink
+            to="/assistant"
+            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Bot size={19} className="nav-icon" />
+            <span>Investigation AI</span>
+          </NavLink>
+
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Settings size={19} className="nav-icon" />
+            <span>Settings</span>
+          </NavLink>
+        </nav>
+
+        {/* Sidebar Footer User Card */}
+        <div className="nexus-user-footer">
+          <div className="user-avatar-circle">
+            <span>IN</span>
+          </div>
+          <div className="user-text-meta">
+            <strong>Investigator</strong>
+            <small>Admin</small>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main App Area */}
+      <div className="nexus-main-area">
+        {/* Top Header Bar */}
+        <header className="nexus-top-bar">
+          <button className="menu-toggle-btn" onClick={() => setSidebarOpen(true)}>
+            <Menu size={20} />
+          </button>
+
+          {/* Search bar */}
+          <div className="nexus-search-trigger" onClick={() => setSearchOpen(true)}>
+            <Search size={16} className="search-icon" />
+            <span>Search entities, FIRs, or locations...</span>
+            <kbd className="ctrl-k-badge">Ctrl K</kbd>
+          </div>
+
+          <div className="header-right-actions">
+            {isDataLoaded && (
+              <button
+                className="header-clear-btn"
+                onClick={clearAllData}
+                title="Wipe current data back to clean state"
+              >
+                <RotateCcw size={14} />
+                <span>Reset to Clean</span>
+              </button>
+            )}
+
+            <button
+              className="icon-action-btn notification-btn"
+              title="Alert notifications"
+              onClick={() => {
+                if (alertCount > 0) alert(`${alertCount} High Risk Alerts detected in the uploaded dataset.`);
+                else alert('No alerts. Workspace is clean.');
+              }}
+            >
+              <Bell size={18} />
+              {alertCount > 0 && <span className="notification-badge">{alertCount}</span>}
+            </button>
+
+            <button
+              className="icon-action-btn"
+              title="Settings"
+              onClick={() => navigate('/settings')}
+            >
+              <Settings size={18} />
+            </button>
+
+            <button
+              className="new-investigation-btn"
+              onClick={() => navigate('/ingestion')}
+            >
+              <Plus size={16} />
+              <span>New Investigation</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="nexus-content-body">
+          <Outlet />
+        </main>
+      </div>
+
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+
+      {/* Global Search Modal */}
+      {searchOpen && (
+        <div className="search-modal-overlay" onMouseDown={() => setSearchOpen(false)}>
+          <div className="search-dialog" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="search-dialog-input-row">
+              <Search size={18} />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={isDataLoaded ? "Search across uploaded cases, suspects, phones, accounts..." : "No data uploaded yet. Type query or upload files."}
+              />
+              <kbd>Esc</kbd>
+            </div>
+            <div className="search-dialog-results">
+              {results.length > 0 ? (
+                results.slice(0, 8).map((result) => (
+                  <button key={result.id} className="search-result-row" onClick={() => goToResult(result)}>
+                    <EntityBadge type={result.type} />
+                    <div className="result-text">
+                      <strong>{result.label}</strong>
+                      <small>{result.secondary}</small>
+                    </div>
+                    {result.relatedCases.length > 0 && (
+                      <span className="result-case-chip">{result.relatedCases.slice(0, 2).join(', ')}</span>
+                    )}
+                  </button>
+                ))
+              ) : (
+                <EmptyState
+                  title={isDataLoaded ? "No matching records" : "No records loaded"}
+                  message={isDataLoaded ? "Try searching by person name, phone number, vehicle plate, or case ID." : "Upload datasets in Data Ingestion to search entities."}
+                />
+              )}
+            </div>
+            <footer className="search-dialog-footer">
+              <span>{isDataLoaded ? `${dataset.searchResults.length} entities indexed in local knowledge graph` : 'Zero data loaded · Clean workspace'}</span>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
-    {sidebarOpen && <button className="backdrop" aria-label="Close navigation" onClick={() => setSidebarOpen(false)} />}
-    {searchOpen && <div className="modal-backdrop" onMouseDown={() => setSearchOpen(false)}><div className="search-modal" role="dialog" aria-modal="true" aria-label="Global search" onMouseDown={(e) => e.stopPropagation()}><div className="search-modal-input"><Search size={20} /><input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search all investigation records..."/><kbd>Esc</kbd></div><div className="search-modal-results">{results.length ? results.slice(0, 8).map((result) => <button key={result.id} onClick={() => goToResult(result)}><EntityBadge type={result.type} /><div><strong>{result.label}</strong><span>{result.secondary}</span></div><small>{result.relatedCases.slice(0, 2).join(', ')}</small></button>) : <EmptyState title="No matching records" />}</div><footer>Demo search uses coherent synthetic investigation records.</footer></div></div>}
-  </div>;
+  );
 }
-
-function NavItem({ to, icon: Icon, label, onClick }: { to: string; icon: typeof PanelLeftClose; label: string; onClick: () => void }) { return <NavLink to={to} onClick={onClick}><Icon size={17} /><span>{label}</span></NavLink>; }
-function NavGroup({ label, items, onNavigate }: { label: string; items: ReadonlyArray<readonly [string, string, typeof PanelLeftClose]>; onNavigate: () => void }) { return <><span className="nav-label">{label}</span>{items.map(([name, path, Icon]) => <NavItem key={`${name}-${path}`} to={path} icon={Icon} label={name} onClick={onNavigate} />)}</>; }
