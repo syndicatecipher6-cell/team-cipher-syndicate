@@ -12,7 +12,7 @@ import {
   setActiveDataset,
   clearActiveDataset,
 } from '../data/mockData';
-import { insertSupabaseJob } from '../services/supabaseService';
+import { insertSupabaseJob, deleteAllSupabaseJobs } from '../services/supabaseService';
 
 interface InvestigationContextType {
   isDataLoaded: boolean;
@@ -114,6 +114,8 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       // ignore
     }
+    // Delete from Supabase backend too
+    void deleteAllSupabaseJobs();
   }, []);
 
   const uploadFiles = useCallback(async (files: FileList | File[]) => {

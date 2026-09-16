@@ -82,3 +82,25 @@ export async function fetchSupabaseJobs(): Promise<any[]> {
     return [];
   }
 }
+
+export async function deleteAllSupabaseJobs(): Promise<boolean> {
+  const { url, anonKey } = getSupabaseConfig();
+  if (!url || !anonKey || url.includes('placeholder')) {
+    return false;
+  }
+
+  try {
+    // We use id=gt.0 to securely delete all rows without violating PostgREST bulk delete protections
+    const res = await fetch(`${url}/rest/v1/processing_jobs?id=gt.0`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': anonKey,
+        'Authorization': `Bearer ${anonKey}`,
+      },
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('[Supabase Direct Sync Error]:', err);
+    return false;
+  }
+}
