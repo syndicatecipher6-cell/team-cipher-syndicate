@@ -12,8 +12,18 @@ class Settings(BaseModel):
     NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "password")
     
     # Supabase Settings
-    SUPABASE_URL: str = os.getenv("NEXT_PUBLIC_SUPABASE_URL", "https://placeholder.supabase.co")
-    SUPABASE_KEY: str = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "placeholder")
+    SUPABASE_URL: str = (
+        os.getenv("SUPABASE_URL") or
+        os.getenv("NEXT_PUBLIC_SUPABASE_URL") or
+        "https://placeholder.supabase.co"
+    )
+    SUPABASE_KEY: str = (
+        os.getenv("SUPABASE_ANON_KEY") or
+        os.getenv("SUPABASE_PUBLISHABLE_KEY") or
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY") or
+        os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY") or
+        "placeholder"
+    )
     
     # Model & Retrieval Settings
     EMBEDDING_MODEL: str = "BAAI/bge-m3"

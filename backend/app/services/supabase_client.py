@@ -1,9 +1,10 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+from datetime import datetime
 from app.config import settings
 
 class SupabaseService:
     """
-    Supabase client for application data and investigator auth persistence.
+    Supabase client for application data and investigator persistence.
     """
     def __init__(self):
         self.client = None
@@ -17,13 +18,45 @@ class SupabaseService:
     def is_connected(self) -> bool:
         return self.client is not None
 
-    def sync_case(self, case_data: Dict[str, Any]) -> bool:
+    def save_processing_job(self, filename: str, file_type: str, nodes: int, edges: int, status: str = "completed") -> bool:
+        """Saves uploaded file report and pipeline status into Supabase processing_jobs table."""
+        if not self.client:
+            return False
+        try:
+            row = {
+                "filename": filename,
+                "type": file_type.upper(),
+                "status": status,
+                "progress": 100,
+                "details": f"{nodes} Nodes, {edges} Edges created",
+                "created_at": datetime.utcnow().isoformat()
+            }
+            self.client.table("processing_jobs").insert(row).execute()
+            return True
+        except Exception as e:
+            print(f"[Supabase] Error saving processing job: {e}")
+            return False
+
+    def save_extracted_entities(self, entities: List[Dict[str, Any]]) -> bool:
+        """Saves extracted suspects, phones, or vehicles into Supabase extracted_entities table."""
+        if not self.client or not entities:
+            return False
+        try:
+            self.client.table("extracted_entities").insert(entities).execute()
+            return True
+        except Exception as e:
+            print(f"[Supabase] Error saving extracted entities: {e}")
+            return False
+
+    def save_case(self, case_data: Dict[str, Any]) -> bool:
+        """Saves a registered case into Supabase cases table."""
         if not self.client:
             return False
         try:
             self.client.table("cases").upsert(case_data).execute()
             return True
-        except Exception:
+        except Exception as e:
+            print(f"[Supabase] Error saving case: {e}")
             return False
 
 supabase_service = SupabaseService()

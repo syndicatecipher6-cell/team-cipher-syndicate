@@ -12,6 +12,7 @@ import {
   setActiveDataset,
   clearActiveDataset,
 } from '../data/mockData';
+import { insertSupabaseJob } from '../services/supabaseService';
 
 interface InvestigationContextType {
   isDataLoaded: boolean;
@@ -177,6 +178,9 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
           } catch {
             // ignore
           }
+
+          // Direct browser-to-Supabase cloud sync
+          void insertSupabaseJob(file.name, ext, nodesCreated, edgesCreated);
 
           return result.updated;
         });
