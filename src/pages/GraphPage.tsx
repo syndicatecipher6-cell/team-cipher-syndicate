@@ -1,11 +1,31 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import styles from './GraphPage.module.css';
+import { useInvestigation } from '../context/InvestigationContext';
 
 export function GraphPage() {
+  const { dataset } = useInvestigation();
   const [selectedNode, setSelectedNode] = useState<any>(null);
-  const [graphData, setGraphData] = useState<{ nodes: any[], links: any[] }>({ nodes: [], links: [] });
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const graphData = useMemo(() => {
+    return {
+      nodes: dataset.graphData.nodes.map(n => ({
+        id: n.id,
+        name: n.label || n.id,
+        type: n.type,
+        risk: (n.metadata?.risk as string) || 'medium',
+        val: 10
+      })),
+      links: dataset.graphData.edges.map(e => ({
+        source: e.source,
+        target: e.target,
+        type: e.relationship,
+        weight: 1
+      }))
+    };
+  }, [dataset.graphData]);
+
+  const [isLoading] = useState(false);
   const fgRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -32,27 +52,15 @@ export function GraphPage() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/graph.json')
-      .then(res => res.json())
-      .then(data => {
-        if (data.nodes && data.links) {
-          setGraphData(data);
-          
-          // Apply custom forces after data is loaded
-          setTimeout(() => {
-            if (fgRef.current) {
-              fgRef.current.d3Force('charge').strength(-400); // Stronger repulsion
-              fgRef.current.d3Force('link').distance(60); // Longer links
-            }
-          }, 100);
+    if (graphData.nodes.length > 0) {
+      setTimeout(() => {
+        if (fgRef.current) {
+          fgRef.current.d3Force('charge').strength(-400); // Stronger repulsion
+          fgRef.current.d3Force('link').distance(60); // Longer links
         }
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch graph data", err);
-        setIsLoading(false);
-      });
-  }, []);
+      }, 100);
+    }
+  }, [graphData]);
 
   const handleNodeClick = useCallback((node: any) => {
     setSelectedNode(node);
