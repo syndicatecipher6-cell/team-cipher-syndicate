@@ -63,7 +63,7 @@ export function AppShell() {
     <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark"><Network size={23} /></div>
+          <div className="brand-mark"><img className="brand-logo-image" src="/nexusnet-logo.png" alt="NexusNet" /></div>
           <div><strong>NEXUSNET</strong><span>INTELLIGENCE</span></div>
           <button className="mobile-only" aria-label="Close navigation" onClick={closeSidebar}>
             <X size={19} />
