@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
-  Inbox,
-  Users,
-  Network,
-  Bot,
-  Settings,
-  Search,
   Bell,
-  Plus,
-  RotateCcw,
-  X,
+  Bot,
+  ChevronDown,
+  Inbox,
   Menu,
+  Network,
+  PanelLeftClose,
+  RotateCcw,
+  Search,
+  Settings,
+  Upload,
+  Users,
+  X,
 } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
 import type { SearchResult } from '../types/domain';
@@ -54,198 +56,114 @@ export function AppShell() {
     else navigate(`/graph?entityId=${encodeURIComponent(result.id)}`);
   };
 
+  const closeSidebar = () => setSidebarOpen(false);
   const alertCount = dataset.stats.alerts;
 
   return (
-    <div className={`nexus-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
-      {/* Left Sidebar (Exact match to Screenshots) */}
-      <aside className="nexus-sidebar">
-        {/* Brand */}
-        <div className="nexus-brand">
-          <div className="nexus-logo-box">
-            <span className="logo-letter">N</span>
-          </div>
-          <span className="nexus-brand-text">NexusNet</span>
-          <button className="mobile-only close-sidebar-btn" onClick={() => setSidebarOpen(false)}>
-            <X size={18} />
+    <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark"><Network size={23} /></div>
+          <div><strong>NEXUSNET</strong><span>INTELLIGENCE</span></div>
+          <button className="mobile-only" aria-label="Close navigation" onClick={closeSidebar}>
+            <X size={19} />
           </button>
         </div>
+        <p className="brand-subtitle">Investigative analysis platform</p>
 
-        {/* Navigation Items */}
-        <nav className="nexus-nav" aria-label="Main navigation">
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            <BarChart3 size={19} className="nav-icon" />
-            <span>Dashboard</span>
-          </NavLink>
-
-          <NavLink
-            to="/ingestion"
-            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            <Inbox size={19} className="nav-icon" />
-            <span>Data Ingestion</span>
-          </NavLink>
-
-          <NavLink
-            to="/entities"
-            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            <Users size={19} className="nav-icon" />
-            <span>Entities & Identities</span>
-          </NavLink>
-
-          <NavLink
-            to="/graph"
-            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            <Network size={19} className="nav-icon" />
-            <span>Network Graph</span>
-          </NavLink>
-
-          <NavLink
-            to="/assistant"
-            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            <Bot size={19} className="nav-icon" />
-            <span>Investigation AI</span>
-          </NavLink>
-
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => `nexus-nav-item ${isActive ? 'active' : ''}`}
-            onClick={() => setSidebarOpen(false)}
-          >
-            <Settings size={19} className="nav-icon" />
-            <span>Settings</span>
-          </NavLink>
+        <nav aria-label="Primary navigation">
+          <NavItem to="/dashboard" icon={BarChart3} label="Dashboard" onClick={closeSidebar} />
+          <NavItem to="/ingestion" icon={Inbox} label="Data Ingestion" onClick={closeSidebar} />
+          <NavItem to="/entities" icon={Users} label="Entities & Identities" onClick={closeSidebar} />
+          <NavItem to="/graph" icon={Network} label="Network Graph" onClick={closeSidebar} />
+          <NavItem to="/assistant" icon={Bot} label="Investigation AI" onClick={closeSidebar} />
+          <NavItem to="/settings" icon={Settings} label="Settings" onClick={closeSidebar} />
         </nav>
 
-        {/* Sidebar Footer User Card */}
-        <div className="nexus-user-footer">
-          <div className="user-avatar-circle">
-            <span>IN</span>
-          </div>
-          <div className="user-text-meta">
-            <strong>Investigator</strong>
-            <small>Admin</small>
-          </div>
+        <div className="sidebar-footer">
+          <span className="status-dot" />
+          {isDataLoaded ? 'Investigation data loaded' : 'Workspace ready'}
+          <strong>{isDataLoaded ? `${dataset.cases.length} case files indexed` : 'Awaiting uploaded records'}</strong>
         </div>
       </aside>
 
-      {/* Main App Area */}
-      <div className="nexus-main-area">
-        {/* Top Header Bar */}
-        <header className="nexus-top-bar">
-          <button className="menu-toggle-btn" onClick={() => setSidebarOpen(true)}>
+      <div className="app-area">
+        <header className="top-header">
+          <button className="menu-button" aria-label="Open navigation" onClick={() => setSidebarOpen(true)}>
             <Menu size={20} />
           </button>
+          <button className="global-search-trigger" onClick={() => setSearchOpen(true)}>
+            <Search size={17} />
+            <span>Search entities, FIRs, cases, or locations...</span>
+            <kbd>Ctrl K</kbd>
+          </button>
 
-          {/* Search bar */}
-          <div className="nexus-search-trigger" onClick={() => setSearchOpen(true)}>
-            <Search size={16} className="search-icon" />
-            <span>Search entities, FIRs, or locations...</span>
-            <kbd className="ctrl-k-badge">Ctrl K</kbd>
-          </div>
-
-          <div className="header-right-actions">
+          <div className="header-actions">
             {isDataLoaded && (
-              <button
-                className="header-clear-btn"
-                onClick={clearAllData}
-                title="Wipe current data back to clean state"
-              >
-                <RotateCcw size={14} />
-                <span>Reset to Clean</span>
+              <button aria-label="Reset investigation data" title="Reset to clean state" onClick={clearAllData}>
+                <RotateCcw size={18} />
               </button>
             )}
-
+            <button aria-label="Upload investigation files" title="Upload investigation files" onClick={() => navigate('/ingestion')}>
+              <Upload size={18} />
+            </button>
             <button
-              className="icon-action-btn notification-btn"
-              title="Alert notifications"
-              onClick={() => {
-                if (alertCount > 0) alert(`${alertCount} High Risk Alerts detected in the uploaded dataset.`);
-                else alert('No alerts. Workspace is clean.');
-              }}
+              aria-label="Notifications"
+              title="Notifications"
+              onClick={() => alert(alertCount > 0 ? `${alertCount} high-risk alerts detected in the uploaded dataset.` : 'No alerts in the current workspace.')}
             >
               <Bell size={18} />
-              {alertCount > 0 && <span className="notification-badge">{alertCount}</span>}
+              {alertCount > 0 && <i />}
             </button>
-
-            <button
-              className="icon-action-btn"
-              title="Settings"
-              onClick={() => navigate('/settings')}
-            >
-              <Settings size={18} />
-            </button>
-
-            <button
-              className="new-investigation-btn"
-              onClick={() => navigate('/ingestion')}
-            >
-              <Plus size={16} />
-              <span>New Investigation</span>
+            <button className="profile-button" onClick={() => navigate('/settings')}>
+              <span>INV</span>
+              <div><strong>Investigator</strong><small>Analysis workspace</small></div>
+              <ChevronDown size={14} />
             </button>
           </div>
         </header>
-
-        {/* Page Content */}
-        <main className="nexus-content-body">
-          <Outlet />
-        </main>
+        <main><Outlet /></main>
       </div>
 
-      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && <button className="backdrop" aria-label="Close navigation" onClick={closeSidebar} />}
 
-      {/* Global Search Modal */}
       {searchOpen && (
-        <div className="search-modal-overlay" onMouseDown={() => setSearchOpen(false)}>
-          <div className="search-dialog" role="dialog" aria-modal="true" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="search-dialog-input-row">
-              <Search size={18} />
+        <div className="modal-backdrop" onMouseDown={() => setSearchOpen(false)}>
+          <div className="search-modal" role="dialog" aria-modal="true" aria-label="Global search" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="search-modal-input">
+              <Search size={20} />
               <input
                 autoFocus
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={isDataLoaded ? "Search across uploaded cases, suspects, phones, accounts..." : "No data uploaded yet. Type query or upload files."}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={isDataLoaded ? 'Search uploaded investigation records...' : 'No records loaded yet. Upload files to begin.'}
               />
               <kbd>Esc</kbd>
             </div>
-            <div className="search-dialog-results">
-              {results.length > 0 ? (
-                results.slice(0, 8).map((result) => (
-                  <button key={result.id} className="search-result-row" onClick={() => goToResult(result)}>
-                    <EntityBadge type={result.type} />
-                    <div className="result-text">
-                      <strong>{result.label}</strong>
-                      <small>{result.secondary}</small>
-                    </div>
-                    {result.relatedCases.length > 0 && (
-                      <span className="result-case-chip">{result.relatedCases.slice(0, 2).join(', ')}</span>
-                    )}
-                  </button>
-                ))
-              ) : (
+            <div className="search-modal-results">
+              {results.length ? results.slice(0, 8).map((result) => (
+                <button key={result.id} onClick={() => goToResult(result)}>
+                  <EntityBadge type={result.type} />
+                  <div><strong>{result.label}</strong><span>{result.secondary}</span></div>
+                  <small>{result.relatedCases.slice(0, 2).join(', ')}</small>
+                </button>
+              )) : (
                 <EmptyState
-                  title={isDataLoaded ? "No matching records" : "No records loaded"}
-                  message={isDataLoaded ? "Try searching by person name, phone number, vehicle plate, or case ID." : "Upload datasets in Data Ingestion to search entities."}
+                  title={isDataLoaded ? 'No matching records' : 'No records loaded'}
+                  message={isDataLoaded ? 'Try another name, identifier, or case ID.' : 'Upload FIR or other supported files in Data Ingestion.'}
                 />
               )}
             </div>
-            <footer className="search-dialog-footer">
-              <span>{isDataLoaded ? `${dataset.searchResults.length} entities indexed in local knowledge graph` : 'Zero data loaded · Clean workspace'}</span>
+            <footer>
+              {isDataLoaded ? `${dataset.searchResults.length} entities indexed from uploaded records` : 'Clean workspace · No synthetic records loaded'}
             </footer>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function NavItem({ to, icon: Icon, label, onClick }: { to: string; icon: typeof PanelLeftClose; label: string; onClick: () => void }) {
+  return <NavLink to={to} onClick={onClick}><Icon size={17} /><span>{label}</span></NavLink>;
 }

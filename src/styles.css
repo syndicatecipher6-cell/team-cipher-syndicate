@@ -1453,3 +1453,62 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Keep active feature screens consistent with the supplied reference UI. */
+:root {
+  --primary-blue: var(--accent);
+  --primary-blue-hover: var(--deep);
+  --primary-blue-light: var(--soft);
+  --nexus-bg: var(--bg);
+  --nexus-card-bg: var(--panel);
+  --nexus-border: var(--border);
+  --nexus-text-main: var(--text);
+  --nexus-text-muted: var(--muted);
+  --nexus-text-sub: var(--text2);
+  --status-blue: var(--accent);
+  --status-blue-bg: var(--soft);
+  --status-blue-text: var(--deep);
+}
+
+.ingestion-page-layout,
+.entities-page-wrapper,
+.dashboard-wrapper {
+  color: var(--text);
+}
+
+.dropzone-box,
+.pipeline-job-card,
+.pipeline-empty-card,
+.entities-table-container,
+.analytics-kpi-card,
+.dashboard-graph-card,
+.dashboard-subpanel,
+.clean-workspace-card {
+  border-color: var(--border);
+  box-shadow: 0 1px 2px rgba(24, 52, 74, .035);
+}
+
+.dropzone-box:hover,
+.dropzone-active {
+  background: #f2f7f7;
+}
+
+.browse-files-btn,
+.primary-action-btn {
+  background: var(--accent);
+}
+
+.browse-files-btn:hover,
+.primary-action-btn:hover {
+  background: var(--deep);
+}
+
+.entities-stat-pill,
+.filter-pill.active {
+  background: var(--soft);
+  border-color: #c4dcda;
+}
+
+.reference-clean-state {
+  background: var(--panel);
+}
