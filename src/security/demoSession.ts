@@ -26,3 +26,7 @@ export function hasValidDemoSession(): boolean {
     return false;
   }
 }
+
+export function clearDemoSession(): void {
+  sessionStorage.removeItem(SESSION_KEY);
+}

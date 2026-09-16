@@ -9,14 +9,13 @@ import {
   Briefcase,
   ArrowUpRight,
   UploadCloud,
-  Sparkles,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useInvestigation } from '../context/InvestigationContext';
 import { EntityBadge } from '../components/ui';
 
 export function EntitiesIdentitiesPage() {
-  const { dataset, isDataLoaded, loadSampleSIHData } = useInvestigation();
+  const { dataset, isDataLoaded } = useInvestigation();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const navigate = useNavigate();
@@ -59,10 +58,6 @@ export function EntitiesIdentitiesPage() {
             <button className="primary-action-btn" onClick={() => navigate('/ingestion')}>
               <UploadCloud size={16} />
               Go to Data Ingestion
-            </button>
-            <button className="secondary-action-btn" onClick={() => void loadSampleSIHData()}>
-              <Sparkles size={16} />
-              Load Sample SIH Dataset
             </button>
           </div>
         </div>

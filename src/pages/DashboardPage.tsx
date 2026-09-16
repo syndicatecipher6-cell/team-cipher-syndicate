@@ -5,7 +5,6 @@ import {
   BriefcaseBusiness,
   Download,
   Network,
-  Sparkles,
   UploadCloud,
   Users,
 } from 'lucide-react';
@@ -17,7 +16,7 @@ import { useInvestigation } from '../context/InvestigationContext';
 import type { GraphEdge, GraphNode } from '../types/domain';
 
 export function DashboardPage() {
-  const { dataset, isDataLoaded, loadSampleSIHData } = useInvestigation();
+  const { dataset, isDataLoaded } = useInvestigation();
   const [selectedCase, setSelectedCase] = useState('');
   const [node, setNode] = useState<GraphNode>();
   const [edge, setEdge] = useState<GraphEdge>();
@@ -92,7 +91,6 @@ export function DashboardPage() {
           <p>Upload FIRs or other supported records to extract entities, resolve identities, and discover cross-case relationships.</p>
           <div className="clean-actions-row">
             <button className="primary-action-btn" onClick={() => navigate('/ingestion')}><UploadCloud size={16} />Go to Data Ingestion</button>
-            <button className="secondary-action-btn" onClick={() => void loadSampleSIHData()}><Sparkles size={16} />Load Sample SIH Dataset</button>
           </div>
         </div>
       ) : (

@@ -1,22 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
-  Bell,
   Bot,
   ChevronDown,
   Inbox,
+  LogOut,
   Menu,
   Network,
   PanelLeftClose,
   RotateCcw,
   Search,
-  Settings,
   Upload,
+  User,
   Users,
   X,
 } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
+import { clearDemoSession } from '../security/demoSession';
 import type { SearchResult } from '../types/domain';
 import { EntityBadge, EmptyState } from '../components/ui';
 
@@ -57,7 +58,33 @@ export function AppShell() {
   };
 
   const closeSidebar = () => setSidebarOpen(false);
-  const alertCount = dataset.stats.alerts;
+
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setProfileMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [profileMenuOpen]);
+
+  const handleSignOut = () => {
+    setProfileMenuOpen(false);
+    clearDemoSession();
+    navigate('/login');
+  };
 
   return (
     <div className={`app-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
@@ -77,7 +104,6 @@ export function AppShell() {
           <NavItem to="/entities" icon={Users} label="Entities & Identities" onClick={closeSidebar} />
           <NavItem to="/graph" icon={Network} label="Network Graph" onClick={closeSidebar} />
           <NavItem to="/assistant" icon={Bot} label="Investigation AI" onClick={closeSidebar} />
-          <NavItem to="/settings" icon={Settings} label="Settings" onClick={closeSidebar} />
         </nav>
 
         <div className="sidebar-footer">
@@ -107,19 +133,46 @@ export function AppShell() {
             <button aria-label="Upload investigation files" title="Upload investigation files" onClick={() => navigate('/ingestion')}>
               <Upload size={18} />
             </button>
-            <button
-              aria-label="Notifications"
-              title="Notifications"
-              onClick={() => alert(alertCount > 0 ? `${alertCount} high-risk alerts detected in the uploaded dataset.` : 'No alerts in the current workspace.')}
-            >
-              <Bell size={18} />
-              {alertCount > 0 && <i />}
-            </button>
-            <button className="profile-button" onClick={() => navigate('/settings')}>
-              <span>INV</span>
-              <div><strong>Investigator</strong><small>Analysis workspace</small></div>
-              <ChevronDown size={14} />
-            </button>
+            <div className="profile-menu-container" ref={profileMenuRef}>
+              <button
+                className="profile-button"
+                aria-expanded={profileMenuOpen}
+                aria-haspopup="true"
+                onClick={() => setProfileMenuOpen((prev) => !prev)}
+              >
+                <span>INV</span>
+                <div><strong>Investigator</strong><small>Analysis workspace</small></div>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    transform: profileMenuOpen ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.15s ease',
+                  }}
+                />
+              </button>
+
+              {profileMenuOpen && (
+                <div className="profile-dropdown" role="menu">
+                  <div className="profile-dropdown-item profile-info-item">
+                    <User size={15} />
+                    <div className="profile-info-text">
+                      <span className="profile-info-sub">Profile name</span>
+                      <strong className="profile-info-title">Admin</strong>
+                    </div>
+                  </div>
+                  <div className="profile-dropdown-divider" />
+                  <button
+                    type="button"
+                    className="profile-dropdown-item profile-logout-btn"
+                    role="menuitem"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut size={15} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <main><Outlet /></main>

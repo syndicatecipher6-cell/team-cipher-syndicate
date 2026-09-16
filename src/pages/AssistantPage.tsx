@@ -16,7 +16,7 @@ import { useInvestigation } from '../context/InvestigationContext';
 import type { AssistantResponse } from '../types/domain';
 
 export function AssistantPage() {
-  const { dataset, isDataLoaded, loadSampleSIHData } = useInvestigation();
+  const { dataset, isDataLoaded } = useInvestigation();
   const [query, setQuery] = useState('');
   const [asked, setAsked] = useState('');
   const [answer, setAnswer] = useState<AssistantResponse>();
@@ -90,10 +90,6 @@ These leads represent automated link intelligence and require investigator corro
             <button className="primary-action-btn" onClick={() => navigate('/ingestion')}>
               <UploadCloud size={16} />
               Go to Data Ingestion
-            </button>
-            <button className="secondary-action-btn" onClick={() => void loadSampleSIHData()}>
-              <Sparkles size={16} />
-              Load Sample SIH Dataset
             </button>
           </div>
         </div>
