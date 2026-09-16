@@ -253,7 +253,7 @@ export function ingestFileContent(
       });
     }
     // Detect Persons
-    else if ('person_id' in first && 'name' in first) {
+    if ('person_id' in first && 'name' in first) {
       rows.forEach((r) => {
         if (!updated.persons.some((p) => p.person_id === r.person_id)) {
           const pRecord: Person = {
@@ -278,7 +278,7 @@ export function ingestFileContent(
       });
     }
     // Detect Phones
-    else if ('phone_id' in first && 'number' in first) {
+    if ('phone_id' in first && 'number' in first) {
       rows.forEach((r) => {
         updated.phones.push({
           phone_id: r.phone_id,
@@ -307,7 +307,7 @@ export function ingestFileContent(
       });
     }
     // Detect Vehicles
-    else if ('vehicle_id' in first && 'plate_number' in first) {
+    if ('vehicle_id' in first && 'plate_number' in first) {
       rows.forEach((r) => {
         updated.vehicles.push({
           vehicle_id: r.vehicle_id,
@@ -337,7 +337,7 @@ export function ingestFileContent(
       });
     }
     // Detect Person-Case Links
-    else if ('case_id' in first && 'person_id' in first) {
+    if ('case_id' in first && 'person_id' in first) {
       rows.forEach((r, idx) => {
         const p = updated.persons.find((item) => item.person_id === r.person_id);
         if (p && !p.caseIds.includes(r.case_id)) {
@@ -356,7 +356,7 @@ export function ingestFileContent(
       });
     }
     // Detect Transactions
-    else if ('txn_id' in first && 'sender_account_id' in first) {
+    if ('txn_id' in first && 'sender_account_id' in first) {
       rows.forEach((r) => {
         const amount = parseFloat(r.amount_inr || '0');
         updated.transactions.push({
@@ -394,7 +394,7 @@ export function ingestFileContent(
       });
     }
     // Detect Timeline Events
-    else if ('event_id' in first && 'event_type' in first) {
+    if ('event_id' in first && 'event_type' in first) {
       rows.forEach((r) => {
         updated.timelineEvents.push({
           event_id: r.event_id,
@@ -409,7 +409,7 @@ export function ingestFileContent(
       });
     }
     // Detect Ground Truth Links
-    else if ('pattern_type' in first && 'entity_1' in first && 'entity_2' in first) {
+    if ('pattern_type' in first && 'entity_1' in first && 'entity_2' in first) {
       rows.forEach((r, idx) => {
         addEdge({
           id: `E-GT-${idx}-${r.entity_1}-${r.entity_2}`,
