@@ -91,7 +91,7 @@ export function parseCSV(text: string): Array<Record<string, string>> {
     return fields;
   };
 
-  const headers = parseRow(lines[0]);
+  const headers = parseRow(lines[0]).map((header) => normalizeFieldName(header));
   const records: Array<Record<string, string>> = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -106,6 +106,144 @@ export function parseCSV(text: string): Array<Record<string, string>> {
   }
 
   return records;
+}
+
+function normalizeFieldName(value: string): string {
+  return value
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function normalizePersonName(value: string): string {
+  return value
+    .normalize('NFKC')
+    .trim()
+    .toLowerCase()
+    .replace(/^(mr|mrs|ms|miss|dr|shri|smt)\.?\s+/i, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function stableId(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index++) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36).toUpperCase();
+}
+
+function getFirstValue(row: Record<string, string>, fields: string[]): string {
+  for (const field of fields) {
+    const value = row[field]?.trim();
+    if (value) return value;
+  }
+  return '';
+}
+
+function parseCaseStatus(value: string): CaseRecord['status'] {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'closed') return 'Closed';
+  if (normalized === 'under review' || normalized === 'under_review') return 'Under Review';
+  return 'Active';
+}
+
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function toGraphMetadata(record: Record<string, unknown>): Record<string, string | number | string[]> {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => {
+      if (typeof value === 'number') return [key, value];
+      if (Array.isArray(value) && value.every((item) => typeof item === 'string')) return [key, value];
+      return [key, String(value ?? '')];
+    })
+  );
+}
+
+const PERSON_NAME_FIELDS = [
+  'suspect_name',
+  'suspect_names',
+  'accused_name',
+  'accused_names',
+  'person_name',
+  'individual_name',
+  'subject_name',
+  'offender_name',
+  'criminal_name',
+];
+
+function getPersonNames(row: Record<string, string>): string[] {
+  const values = PERSON_NAME_FIELDS.map((field) => row[field]).filter(Boolean);
+  if (row.person_id && row.name) values.push(row.name);
+
+  const seen = new Set<string>();
+  return values
+    .flatMap((value) => value.split(/[;|\n]+/))
+    .map((value) => value.trim())
+    .filter((value) => {
+      const normalized = normalizePersonName(value);
+      if (!normalized || seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    });
+}
+
+interface ExtractedTextPerson {
+  name: string;
+  role: Person['role'];
+  excerpt: string;
+}
+
+function roleFromText(value: string): Person['role'] {
+  const normalized = value.toLowerCase();
+  if (normalized.includes('witness')) return 'Witness';
+  if (normalized.includes('victim')) return 'Victim';
+  if (normalized.includes('person of interest')) return 'Person of Interest';
+  return 'Suspect';
+}
+
+function sentenceContaining(text: string, value: string): string {
+  return text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .find((sentence) => sentence.toLowerCase().includes(value.toLowerCase()))
+    ?.trim() || value;
+}
+
+function extractPeopleFromText(text: string): ExtractedTextPerson[] {
+  const name = String.raw`[\p{L}][\p{L}'-]*(?:\s+[\p{L}][\p{L}'-]*){1,3}`;
+  const title = String.raw`(?:(?:mr|mrs|ms|miss|dr|shri|smt)\.?\s+)?`;
+  const role = String.raw`(suspect|accused|witness|victim|person\s+of\s+interest)`;
+  const matches: Array<{ name: string; role: string }> = [];
+  const collect = (pattern: RegExp, nameGroup: number, roleGroup: number) => {
+    for (const match of text.matchAll(pattern)) {
+      if (match[nameGroup] && match[roleGroup]) {
+        matches.push({ name: match[nameGroup].trim().replace(/\s+/g, ' '), role: match[roleGroup] });
+      }
+    }
+  };
+
+  collect(new RegExp(String.raw`\b(?:identifies|identified|names|named|mentions|records)\s+${title}(${name})\s+as\s+(?:the\s+)?(?:primary\s+|main\s+)?${role}\b`, 'giu'), 1, 2);
+  collect(new RegExp(String.raw`\b${title}(${name})\s+(?:is|was)\s+(?:the\s+)?(?:primary\s+|main\s+)?${role}\b`, 'giu'), 1, 2);
+  collect(new RegExp(String.raw`\b${role}\s+(?:named\s+|identified\s+as\s+)?${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|used|uses|resides|residing|with)\b|$)`, 'giu'), 2, 1);
+  collect(new RegExp(String.raw`\b${role}\s*(?:name\s*)?(?:is|was|named)?\s*[:\-]\s*${title}(${name})(?=[,.;\n]|$)`, 'giu'), 2, 1);
+
+  const resolved = new Map<string, ExtractedTextPerson>();
+  matches.forEach((match) => {
+    const normalized = normalizePersonName(match.name);
+    if (!normalized || resolved.has(normalized)) return;
+    resolved.set(normalized, {
+      name: match.name,
+      role: roleFromText(match.role),
+      excerpt: sentenceContaining(text, match.name),
+    });
+  });
+  return [...resolved.values()];
 }
 
 /**
@@ -155,15 +293,30 @@ export function ingestFileContent(
   const updated: ParsedDataset = {
     ...current,
     cases: [...current.cases],
-    persons: [...current.persons],
+    persons: current.persons.map((person) => ({
+      ...person,
+      caseIds: [...person.caseIds],
+      phoneIds: [...person.phoneIds],
+      vehicleIds: [...person.vehicleIds],
+      accountIds: [...person.accountIds],
+      locationIds: [...person.locationIds],
+    })),
     phones: [...current.phones],
     vehicles: [...current.vehicles],
     accounts: [...current.accounts],
     transactions: [...current.transactions],
     timelineEvents: [...current.timelineEvents],
     graphData: {
-      nodes: [...current.graphData.nodes],
-      edges: [...current.graphData.edges],
+      nodes: current.graphData.nodes.map((node) => ({
+        ...node,
+        metadata: { ...node.metadata },
+        provenance: node.provenance ? { ...node.provenance } : undefined,
+      })),
+      edges: current.graphData.edges.map((edge) => ({
+        ...edge,
+        evidenceIds: [...edge.evidenceIds],
+        provenance: edge.provenance ? { ...edge.provenance } : undefined,
+      })),
     },
     evidence: [...current.evidence],
     searchResults: [...current.searchResults],
@@ -171,8 +324,8 @@ export function ingestFileContent(
     stats: { ...current.stats },
   };
 
-  let nodesBefore = updated.graphData.nodes.length;
-  let edgesBefore = updated.graphData.edges.length;
+  const nodesBefore = updated.graphData.nodes.length;
+  const edgesBefore = updated.graphData.edges.length;
 
   const nodeMap = new Map<string, GraphNode>();
   updated.graphData.nodes.forEach((n) => nodeMap.set(n.id, n));
@@ -187,32 +340,39 @@ export function ingestFileContent(
     }
   };
 
-  const addEdge = (edge: GraphEdge) => {
+  const addEdge = (edge: GraphEdge): boolean => {
     const key = `${edge.source}-${edge.target}-${edge.relationship}`;
     if (!edgeSet.has(key)) {
       edgeSet.add(key);
       updated.graphData.edges.push(edge);
+      return true;
     }
+    return false;
   };
 
   const lowerName = fileName.toLowerCase();
 
   if (lowerName.endsWith('.json')) {
     try {
-      const data = JSON.parse(content);
-      const items = Array.isArray(data) ? data : data.records ?? [data];
-      items.forEach((item: Record<string, any>, idx: number) => {
+      const data: unknown = JSON.parse(content);
+      const items = Array.isArray(data)
+        ? data
+        : isJsonRecord(data) && Array.isArray(data.records)
+          ? data.records
+          : [data];
+      items.filter(isJsonRecord).forEach((item, idx) => {
         if (item.sender || item.from || item.account) {
-          const srcId = item.sender ?? item.from ?? `AC-${idx}`;
-          const dstId = item.receiver ?? item.to ?? `AC-${idx + 100}`;
-          addNode({ id: srcId, type: 'account', label: srcId, metadata: item, provenance: { sourceDataset: fileName, sourceRecordId: `REC-${idx}`, recordType: 'Account' } });
-          addNode({ id: dstId, type: 'account', label: dstId, metadata: item, provenance: { sourceDataset: fileName, sourceRecordId: `REC-${idx}`, recordType: 'Account' } });
+          const srcId = String(item.sender ?? item.from ?? `AC-${idx}`);
+          const dstId = String(item.receiver ?? item.to ?? `AC-${idx + 100}`);
+          const metadata = toGraphMetadata(item);
+          addNode({ id: srcId, type: 'account', label: srcId, metadata, provenance: { sourceDataset: fileName, sourceRecordId: `REC-${idx}`, recordType: 'Account' } });
+          addNode({ id: dstId, type: 'account', label: dstId, metadata, provenance: { sourceDataset: fileName, sourceRecordId: `REC-${idx}`, recordType: 'Account' } });
           addEdge({
             id: `E-TX-${Date.now()}-${idx}`,
             source: srcId,
             target: dstId,
-            relationship: item.relationship ?? 'TRANSFERRED_FUNDS',
-            priority: (item.amount && item.amount > 50000) ? 'High' : 'Medium',
+            relationship: String(item.relationship ?? 'TRANSFERRED_FUNDS'),
+            priority: Number(item.amount ?? 0) > 50000 ? 'High' : 'Medium',
             evidenceIds: [`EV-${idx}`],
             provenance: { sourceDataset: fileName, sourceRecordId: `REC-${idx}`, recordType: 'Transaction' },
           });
@@ -226,57 +386,196 @@ export function ingestFileContent(
     if (!rows.length) return { updated, nodesCreated: 0, edgesCreated: 0 };
 
     const first = rows[0];
+    const personByNormalizedName = new Map<string, Person>();
+    updated.persons.forEach((person) => {
+      const normalized = normalizePersonName(person.name);
+      if (normalized) personByNormalizedName.set(normalized, person);
+    });
 
-    // Detect Cases
-    if ('case_id' in first && ('fir_number' in first || 'crime_type' in first)) {
-      rows.forEach((r) => {
-        if (!updated.cases.some((c) => c.case_id === r.case_id)) {
+    const parseRole = (value: string): Person['role'] => {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'witness') return 'Witness';
+      if (normalized === 'victim') return 'Victim';
+      if (normalized === 'person of interest' || normalized === 'poi') return 'Person of Interest';
+      return 'Suspect';
+    };
+
+    const ensurePerson = (
+      name: string,
+      explicitId: string,
+      role: Person['role'],
+      caseId: string,
+      row: Record<string, string>,
+      rowIndex: number
+    ): Person => {
+      const normalizedName = normalizePersonName(name);
+      const byId = explicitId
+        ? updated.persons.find((person) => person.person_id === explicitId)
+        : undefined;
+      let person = byId ?? personByNormalizedName.get(normalizedName);
+
+      if (!person) {
+        const personId = explicitId || `P-NAME-${stableId(normalizedName)}`;
+        person = {
+          person_id: personId,
+          name: name.trim(),
+          role,
+          caseIds: caseId ? [caseId] : [],
+          phoneIds: [],
+          vehicleIds: [],
+          accountIds: [],
+          locationIds: [],
+        };
+        updated.persons.push(person);
+        personByNormalizedName.set(normalizedName, person);
+        addNode({
+          id: personId,
+          type: 'person',
+          label: person.name,
+          metadata: {
+            role,
+            normalizedName,
+            identityResolution: explicitId ? 'Identifier match' : 'Exact normalized-name match; investigator verification required',
+            caseIds: caseId ? [caseId] : [],
+            age: row.age || '',
+            gender: row.gender || '',
+          },
+          provenance: { sourceDataset: fileName, sourceRecordId: explicitId || `ROW-${rowIndex + 1}`, recordType: 'Person extraction' },
+        });
+      } else {
+        if (caseId && !person.caseIds.includes(caseId)) person.caseIds.push(caseId);
+        const existingNode = nodeMap.get(person.person_id);
+        if (existingNode) {
+          existingNode.metadata = {
+            ...existingNode.metadata,
+            caseIds: [...person.caseIds],
+            identityResolution: explicitId && explicitId === person.person_id
+              ? 'Identifier match'
+              : 'Exact normalized-name match; investigator verification required',
+          };
+        }
+      }
+
+      return person;
+    };
+
+    // A case row may also contain suspect fields. Extract both instead of treating
+    // case and person records as mutually exclusive schemas.
+    rows.forEach((r, rowIndex) => {
+      const caseId = getFirstValue(r, ['case_id', 'case_number', 'case_no', 'fir_id']);
+      const looksLikeCase = Boolean(caseId && (
+        'fir_number' in r || 'crime_type' in r || 'case_id' in r || 'case_number' in r || 'case_no' in r
+      ));
+
+      if (looksLikeCase) {
+        if (!updated.cases.some((c) => c.case_id === caseId)) {
           const caseRecord: CaseRecord = {
-            case_id: r.case_id,
-            fir_number: r.fir_number || `FIR/${r.case_id}`,
+            case_id: caseId,
+            fir_number: r.fir_number || `FIR/${caseId}`,
             crime_type: r.crime_type || 'General Offense',
             district: r.district || 'Unspecified',
             state: r.state || 'India',
             date_filed: r.date_filed || new Date().toISOString().slice(0, 10),
-            status: (r.status as any) || 'Active',
-            summary: r.summary || `Investigation case ${r.case_id}`,
+            status: parseCaseStatus(r.status || ''),
+            summary: r.summary || r.description || `Investigation case ${caseId}`,
           };
           updated.cases.push(caseRecord);
           addNode({
-            id: r.case_id,
+            id: caseId,
             type: 'case',
-            label: r.case_id,
+            label: caseId,
             metadata: { fir_number: caseRecord.fir_number, crime_type: caseRecord.crime_type },
-            provenance: { sourceDataset: fileName, sourceRecordId: r.case_id, recordType: 'Case' },
+            provenance: { sourceDataset: fileName, sourceRecordId: caseId, recordType: 'Case' },
           });
         }
-      });
-    }
-    // Detect Persons
-    if ('person_id' in first && 'name' in first) {
-      rows.forEach((r) => {
-        if (!updated.persons.some((p) => p.person_id === r.person_id)) {
-          const pRecord: Person = {
-            person_id: r.person_id,
-            name: r.name,
-            role: (r.role as any) || 'Suspect',
-            caseIds: r.case_id ? [r.case_id] : [],
-            phoneIds: [],
-            vehicleIds: [],
-            accountIds: [],
-            locationIds: [],
+      }
+
+      const personNames = getPersonNames(r);
+      if (personNames.length === 0 && caseId && r.person_id) {
+        const linkedPerson = updated.persons.find((person) => person.person_id === r.person_id);
+        if (linkedPerson) {
+          if (!linkedPerson.caseIds.includes(caseId)) linkedPerson.caseIds.push(caseId);
+          const linkedNode = nodeMap.get(linkedPerson.person_id);
+          if (linkedNode) linkedNode.metadata = { ...linkedNode.metadata, caseIds: [...linkedPerson.caseIds] };
+
+          const relationship = (r.relationship || r.role || 'ASSOCIATED_WITH')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]+/g, '_');
+          const evidenceId = `EV-PC-${stableId(`${fileName}:${rowIndex}:${caseId}:${r.person_id}`)}`;
+          const provenance = {
+            sourceDataset: fileName,
+            sourceRecordId: `ROW-${rowIndex + 1}`,
+            recordType: 'Case person link',
           };
-          updated.persons.push(pRecord);
-          addNode({
-            id: r.person_id,
-            type: 'person',
-            label: r.name,
-            metadata: { role: pRecord.role, age: r.age, gender: r.gender },
-            provenance: { sourceDataset: fileName, sourceRecordId: r.person_id, recordType: 'Person' },
+          const edgeAdded = addEdge({
+            id: `E-PC-${caseId}-${r.person_id}-${stableId(fileName)}`,
+            source: caseId,
+            target: r.person_id,
+            relationship,
+            priority: relationship.includes('SUSPECT') || relationship.includes('ACCUSED') ? 'High' : 'Medium',
+            evidenceIds: [evidenceId],
+            provenance,
+          });
+          if (edgeAdded) {
+            updated.evidence.push({
+              evidence_id: evidenceId,
+              relationship,
+              entityA: caseId,
+              entityB: r.person_id,
+              case_id: caseId,
+              timestamp: new Date().toISOString(),
+              evidenceType: 'Uploaded case-person link',
+              supportingData: `${linkedPerson.name} is linked to ${caseId} by the uploaded record.`,
+              priority: relationship.includes('SUSPECT') || relationship.includes('ACCUSED') ? 'High' : 'Medium',
+              sourceReliability: 'Identifier supplied in source',
+              provenance,
+            });
+          }
+        }
+      }
+
+      personNames.forEach((personName, personIndex) => {
+        const explicitId = personNames.length === 1 ? (r.person_id || '') : '';
+        const role = parseRole(r.role || r.person_role || (PERSON_NAME_FIELDS.some((field) => Boolean(r[field])) ? 'Suspect' : ''));
+        const person = ensurePerson(personName, explicitId, role, caseId, r, rowIndex);
+
+        if (!caseId) return;
+        const relationship = role === 'Suspect'
+          ? 'NAMED_AS_SUSPECT'
+          : `ROLE_${role.toUpperCase().replace(/\s+/g, '_')}`;
+        const evidenceId = `EV-PC-${stableId(`${fileName}:${rowIndex}:${caseId}:${normalizePersonName(personName)}:${personIndex}`)}`;
+        const provenance = {
+          sourceDataset: fileName,
+          sourceRecordId: caseId || `ROW-${rowIndex + 1}`,
+          recordType: 'Case person extraction',
+        };
+        const edgeAdded = addEdge({
+          id: `E-PC-${caseId}-${person.person_id}-${stableId(fileName)}`,
+          source: caseId,
+          target: person.person_id,
+          relationship,
+          priority: role === 'Suspect' ? 'High' : 'Medium',
+          evidenceIds: [evidenceId],
+          provenance,
+        });
+
+        if (edgeAdded && !updated.evidence.some((item) => item.evidence_id === evidenceId)) {
+          updated.evidence.push({
+            evidence_id: evidenceId,
+            relationship,
+            entityA: caseId,
+            entityB: person.person_id,
+            case_id: caseId,
+            timestamp: new Date().toISOString(),
+            evidenceType: 'Uploaded case record',
+            supportingData: `${personName} is recorded as ${role.toLowerCase()} in ${caseId}.`,
+            priority: role === 'Suspect' ? 'High' : 'Medium',
+            sourceReliability: explicitId ? 'Identifier supplied in source' : 'Name match; investigator verification required',
+            provenance,
           });
         }
       });
-    }
+    });
     // Detect Phones
     if ('phone_id' in first && 'number' in first) {
       rows.forEach((r) => {
@@ -334,25 +633,6 @@ export function ingestFileContent(
             provenance: { sourceDataset: fileName, sourceRecordId: r.vehicle_id, recordType: 'RTO Record' },
           });
         }
-      });
-    }
-    // Detect Person-Case Links
-    if ('case_id' in first && 'person_id' in first) {
-      rows.forEach((r, idx) => {
-        const p = updated.persons.find((item) => item.person_id === r.person_id);
-        if (p && !p.caseIds.includes(r.case_id)) {
-          p.caseIds.push(r.case_id);
-          if (r.role) p.role = r.role as any;
-        }
-        addEdge({
-          id: `E-PC-${idx}-${r.case_id}-${r.person_id}`,
-          source: r.case_id,
-          target: r.person_id,
-          relationship: r.role ? `ROLE_${r.role.toUpperCase().replace(/\s+/g, '_')}` : 'ASSOCIATED_WITH',
-          priority: r.role === 'Suspect' ? 'High' : 'Medium',
-          evidenceIds: [`EV-LINK-${idx}`],
-          provenance: { sourceDataset: fileName, sourceRecordId: `PC-${idx}`, recordType: 'Case Accused Link' },
-        });
       });
     }
     // Detect Transactions
@@ -432,67 +712,238 @@ export function ingestFileContent(
         }
       });
     }
+  } else if (lowerName.endsWith('.txt')) {
+    const caseMatch = content.match(/\bCASE[\s:#-]*(\d{1,12})\b/i)
+      ?? fileName.match(/\bCASE[\s_-]*(\d{1,12})\b/i);
+    const firMatch = content.match(/\bFIR(?:\s*(?:NO\.?|NUMBER))?[\s:#/-]*([A-Z0-9][A-Z0-9/-]{1,30})/i);
+    const caseId = caseMatch
+      ? `CASE-${caseMatch[1]}`
+      : `CASE-TXT-${stableId(`${fileName}:${content.slice(0, 160)}`)}`;
+    const firNumber = firMatch?.[0].trim() || `FIR/${fileName.replace(/\.[^/.]+$/, '')}`;
+    const crimeType = /financial|bank|transaction|fraud/i.test(content)
+      ? 'Financial Fraud'
+      : /cyber|online|phishing|digital/i.test(content)
+        ? 'Cyber Crime'
+        : /vehicle|car|motorcycle|theft/i.test(content)
+          ? 'Vehicle Crime'
+          : 'FIR Text Analysis';
+    const provenance = { sourceDataset: fileName, sourceRecordId: caseId, recordType: 'TXT FIR extraction' };
+
+    if (!updated.cases.some((item) => item.case_id === caseId)) {
+      updated.cases.push({
+        case_id: caseId,
+        fir_number: firNumber,
+        crime_type: crimeType,
+        district: 'Unspecified',
+        state: 'India',
+        date_filed: new Date().toISOString().slice(0, 10),
+        status: 'Active',
+        summary: `Entities extracted from paragraph-based FIR ${fileName}.`,
+      });
+      addNode({
+        id: caseId,
+        type: 'case',
+        label: caseId,
+        metadata: { source: fileName, fir_number: firNumber, crime_type: crimeType },
+        provenance,
+      });
+    }
+
+    const extractedPeople = extractPeopleFromText(content);
+    const resolvedPeople: Array<{ person: Person; extracted: ExtractedTextPerson }> = [];
+    extractedPeople.forEach((extracted, index) => {
+      const normalizedName = normalizePersonName(extracted.name);
+      let person = updated.persons.find((item) => normalizePersonName(item.name) === normalizedName);
+      if (!person) {
+        person = {
+          person_id: `P-NAME-${stableId(normalizedName)}`,
+          name: extracted.name,
+          role: extracted.role,
+          caseIds: [caseId],
+          phoneIds: [],
+          vehicleIds: [],
+          accountIds: [],
+          locationIds: [],
+        };
+        updated.persons.push(person);
+        addNode({
+          id: person.person_id,
+          type: 'person',
+          label: person.name,
+          metadata: {
+            role: extracted.role,
+            normalizedName,
+            caseIds: [caseId],
+            identityResolution: 'Exact normalized-name match; investigator verification required',
+          },
+          provenance: { ...provenance, sourceRecordId: `${caseId}-PERSON-${index + 1}` },
+        });
+      } else {
+        if (!person.caseIds.includes(caseId)) person.caseIds.push(caseId);
+        const personNode = nodeMap.get(person.person_id);
+        if (personNode) personNode.metadata = { ...personNode.metadata, caseIds: [...person.caseIds] };
+      }
+      resolvedPeople.push({ person, extracted });
+
+      const relationship = extracted.role === 'Suspect'
+        ? 'NAMED_AS_SUSPECT'
+        : `ROLE_${extracted.role.toUpperCase().replace(/\s+/g, '_')}`;
+      const evidenceId = `EV-TXT-${stableId(`${fileName}:${caseId}:${person.person_id}:${relationship}`)}`;
+      if (addEdge({
+        id: `E-TXT-${caseId}-${person.person_id}`,
+        source: caseId,
+        target: person.person_id,
+        relationship,
+        priority: extracted.role === 'Suspect' ? 'High' : 'Medium',
+        evidenceIds: [evidenceId],
+        provenance,
+      })) {
+        updated.evidence.push({
+          evidence_id: evidenceId,
+          relationship,
+          entityA: caseId,
+          entityB: person.person_id,
+          case_id: caseId,
+          timestamp: new Date().toISOString(),
+          evidenceType: 'TXT FIR paragraph',
+          supportingData: extracted.excerpt,
+          priority: extracted.role === 'Suspect' ? 'High' : 'Medium',
+          sourceReliability: 'Rule-based text extraction; investigator verification required',
+          provenance,
+        });
+      }
+    });
+
+    const findOwner = (rawValue: string): Person | undefined => {
+      const sentence = sentenceContaining(content, rawValue).toLowerCase();
+      const inSameSentence = resolvedPeople.find(({ extracted }) => sentence.includes(extracted.name.toLowerCase()));
+      return inSameSentence?.person ?? (resolvedPeople.length === 1 ? resolvedPeople[0].person : undefined);
+    };
+
+    const phoneMatches = content.match(/(?:\+?91[\s-]?)?[6-9](?:[\s-]?\d){9}\b/g) ?? [];
+    [...new Set(phoneMatches)].forEach((rawPhone) => {
+      const digits = rawPhone.replace(/\D/g, '').slice(-10);
+      const phoneId = `PH-${digits}`;
+      const owner = findOwner(rawPhone);
+      if (!updated.phones.some((phone) => phone.phone_id === phoneId)) {
+        updated.phones.push({ phone_id: phoneId, number: digits, owner_person_id: owner?.person_id || '', carrier: 'Unknown' });
+      }
+      addNode({
+        id: phoneId,
+        type: 'phone',
+        label: `Phone ${digits.slice(-4)}`,
+        metadata: { number: digits, carrier: 'Unknown' },
+        provenance,
+      });
+      if (owner) {
+        if (!owner.phoneIds.includes(phoneId)) owner.phoneIds.push(phoneId);
+        const evidenceId = `EV-TXT-PHONE-${stableId(`${fileName}:${owner.person_id}:${phoneId}`)}`;
+        if (addEdge({
+          id: `E-TXT-PHONE-${owner.person_id}-${phoneId}`,
+          source: owner.person_id,
+          target: phoneId,
+          relationship: 'USES_PHONE',
+          priority: 'High',
+          evidenceIds: [evidenceId],
+          provenance,
+        })) {
+          updated.evidence.push({
+            evidence_id: evidenceId,
+            relationship: 'USES_PHONE',
+            entityA: owner.person_id,
+            entityB: phoneId,
+            case_id: caseId,
+            timestamp: new Date().toISOString(),
+            evidenceType: 'TXT FIR paragraph',
+            supportingData: sentenceContaining(content, rawPhone),
+            priority: 'High',
+            sourceReliability: 'Rule-based text extraction; investigator verification required',
+            provenance,
+          });
+        }
+      }
+    });
+
+    const vehicleMatches = content.match(/\b[A-Z]{2}[\s-]?\d{1,2}[\s-]?[A-Z]{1,3}[\s-]?\d{4}\b/gi) ?? [];
+    [...new Set(vehicleMatches.map((value) => value.toUpperCase()))].forEach((rawVehicle) => {
+      const plate = rawVehicle.replace(/\s+/g, ' ').trim();
+      const vehicleId = `VH-${plate.replace(/[^A-Z0-9]/g, '')}`;
+      const owner = findOwner(rawVehicle);
+      if (!updated.vehicles.some((vehicle) => vehicle.vehicle_id === vehicleId)) {
+        updated.vehicles.push({ vehicle_id: vehicleId, plate_number: plate, owner_person_id: owner?.person_id || '', vehicle_type: 'Vehicle', color: 'Unknown' });
+      }
+      addNode({ id: vehicleId, type: 'vehicle', label: plate, metadata: { plate_number: plate }, provenance });
+      if (owner) {
+        if (!owner.vehicleIds.includes(vehicleId)) owner.vehicleIds.push(vehicleId);
+        const evidenceId = `EV-TXT-VEHICLE-${stableId(`${fileName}:${owner.person_id}:${vehicleId}`)}`;
+        if (addEdge({
+          id: `E-TXT-VEHICLE-${owner.person_id}-${vehicleId}`,
+          source: owner.person_id,
+          target: vehicleId,
+          relationship: 'ASSOCIATED_WITH_VEHICLE',
+          priority: 'Medium',
+          evidenceIds: [evidenceId],
+          provenance,
+        })) {
+          updated.evidence.push({
+            evidence_id: evidenceId,
+            relationship: 'ASSOCIATED_WITH_VEHICLE',
+            entityA: owner.person_id,
+            entityB: vehicleId,
+            case_id: caseId,
+            timestamp: new Date().toISOString(),
+            evidenceType: 'TXT FIR paragraph',
+            supportingData: sentenceContaining(content, rawVehicle),
+            priority: 'Medium',
+            sourceReliability: 'Rule-based text extraction; investigator verification required',
+            provenance,
+          });
+        }
+      }
+    });
   } else {
-    // Unstructured PDF or text document
-    const pseudoCaseId = `CASE-${Date.now().toString().slice(-4)}`;
-    const extractedSuspect = `Suspect-${Math.floor(1000 + Math.random() * 9000)}`;
-    const extractedPhone = `PH-${Math.floor(100 + Math.random() * 900)}`;
-
-    updated.cases.push({
-      case_id: pseudoCaseId,
-      fir_number: `FIR/${fileName.replace(/\.[^/.]+$/, '')}`,
-      crime_type: 'FIR Document Analysis',
-      district: 'Cyber Cell',
-      state: 'Delhi',
-      date_filed: new Date().toISOString().slice(0, 10),
-      status: 'Active',
-      summary: `Entities extracted from uploaded document ${fileName}.`,
-    });
-
-    addNode({
-      id: pseudoCaseId,
-      type: 'case',
-      label: pseudoCaseId,
-      metadata: { source: fileName },
-      provenance: { sourceDataset: fileName, sourceRecordId: pseudoCaseId, recordType: 'Document' },
-    });
-
-    addNode({
-      id: extractedSuspect,
-      type: 'person',
-      label: extractedSuspect,
-      metadata: { role: 'Suspect' },
-      provenance: { sourceDataset: fileName, sourceRecordId: pseudoCaseId, recordType: 'NER Extraction' },
-    });
-
-    addNode({
-      id: extractedPhone,
-      type: 'phone',
-      label: extractedPhone,
-      metadata: { carrier: 'Telecom' },
-      provenance: { sourceDataset: fileName, sourceRecordId: pseudoCaseId, recordType: 'NER Extraction' },
-    });
-
-    addEdge({
-      id: `E-${pseudoCaseId}-${extractedSuspect}`,
-      source: pseudoCaseId,
-      target: extractedSuspect,
-      relationship: 'NAMED_IN_FIR',
-      priority: 'High',
-      evidenceIds: [`EV-DOC-${Date.now()}`],
-      provenance: { sourceDataset: fileName, sourceRecordId: pseudoCaseId, recordType: 'OCR / NER Extraction' },
-    });
-
-    addEdge({
-      id: `E-${extractedSuspect}-${extractedPhone}`,
-      source: extractedSuspect,
-      target: extractedPhone,
-      relationship: 'COMMUNICATION_DEVICE',
-      priority: 'Medium',
-      evidenceIds: [`EV-DEV-${Date.now()}`],
-      provenance: { sourceDataset: fileName, sourceRecordId: pseudoCaseId, recordType: 'OCR / NER Extraction' },
-    });
+    // Binary/scanned documents need OCR; do not fabricate person or device nodes.
+    const pseudoCaseId = `CASE-DOC-${stableId(fileName)}`;
+    if (!updated.cases.some((item) => item.case_id === pseudoCaseId)) {
+      updated.cases.push({
+        case_id: pseudoCaseId,
+        fir_number: `FIR/${fileName.replace(/\.[^/.]+$/, '')}`,
+        crime_type: 'Document awaiting OCR',
+        district: 'Unspecified',
+        state: 'India',
+        date_filed: new Date().toISOString().slice(0, 10),
+        status: 'Under Review',
+        summary: `OCR is required before entities can be extracted from ${fileName}.`,
+      });
+      addNode({
+        id: pseudoCaseId,
+        type: 'case',
+        label: pseudoCaseId,
+        metadata: { source: fileName, extractionStatus: 'OCR required' },
+        provenance: { sourceDataset: fileName, sourceRecordId: pseudoCaseId, recordType: 'Document' },
+      });
+    }
   }
+
+  // A canonical person referenced by more than one case is the evidence-backed
+  // bridge between those cases. Surface it as a reviewable cross-case lead.
+  updated.persons.forEach((person) => {
+    const caseIds = [...new Set(person.caseIds)].filter(Boolean);
+    if (caseIds.length < 2) return;
+
+    const alertId = `ALT-CROSS-${person.person_id}`;
+    const alert = {
+      id: alertId,
+      title: 'Shared Suspect Across Cases',
+      description: `${person.name} appears in ${caseIds.join(', ')}. Exact-name identity match requires investigator verification.`,
+      priority: 'High' as const,
+      caseIds,
+      entityIds: [person.person_id],
+    };
+    const existingIndex = updated.alerts.findIndex((item) => item.id === alertId);
+    if (existingIndex >= 0) updated.alerts[existingIndex] = alert;
+    else updated.alerts.push(alert);
+  });
 
   // Update statistics
   const networks = countNetworks(updated.graphData.nodes, updated.graphData.edges);

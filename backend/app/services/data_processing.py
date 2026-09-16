@@ -1,5 +1,6 @@
 import os
 import re
+import hashlib
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Any, Tuple
@@ -27,6 +28,22 @@ class DataProcessingService:
 
     def is_empty(self) -> bool:
         return len(self.cases_df) == 0 and len(self.graph_nodes) == 0
+
+    @staticmethod
+    def _normalize_field_name(value: str) -> str:
+        return re.sub(r"^_+|_+$", "", re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()))
+
+    @staticmethod
+    def _normalize_person_name(value: str) -> str:
+        normalized = str(value).strip().lower()
+        normalized = re.sub(r"^(mr|mrs|ms|miss|dr|shri|smt)\.?\s+", "", normalized)
+        normalized = re.sub(r"[^\w]+", " ", normalized, flags=re.UNICODE)
+        return re.sub(r"\s+", " ", normalized).strip()
+
+    @staticmethod
+    def _person_id_from_name(normalized_name: str) -> str:
+        digest = hashlib.sha1(normalized_name.encode("utf-8")).hexdigest()[:10].upper()
+        return f"P-NAME-{digest}"
 
     def clear(self):
         self.cases_df = pd.DataFrame()
@@ -195,7 +212,11 @@ class DataProcessingService:
 
     def ingest_file_dataframe(self, filename: str, content: str) -> Tuple[int, int]:
         """
-        Ingests user uploaded CSV or text using Pandas & NumPy data parsing.
+        Ingests user-uploaded CSV data and resolves case/person relationships.
+
+        Case and person fields are intentionally not treated as mutually
+        exclusive: a case row can contain a suspect name. Repeated exact
+        normalized names resolve to one reviewable canonical person node.
         """
         import io
         lower = filename.lower()
@@ -204,59 +225,223 @@ class DataProcessingService:
 
         if lower.endswith(".csv"):
             df = pd.read_csv(io.StringIO(content)).fillna("")
-            cols = [c.lower() for c in df.columns]
+            df.columns = [self._normalize_field_name(column) for column in df.columns]
+            cols = set(df.columns)
+            case_fields = ("case_id", "case_number", "case_no", "fir_id")
+            person_name_fields = (
+                "suspect_name", "suspect_names", "accused_name", "accused_names",
+                "person_name", "individual_name", "subject_name", "offender_name",
+                "criminal_name",
+            )
 
-            # Detect case CSV
-            if any("case_id" in c or "fir" in c for c in cols):
-                self.cases_df = pd.concat([self.cases_df, df], ignore_index=True)
-                for _, row in df.iterrows():
-                    cid = str(row.get("case_id", row.get("CASE_ID", f"CASE-{len(self.graph_nodes)+1}"))).strip()
-                    self.graph_nodes[cid] = GraphNode(
-                        id=cid,
-                        type="case",
-                        label=cid,
-                        metadata={k: str(v) for k, v in row.items()},
-                        provenance=Provenance(sourceDataset=filename, sourceRecordId=cid, recordType="Case")
-                    )
-                    self.search_results.append(
-                        SearchResult(
+            def row_value(row, fields):
+                for field in fields:
+                    value = str(row.get(field, "")).strip()
+                    if value:
+                        return value
+                return ""
+
+            name_to_person_id = {
+                self._normalize_person_name(node.label): node_id
+                for node_id, node in self.graph_nodes.items()
+                if node.type == "person" and self._normalize_person_name(node.label)
+            }
+            person_rows = []
+            found_structured_entity = False
+
+            for row_index, row in df.iterrows():
+                cid = row_value(row, case_fields)
+                if cid:
+                    found_structured_entity = True
+                    if cid not in self.graph_nodes:
+                        self.graph_nodes[cid] = GraphNode(
                             id=cid,
                             type="case",
                             label=cid,
-                            secondary=f"{row.get('fir_number', '')} · Case",
-                            relatedCases=[cid],
-                            relationshipCount=2,
-                            source=filename
+                            metadata={key: str(value) for key, value in row.items()},
+                            provenance=Provenance(sourceDataset=filename, sourceRecordId=cid, recordType="Case")
                         )
-                    )
+                        self.search_results.append(
+                            SearchResult(
+                                id=cid,
+                                type="case",
+                                label=cid,
+                                secondary=f"{row.get('fir_number', '')} · Case",
+                                relatedCases=[cid],
+                                relationshipCount=0,
+                                source=filename
+                            )
+                        )
 
-            # Detect person CSV
-            elif any("person" in c or "name" in c or "suspect" in c for c in cols):
-                self.persons_df = pd.concat([self.persons_df, df], ignore_index=True)
-                for _, row in df.iterrows():
-                    pid = str(row.get("person_id", row.get("id", f"P-{len(self.graph_nodes)+1}"))).strip()
-                    name = str(row.get("name", pid))
-                    self.graph_nodes[pid] = GraphNode(
-                        id=pid,
-                        type="person",
-                        label=name,
-                        metadata={k: str(v) for k, v in row.items()},
-                        provenance=Provenance(sourceDataset=filename, sourceRecordId=pid, recordType="Person")
+                raw_names = [str(row.get(field, "")).strip() for field in person_name_fields if str(row.get(field, "")).strip()]
+                if str(row.get("person_id", "")).strip() and str(row.get("name", "")).strip():
+                    raw_names.append(str(row.get("name", "")).strip())
+
+                names = []
+                seen_names = set()
+                for raw_name in raw_names:
+                    for candidate in re.split(r"[;|\n]+", raw_name):
+                        candidate = candidate.strip()
+                        normalized_name = self._normalize_person_name(candidate)
+                        if candidate and normalized_name and normalized_name not in seen_names:
+                            names.append((candidate, normalized_name))
+                            seen_names.add(normalized_name)
+
+                linked_pid = str(row.get("person_id", "")).strip()
+                if not names and cid and linked_pid and linked_pid in self.graph_nodes:
+                    linked_node = self.graph_nodes[linked_pid]
+                    linked_cases = list(linked_node.metadata.get("caseIds", []))
+                    if cid not in linked_cases:
+                        linked_cases.append(cid)
+                        linked_node.metadata["caseIds"] = linked_cases
+                    relationship = re.sub(
+                        r"[^A-Z0-9]+",
+                        "_",
+                        str(row.get("relationship", row.get("role", "ASSOCIATED_WITH"))).upper()
+                    ).strip("_")
+                    edge_exists = any(
+                        edge.source == cid and edge.target == linked_pid and edge.relationship == relationship
+                        for edge in self.graph_edges
                     )
-                    self.search_results.append(
-                        SearchResult(
+                    if not edge_exists:
+                        evidence_id = f"EV-PC-{hashlib.sha1(f'{filename}:{row_index}:{cid}:{linked_pid}'.encode()).hexdigest()[:10].upper()}"
+                        provenance = Provenance(
+                            sourceDataset=filename,
+                            sourceRecordId=f"ROW-{row_index + 1}",
+                            recordType="Case person link"
+                        )
+                        priority = "High" if "SUSPECT" in relationship or "ACCUSED" in relationship else "Medium"
+                        self.graph_edges.append(
+                            GraphEdge(
+                                id=f"E-PC-{cid}-{linked_pid}-{len(self.graph_edges) + 1}",
+                                source=cid,
+                                target=linked_pid,
+                                relationship=relationship,
+                                evidenceIds=[evidence_id],
+                                priority=priority,
+                                provenance=provenance
+                            )
+                        )
+                        self.evidence_list.append(
+                            Evidence(
+                                evidence_id=evidence_id,
+                                relationship=relationship,
+                                entityA=cid,
+                                entityB=linked_pid,
+                                case_id=cid,
+                                timestamp="",
+                                evidenceType="Uploaded case-person link",
+                                supportingData=f"{linked_node.label} is linked to {cid} by the uploaded record.",
+                                priority=priority,
+                                sourceReliability="Identifier supplied in source",
+                                provenance=provenance
+                            )
+                        )
+
+                for person_index, (name, normalized_name) in enumerate(names):
+                    found_structured_entity = True
+                    explicit_pid = str(row.get("person_id", "")).strip() if len(names) == 1 else ""
+                    pid = explicit_pid or name_to_person_id.get(normalized_name) or self._person_id_from_name(normalized_name)
+                    existing_pid = name_to_person_id.get(normalized_name)
+                    if existing_pid:
+                        pid = existing_pid
+
+                    existing_node = self.graph_nodes.get(pid)
+                    existing_cases = list(existing_node.metadata.get("caseIds", [])) if existing_node else []
+                    if cid and cid not in existing_cases:
+                        existing_cases.append(cid)
+
+                    if existing_node:
+                        existing_node.metadata["caseIds"] = existing_cases
+                        existing_node.metadata["identityResolution"] = (
+                            "Identifier match" if explicit_pid == pid
+                            else "Exact normalized-name match; investigator verification required"
+                        )
+                    else:
+                        self.graph_nodes[pid] = GraphNode(
                             id=pid,
                             type="person",
                             label=name,
-                            secondary=f"{pid} · Suspect",
-                            relatedCases=[],
-                            relationshipCount=3,
-                            source=filename
+                            metadata={
+                                "role": str(row.get("role", row.get("person_role", "Suspect"))) or "Suspect",
+                                "normalizedName": normalized_name,
+                                "caseIds": existing_cases,
+                                "identityResolution": (
+                                    "Identifier match" if explicit_pid
+                                    else "Exact normalized-name match; investigator verification required"
+                                ),
+                            },
+                            provenance=Provenance(
+                                sourceDataset=filename,
+                                sourceRecordId=explicit_pid or f"ROW-{row_index + 1}",
+                                recordType="Person extraction"
+                            )
                         )
-                    )
+                        self.search_results.append(
+                            SearchResult(
+                                id=pid,
+                                type="person",
+                                label=name,
+                                secondary=f"{pid} · Suspect",
+                                relatedCases=existing_cases,
+                                relationshipCount=0,
+                                source=filename
+                            )
+                        )
+                    name_to_person_id[normalized_name] = pid
+                    person_rows.append({"person_id": pid, "name": name, "case_id": cid})
 
-            # Detect CDR / Phone / Transaction
-            else:
+                    if cid:
+                        relationship = "NAMED_AS_SUSPECT"
+                        edge_exists = any(
+                            edge.source == cid and edge.target == pid and edge.relationship == relationship
+                            for edge in self.graph_edges
+                        )
+                        if not edge_exists:
+                            evidence_id = f"EV-PC-{hashlib.sha1(f'{filename}:{row_index}:{cid}:{normalized_name}:{person_index}'.encode()).hexdigest()[:10].upper()}"
+                            provenance = Provenance(
+                                sourceDataset=filename,
+                                sourceRecordId=cid,
+                                recordType="Case person extraction"
+                            )
+                            self.graph_edges.append(
+                                GraphEdge(
+                                    id=f"E-PC-{cid}-{pid}-{len(self.graph_edges) + 1}",
+                                    source=cid,
+                                    target=pid,
+                                    relationship=relationship,
+                                    evidenceIds=[evidence_id],
+                                    priority="High",
+                                    provenance=provenance
+                                )
+                            )
+                            self.evidence_list.append(
+                                Evidence(
+                                    evidence_id=evidence_id,
+                                    relationship=relationship,
+                                    entityA=cid,
+                                    entityB=pid,
+                                    case_id=cid,
+                                    timestamp="",
+                                    evidenceType="Uploaded case record",
+                                    supportingData=f"{name} is recorded as suspect in {cid}.",
+                                    priority="High",
+                                    sourceReliability=(
+                                        "Identifier supplied in source" if explicit_pid
+                                        else "Name match; investigator verification required"
+                                    ),
+                                    provenance=provenance
+                                )
+                            )
+
+            if any(field in cols for field in case_fields):
+                self.cases_df = pd.concat([self.cases_df, df], ignore_index=True)
+            if person_rows:
+                self.persons_df = pd.concat([self.persons_df, pd.DataFrame(person_rows)], ignore_index=True)
+
+            # Preserve generic-record ingestion for CSVs that contain neither a
+            # recognizable case nor a recognizable person schema.
+            if not found_structured_entity:
                 for idx, row in df.iterrows():
                     rec_id = f"REC-{len(self.graph_nodes)+1}"
                     self.graph_nodes[rec_id] = GraphNode(
@@ -267,8 +452,8 @@ class DataProcessingService:
                         provenance=Provenance(sourceDataset=filename, sourceRecordId=rec_id, recordType="CSV Record")
                     )
 
-        nodes_created = max(1, len(self.graph_nodes) - nodes_before)
-        edges_created = max(1, len(self.graph_edges) - edges_before)
+        nodes_created = len(self.graph_nodes) - nodes_before
+        edges_created = len(self.graph_edges) - edges_before
         return nodes_created, edges_created
 
     def compute_stats(self) -> DashboardStats:

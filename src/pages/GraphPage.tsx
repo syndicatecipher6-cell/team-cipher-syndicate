@@ -6,29 +6,103 @@ import { useInvestigation } from '../context/InvestigationContext';
 export function GraphPage() {
   const { dataset } = useInvestigation();
   const [selectedNode, setSelectedNode] = useState<any>(null);
+  const fgRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   
   const graphData = useMemo(() => {
-    return {
-      nodes: dataset.graphData.nodes.map(n => ({
+    const entityById = new Map(dataset.graphData.nodes.map(node => [node.id, node]));
+    const directCasePersonEdges = dataset.graphData.edges.flatMap(edge => {
+      const source = entityById.get(edge.source);
+      const target = entityById.get(edge.target);
+      if (source?.type === 'case' && target?.type === 'person') {
+        return [{ edge, caseId: source.id, personId: target.id }];
+      }
+      if (source?.type === 'person' && target?.type === 'case') {
+        return [{ edge, caseId: target.id, personId: source.id }];
+      }
+      return [];
+    });
+    const casesByPerson = new Map<string, Set<string>>();
+    directCasePersonEdges.forEach(({ caseId, personId }) => {
+      const caseIds = casesByPerson.get(personId) ?? new Set<string>();
+      caseIds.add(caseId);
+      casesByPerson.set(personId, caseIds);
+    });
+    const commonPersonIds = new Set(
+      [...casesByPerson.entries()]
+        .filter(([, caseIds]) => caseIds.size >= 2)
+        .map(([personId]) => personId)
+    );
+    const visibleRelationships = directCasePersonEdges.filter(({ personId }) => commonPersonIds.has(personId));
+    const visibleNodeIds = new Set<string>();
+    visibleRelationships.forEach(({ caseId, personId }) => {
+      visibleNodeIds.add(caseId);
+      visibleNodeIds.add(personId);
+    });
+
+    const nodes = dataset.graphData.nodes.filter(node => visibleNodeIds.has(node.id)).map(n => ({
         id: n.id,
         name: n.label || n.id,
         type: n.type,
-        risk: (n.metadata?.risk as string) || 'medium',
-        val: 10
-      })),
-      links: dataset.graphData.edges.map(e => ({
+        fx: undefined as number | undefined,
+        fy: undefined as number | undefined,
+      }));
+    const links = visibleRelationships.map(({ edge: e }) => ({
         source: e.source,
         target: e.target,
         type: e.relationship,
         weight: 1
-      }))
-    };
-  }, [dataset.graphData]);
+      }));
+
+    // Shared case networks read more clearly as stable components: cases above
+    // and their common resolved person below.
+    if (nodes.length <= 30) {
+      const adjacency = new Map(nodes.map(node => [node.id, [] as string[]]));
+      links.forEach(link => {
+        adjacency.get(link.source)?.push(link.target);
+        adjacency.get(link.target)?.push(link.source);
+      });
+      const remaining = new Set(nodes.map(node => node.id));
+      const components: string[][] = [];
+      while (remaining.size) {
+        const start = remaining.values().next().value as string;
+        const component: string[] = [];
+        const queue = [start];
+        remaining.delete(start);
+        while (queue.length) {
+          const current = queue.shift()!;
+          component.push(current);
+          for (const neighbor of adjacency.get(current) ?? []) {
+            if (remaining.delete(neighbor)) queue.push(neighbor);
+          }
+        }
+        components.push(component.sort());
+      }
+      components.sort((left, right) => left[0].localeCompare(right[0]));
+      const nodeById = new Map(nodes.map(node => [node.id, node]));
+      const layoutWidth = Math.max(320, Math.min(1000, dimensions.width * 0.82));
+      const componentWidth = layoutWidth / Math.max(1, components.length);
+      const positionRow = (ids: string[], centerX: number, y: number) => {
+        const spacing = Math.min(150, componentWidth / Math.max(2, ids.length));
+        ids.forEach((id, index) => {
+          const node = nodeById.get(id);
+          if (!node) return;
+          node.fx = centerX + (index - (ids.length - 1) / 2) * spacing;
+          node.fy = y;
+        });
+      };
+      components.forEach((component, index) => {
+        const centerX = -layoutWidth / 2 + componentWidth * (index + 0.5);
+        positionRow(component.filter(id => nodeById.get(id)?.type === 'case'), centerX, -120);
+        positionRow(component.filter(id => nodeById.get(id)?.type === 'person'), centerX, 80);
+      });
+    }
+
+    return { nodes, links };
+  }, [dataset.graphData, dimensions.width]);
 
   const [isLoading] = useState(false);
-  const fgRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   useEffect(() => {
     if (containerRef.current) {
@@ -55,8 +129,9 @@ export function GraphPage() {
     if (graphData.nodes.length > 0) {
       setTimeout(() => {
         if (fgRef.current) {
-          fgRef.current.d3Force('charge').strength(-400); // Stronger repulsion
-          fgRef.current.d3Force('link').distance(60); // Longer links
+          fgRef.current.d3Force('charge').strength(-800);
+          fgRef.current.d3Force('link').distance(130);
+          fgRef.current.d3ReheatSimulation();
         }
       }, 100);
     }
@@ -91,15 +166,12 @@ export function GraphPage() {
         <div className={`glass-panel ${styles.graphContainer}`}>
           <div className={styles.graphToolbar}>
             <div className={styles.legend}>
-              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#ef4444'}}></span> High Risk</span>
-              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#f59e0b'}}></span> Medium Risk</span>
-              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#10b981'}}></span> Low Risk</span>
+              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#f59e0b'}}></span> Case</span>
+              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#2563eb'}}></span> Common Person</span>
             </div>
             <div className={styles.filters}>
-              <select className={styles.filterSelect}>
-                <option>All Entities</option>
-                <option>Only People</option>
-                <option>Only Organizations</option>
+              <select className={styles.filterSelect} disabled aria-label="Graph scope">
+                <option>Shared Case Networks</option>
               </select>
             </div>
           </div>
@@ -107,17 +179,22 @@ export function GraphPage() {
           <div className={styles.canvasWrapper} ref={containerRef}>
             {isLoading ? (
               <div style={{ color: 'var(--text-muted)' }}>Loading network graph...</div>
+            ) : graphData.nodes.length === 0 ? (
+              <div className={styles.emptyState}>
+                No common person is linked to two or more cases yet.
+              </div>
             ) : (
               <ForceGraph2D
                 ref={fgRef}
                 graphData={graphData}
                 nodeLabel="name"
                 nodeRelSize={6}
-                linkColor={() => '#cbd5e1'}
-                linkWidth={link => ((link as any).weight || 1) * 1.5}
-                linkDirectionalArrowLength={3.5}
+                linkColor={() => '#64748b'}
+                linkWidth={link => ((link as any).weight || 1) * 2.5}
+                linkDirectionalArrowLength={5}
                 linkDirectionalArrowRelPos={1}
                 linkCurvature={0.1}
+                linkLabel={(link: any) => link.type || 'Relationship'}
                 onNodeClick={handleNodeClick}
                 width={dimensions.width}
                 height={dimensions.height}
@@ -126,14 +203,12 @@ export function GraphPage() {
                   const fontSize = 12 / globalScale;
                   ctx.font = `${fontSize}px Sans-Serif`;
                   
-                  // Calculate radius based on node val
-                  const val = node.val || 10;
-                  const r = Math.sqrt(val) * 2;
+                  const r = 7;
                   
                   // Draw circle
                   ctx.beginPath();
                   ctx.arc(node.x, node.y, r, 0, 2 * Math.PI, false);
-                  ctx.fillStyle = node.risk === 'high' ? '#ef4444' : node.risk === 'medium' ? '#f59e0b' : '#10b981';
+                  ctx.fillStyle = node.type === 'case' ? '#f59e0b' : '#2563eb';
                   ctx.fill();
                   
                   // Draw border
@@ -163,10 +238,10 @@ export function GraphPage() {
             <div className={styles.entityDetails}>
               <div className={styles.entityHeader}>
                 <div className={styles.avatar} style={{
-                  backgroundColor: selectedNode.risk === 'high' ? 'var(--danger-light)' : 'var(--bg-tertiary)',
-                  color: selectedNode.risk === 'high' ? 'var(--danger)' : 'var(--text-primary)'
+                  backgroundColor: selectedNode.type === 'case' ? '#fef3c7' : '#dbeafe',
+                  color: selectedNode.type === 'case' ? '#b45309' : '#1d4ed8'
                 }}>
-                  {selectedNode.type === 'person' ? '👤' : selectedNode.type === 'organization' ? '🏢' : '📍'}
+                  {selectedNode.type === 'person' ? '👤' : '📁'}
                 </div>
                 <div>
                   <h4>{selectedNode.name}</h4>
@@ -175,20 +250,9 @@ export function GraphPage() {
               </div>
               
               <div className={styles.detailSection}>
-                <h5>Risk Profile</h5>
-                <div className={styles.riskBadge} data-risk={selectedNode.risk}>
-                  {selectedNode.risk.toUpperCase()}
-                </div>
-              </div>
-
-              <div className={styles.detailSection}>
-                <h5>Network Influence</h5>
+                <h5>Relationship Summary</h5>
                 <div className={styles.metric}>
-                  <span>Centrality Score:</span>
-                  <strong>{selectedNode.val * 3.5}</strong>
-                </div>
-                <div className={styles.metric}>
-                  <span>Direct Connections:</span>
+                  <span>{selectedNode.type === 'person' ? 'Connected Cases:' : 'Connected Common People:'}</span>
                   <strong>
                     {graphData.links.filter((l: any) => 
                       l.source.id === selectedNode.id || l.target.id === selectedNode.id || 
@@ -197,17 +261,10 @@ export function GraphPage() {
                   </strong>
                 </div>
               </div>
-
-              {selectedNode.risk === 'high' && (
-                <div className={styles.alertBox}>
-                  <strong>Action Recommended</strong>
-                  <p>This entity acts as a central hub. Investigating this node could disrupt network operations.</p>
-                </div>
-              )}
             </div>
           ) : (
             <div className={styles.emptyState}>
-              <p>Select an entity from the graph to view its detailed profile, risk score, and network connections.</p>
+              <p>Select an entity from the graph to view its profile and shared-case connections.</p>
             </div>
           )}
         </div>
