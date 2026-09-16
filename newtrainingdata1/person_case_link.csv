@@ -1,0 +1,536 @@
+case_id,person_id,role
+CASE-030,P-0001,Suspect
+CASE-012,P-0001,Witness
+CASE-025,P-0001,Suspect
+CASE-018,P-0002,Suspect
+CASE-045,P-0003,Witness
+CASE-008,P-0004,Person of Interest
+CASE-011,P-0005,Victim
+CASE-019,P-0006,Witness
+CASE-041,P-0007,Person of Interest
+CASE-040,P-0007,Witness
+CASE-015,P-0008,Suspect
+CASE-032,P-0009,Person of Interest
+CASE-056,P-0009,Witness
+CASE-018,P-0010,Victim
+CASE-001,P-0010,Victim
+CASE-021,P-0011,Suspect
+CASE-060,P-0012,Witness
+CASE-037,P-0013,Person of Interest
+CASE-003,P-0014,Suspect
+CASE-050,P-0015,Witness
+CASE-026,P-0016,Witness
+CASE-053,P-0017,Witness
+CASE-007,P-0017,Suspect
+CASE-001,P-0018,Victim
+CASE-014,P-0019,Suspect
+CASE-042,P-0020,Person of Interest
+CASE-043,P-0021,Suspect
+CASE-055,P-0022,Victim
+CASE-037,P-0022,Suspect
+CASE-050,P-0023,Suspect
+CASE-012,P-0024,Person of Interest
+CASE-051,P-0024,Witness
+CASE-001,P-0025,Witness
+CASE-056,P-0025,Suspect
+CASE-034,P-0026,Suspect
+CASE-018,P-0027,Victim
+CASE-037,P-0028,Victim
+CASE-006,P-0029,Person of Interest
+CASE-040,P-0029,Victim
+CASE-059,P-0030,Victim
+CASE-008,P-0031,Suspect
+CASE-025,P-0031,Witness
+CASE-012,P-0032,Witness
+CASE-036,P-0033,Victim
+CASE-046,P-0033,Suspect
+CASE-035,P-0034,Suspect
+CASE-049,P-0035,Witness
+CASE-014,P-0036,Victim
+CASE-049,P-0036,Suspect
+CASE-048,P-0036,Person of Interest
+CASE-028,P-0037,Suspect
+CASE-023,P-0038,Witness
+CASE-054,P-0039,Suspect
+CASE-044,P-0040,Witness
+CASE-053,P-0040,Suspect
+CASE-052,P-0041,Victim
+CASE-057,P-0042,Suspect
+CASE-030,P-0043,Suspect
+CASE-006,P-0043,Person of Interest
+CASE-005,P-0044,Suspect
+CASE-045,P-0045,Suspect
+CASE-014,P-0046,Witness
+CASE-019,P-0047,Suspect
+CASE-060,P-0048,Suspect
+CASE-029,P-0049,Victim
+CASE-013,P-0050,Suspect
+CASE-015,P-0051,Person of Interest
+CASE-054,P-0051,Witness
+CASE-022,P-0052,Victim
+CASE-032,P-0053,Victim
+CASE-038,P-0053,Witness
+CASE-030,P-0054,Suspect
+CASE-051,P-0055,Suspect
+CASE-015,P-0056,Suspect
+CASE-031,P-0056,Suspect
+CASE-010,P-0057,Suspect
+CASE-023,P-0057,Person of Interest
+CASE-011,P-0058,Victim
+CASE-012,P-0059,Person of Interest
+CASE-043,P-0060,Victim
+CASE-008,P-0061,Suspect
+CASE-009,P-0062,Suspect
+CASE-014,P-0063,Witness
+CASE-021,P-0064,Person of Interest
+CASE-029,P-0065,Witness
+CASE-020,P-0066,Suspect
+CASE-060,P-0067,Witness
+CASE-030,P-0068,Person of Interest
+CASE-048,P-0069,Witness
+CASE-042,P-0070,Victim
+CASE-019,P-0071,Person of Interest
+CASE-037,P-0072,Suspect
+CASE-043,P-0072,Witness
+CASE-029,P-0073,Victim
+CASE-022,P-0073,Victim
+CASE-009,P-0074,Witness
+CASE-044,P-0074,Suspect
+CASE-054,P-0075,Suspect
+CASE-021,P-0076,Suspect
+CASE-038,P-0077,Witness
+CASE-050,P-0078,Suspect
+CASE-018,P-0078,Suspect
+CASE-044,P-0079,Person of Interest
+CASE-043,P-0079,Person of Interest
+CASE-032,P-0080,Suspect
+CASE-004,P-0081,Person of Interest
+CASE-010,P-0082,Victim
+CASE-025,P-0083,Suspect
+CASE-023,P-0084,Suspect
+CASE-036,P-0085,Suspect
+CASE-029,P-0086,Person of Interest
+CASE-048,P-0086,Person of Interest
+CASE-052,P-0087,Victim
+CASE-047,P-0088,Suspect
+CASE-058,P-0088,Person of Interest
+CASE-010,P-0089,Suspect
+CASE-056,P-0090,Witness
+CASE-060,P-0091,Person of Interest
+CASE-006,P-0092,Suspect
+CASE-001,P-0092,Person of Interest
+CASE-036,P-0093,Witness
+CASE-059,P-0094,Suspect
+CASE-025,P-0095,Suspect
+CASE-053,P-0096,Person of Interest
+CASE-020,P-0097,Witness
+CASE-032,P-0097,Witness
+CASE-001,P-0098,Suspect
+CASE-041,P-0099,Person of Interest
+CASE-042,P-0100,Victim
+CASE-012,P-0101,Witness
+CASE-016,P-0102,Suspect
+CASE-032,P-0103,Witness
+CASE-005,P-0103,Suspect
+CASE-028,P-0104,Person of Interest
+CASE-031,P-0105,Person of Interest
+CASE-024,P-0106,Victim
+CASE-033,P-0106,Suspect
+CASE-038,P-0107,Suspect
+CASE-057,P-0108,Victim
+CASE-004,P-0109,Suspect
+CASE-059,P-0110,Person of Interest
+CASE-019,P-0111,Witness
+CASE-033,P-0112,Witness
+CASE-013,P-0112,Victim
+CASE-050,P-0112,Witness
+CASE-021,P-0113,Person of Interest
+CASE-044,P-0114,Suspect
+CASE-052,P-0114,Victim
+CASE-007,P-0115,Witness
+CASE-010,P-0116,Suspect
+CASE-024,P-0117,Victim
+CASE-059,P-0118,Person of Interest
+CASE-010,P-0119,Witness
+CASE-051,P-0120,Witness
+CASE-058,P-0120,Victim
+CASE-055,P-0121,Witness
+CASE-035,P-0121,Victim
+CASE-046,P-0121,Suspect
+CASE-005,P-0122,Suspect
+CASE-002,P-0123,Witness
+CASE-024,P-0124,Suspect
+CASE-039,P-0125,Witness
+CASE-012,P-0126,Suspect
+CASE-046,P-0126,Person of Interest
+CASE-020,P-0126,Suspect
+CASE-010,P-0127,Suspect
+CASE-045,P-0127,Suspect
+CASE-006,P-0128,Suspect
+CASE-008,P-0129,Suspect
+CASE-005,P-0129,Witness
+CASE-013,P-0130,Suspect
+CASE-033,P-0131,Suspect
+CASE-038,P-0131,Suspect
+CASE-005,P-0132,Suspect
+CASE-007,P-0133,Victim
+CASE-014,P-0134,Suspect
+CASE-038,P-0134,Victim
+CASE-058,P-0134,Suspect
+CASE-048,P-0135,Person of Interest
+CASE-023,P-0136,Witness
+CASE-011,P-0136,Victim
+CASE-055,P-0136,Suspect
+CASE-007,P-0137,Person of Interest
+CASE-034,P-0138,Victim
+CASE-014,P-0138,Person of Interest
+CASE-049,P-0139,Witness
+CASE-007,P-0140,Person of Interest
+CASE-060,P-0140,Person of Interest
+CASE-014,P-0140,Witness
+CASE-012,P-0141,Suspect
+CASE-012,P-0142,Person of Interest
+CASE-054,P-0142,Suspect
+CASE-023,P-0142,Witness
+CASE-049,P-0143,Person of Interest
+CASE-008,P-0144,Witness
+CASE-024,P-0145,Victim
+CASE-003,P-0146,Suspect
+CASE-025,P-0147,Suspect
+CASE-020,P-0148,Victim
+CASE-015,P-0149,Suspect
+CASE-036,P-0149,Person of Interest
+CASE-055,P-0150,Suspect
+CASE-031,P-0151,Suspect
+CASE-044,P-0151,Suspect
+CASE-044,P-0152,Suspect
+CASE-043,P-0153,Victim
+CASE-026,P-0154,Suspect
+CASE-007,P-0155,Victim
+CASE-011,P-0156,Suspect
+CASE-005,P-0156,Suspect
+CASE-055,P-0157,Person of Interest
+CASE-054,P-0158,Suspect
+CASE-049,P-0159,Victim
+CASE-018,P-0160,Victim
+CASE-026,P-0161,Witness
+CASE-023,P-0161,Witness
+CASE-032,P-0162,Witness
+CASE-030,P-0163,Suspect
+CASE-032,P-0164,Suspect
+CASE-002,P-0165,Suspect
+CASE-007,P-0165,Suspect
+CASE-048,P-0165,Victim
+CASE-025,P-0166,Suspect
+CASE-039,P-0166,Suspect
+CASE-044,P-0166,Witness
+CASE-043,P-0167,Witness
+CASE-049,P-0167,Witness
+CASE-019,P-0168,Victim
+CASE-017,P-0169,Witness
+CASE-035,P-0170,Person of Interest
+CASE-002,P-0170,Suspect
+CASE-059,P-0171,Suspect
+CASE-055,P-0172,Suspect
+CASE-003,P-0173,Suspect
+CASE-050,P-0174,Suspect
+CASE-032,P-0175,Suspect
+CASE-028,P-0175,Victim
+CASE-008,P-0176,Witness
+CASE-036,P-0177,Victim
+CASE-031,P-0178,Witness
+CASE-004,P-0179,Suspect
+CASE-025,P-0180,Witness
+CASE-019,P-0181,Suspect
+CASE-003,P-0182,Suspect
+CASE-052,P-0183,Victim
+CASE-058,P-0184,Witness
+CASE-028,P-0185,Suspect
+CASE-023,P-0186,Suspect
+CASE-016,P-0187,Witness
+CASE-059,P-0188,Victim
+CASE-008,P-0189,Suspect
+CASE-022,P-0189,Witness
+CASE-043,P-0190,Person of Interest
+CASE-058,P-0191,Suspect
+CASE-031,P-0192,Witness
+CASE-025,P-0193,Witness
+CASE-037,P-0193,Person of Interest
+CASE-021,P-0193,Suspect
+CASE-022,P-0194,Witness
+CASE-043,P-0195,Suspect
+CASE-022,P-0195,Suspect
+CASE-013,P-0196,Person of Interest
+CASE-032,P-0196,Victim
+CASE-041,P-0196,Person of Interest
+CASE-019,P-0197,Suspect
+CASE-037,P-0198,Suspect
+CASE-048,P-0199,Person of Interest
+CASE-038,P-0200,Witness
+CASE-007,P-0200,Suspect
+CASE-034,P-0201,Witness
+CASE-051,P-0202,Suspect
+CASE-033,P-0203,Suspect
+CASE-052,P-0203,Victim
+CASE-027,P-0204,Suspect
+CASE-030,P-0205,Victim
+CASE-057,P-0206,Suspect
+CASE-056,P-0207,Witness
+CASE-012,P-0207,Suspect
+CASE-048,P-0208,Person of Interest
+CASE-030,P-0208,Witness
+CASE-018,P-0208,Witness
+CASE-028,P-0209,Witness
+CASE-060,P-0209,Witness
+CASE-024,P-0210,Witness
+CASE-048,P-0211,Victim
+CASE-028,P-0212,Suspect
+CASE-059,P-0213,Witness
+CASE-005,P-0213,Person of Interest
+CASE-019,P-0214,Witness
+CASE-039,P-0215,Suspect
+CASE-010,P-0216,Suspect
+CASE-053,P-0217,Suspect
+CASE-028,P-0218,Suspect
+CASE-013,P-0219,Suspect
+CASE-011,P-0219,Suspect
+CASE-018,P-0220,Witness
+CASE-043,P-0220,Witness
+CASE-047,P-0221,Witness
+CASE-056,P-0222,Person of Interest
+CASE-020,P-0223,Person of Interest
+CASE-027,P-0224,Suspect
+CASE-058,P-0224,Victim
+CASE-054,P-0225,Victim
+CASE-008,P-0226,Witness
+CASE-008,P-0227,Witness
+CASE-050,P-0228,Witness
+CASE-060,P-0228,Witness
+CASE-039,P-0229,Suspect
+CASE-022,P-0230,Witness
+CASE-054,P-0230,Suspect
+CASE-016,P-0231,Suspect
+CASE-060,P-0231,Suspect
+CASE-018,P-0232,Suspect
+CASE-038,P-0233,Suspect
+CASE-045,P-0234,Person of Interest
+CASE-028,P-0235,Witness
+CASE-018,P-0236,Person of Interest
+CASE-024,P-0237,Suspect
+CASE-031,P-0237,Suspect
+CASE-046,P-0237,Witness
+CASE-003,P-0238,Victim
+CASE-054,P-0238,Victim
+CASE-059,P-0239,Victim
+CASE-036,P-0240,Suspect
+CASE-045,P-0241,Suspect
+CASE-008,P-0242,Person of Interest
+CASE-035,P-0242,Person of Interest
+CASE-059,P-0243,Person of Interest
+CASE-059,P-0244,Suspect
+CASE-017,P-0244,Person of Interest
+CASE-020,P-0244,Suspect
+CASE-057,P-0245,Suspect
+CASE-021,P-0246,Person of Interest
+CASE-027,P-0247,Suspect
+CASE-051,P-0247,Person of Interest
+CASE-032,P-0248,Victim
+CASE-031,P-0248,Person of Interest
+CASE-028,P-0249,Person of Interest
+CASE-053,P-0250,Victim
+CASE-011,P-0250,Witness
+CASE-039,P-0251,Victim
+CASE-021,P-0252,Witness
+CASE-004,P-0253,Witness
+CASE-029,P-0254,Victim
+CASE-026,P-0255,Suspect
+CASE-037,P-0256,Suspect
+CASE-034,P-0257,Victim
+CASE-042,P-0258,Suspect
+CASE-049,P-0258,Witness
+CASE-021,P-0259,Witness
+CASE-009,P-0260,Suspect
+CASE-017,P-0260,Witness
+CASE-019,P-0261,Suspect
+CASE-012,P-0262,Suspect
+CASE-054,P-0263,Person of Interest
+CASE-002,P-0264,Person of Interest
+CASE-041,P-0265,Suspect
+CASE-030,P-0266,Suspect
+CASE-011,P-0267,Suspect
+CASE-004,P-0267,Suspect
+CASE-006,P-0268,Person of Interest
+CASE-037,P-0269,Suspect
+CASE-028,P-0270,Person of Interest
+CASE-050,P-0270,Witness
+CASE-008,P-0271,Suspect
+CASE-056,P-0272,Person of Interest
+CASE-048,P-0273,Witness
+CASE-055,P-0274,Suspect
+CASE-053,P-0275,Suspect
+CASE-027,P-0276,Suspect
+CASE-002,P-0277,Person of Interest
+CASE-019,P-0277,Suspect
+CASE-016,P-0278,Suspect
+CASE-030,P-0279,Suspect
+CASE-056,P-0280,Suspect
+CASE-044,P-0281,Suspect
+CASE-028,P-0282,Victim
+CASE-007,P-0283,Witness
+CASE-060,P-0284,Suspect
+CASE-039,P-0285,Person of Interest
+CASE-043,P-0285,Witness
+CASE-003,P-0286,Suspect
+CASE-001,P-0286,Witness
+CASE-026,P-0287,Victim
+CASE-058,P-0288,Witness
+CASE-017,P-0289,Suspect
+CASE-022,P-0290,Person of Interest
+CASE-021,P-0291,Victim
+CASE-017,P-0292,Suspect
+CASE-009,P-0293,Witness
+CASE-018,P-0294,Person of Interest
+CASE-048,P-0294,Suspect
+CASE-024,P-0294,Person of Interest
+CASE-049,P-0295,Person of Interest
+CASE-028,P-0296,Person of Interest
+CASE-032,P-0297,Victim
+CASE-055,P-0298,Person of Interest
+CASE-029,P-0299,Suspect
+CASE-015,P-0300,Suspect
+CASE-011,P-0301,Victim
+CASE-058,P-0302,Person of Interest
+CASE-023,P-0303,Person of Interest
+CASE-030,P-0304,Witness
+CASE-056,P-0305,Suspect
+CASE-010,P-0305,Suspect
+CASE-012,P-0306,Suspect
+CASE-054,P-0306,Witness
+CASE-058,P-0307,Victim
+CASE-001,P-0308,Witness
+CASE-027,P-0309,Person of Interest
+CASE-032,P-0310,Victim
+CASE-002,P-0311,Victim
+CASE-019,P-0311,Victim
+CASE-038,P-0312,Person of Interest
+CASE-021,P-0313,Suspect
+CASE-054,P-0314,Victim
+CASE-041,P-0315,Person of Interest
+CASE-001,P-0316,Suspect
+CASE-040,P-0317,Person of Interest
+CASE-047,P-0318,Person of Interest
+CASE-052,P-0319,Suspect
+CASE-037,P-0319,Person of Interest
+CASE-019,P-0320,Victim
+CASE-021,P-0320,Victim
+CASE-039,P-0321,Suspect
+CASE-012,P-0322,Suspect
+CASE-026,P-0323,Suspect
+CASE-006,P-0323,Suspect
+CASE-026,P-0324,Suspect
+CASE-042,P-0325,Suspect
+CASE-010,P-0325,Witness
+CASE-052,P-0326,Person of Interest
+CASE-039,P-0327,Suspect
+CASE-009,P-0327,Suspect
+CASE-013,P-0328,Witness
+CASE-031,P-0329,Witness
+CASE-018,P-0329,Suspect
+CASE-052,P-0330,Witness
+CASE-024,P-0330,Suspect
+CASE-003,P-0331,Witness
+CASE-044,P-0332,Victim
+CASE-015,P-0332,Suspect
+CASE-042,P-0332,Witness
+CASE-034,P-0333,Suspect
+CASE-006,P-0334,Person of Interest
+CASE-010,P-0335,Person of Interest
+CASE-020,P-0336,Person of Interest
+CASE-019,P-0337,Witness
+CASE-059,P-0338,Suspect
+CASE-028,P-0339,Suspect
+CASE-047,P-0340,Witness
+CASE-017,P-0341,Witness
+CASE-002,P-0342,Victim
+CASE-008,P-0342,Witness
+CASE-054,P-0343,Suspect
+CASE-026,P-0343,Suspect
+CASE-021,P-0344,Victim
+CASE-038,P-0344,Victim
+CASE-052,P-0345,Suspect
+CASE-056,P-0346,Suspect
+CASE-052,P-0346,Suspect
+CASE-012,P-0346,Person of Interest
+CASE-044,P-0347,Suspect
+CASE-001,P-0348,Suspect
+CASE-042,P-0349,Witness
+CASE-056,P-0350,Victim
+CASE-047,P-0351,Suspect
+CASE-032,P-0351,Person of Interest
+CASE-045,P-0352,Victim
+CASE-026,P-0353,Person of Interest
+CASE-009,P-0354,Suspect
+CASE-002,P-0355,Victim
+CASE-002,P-0356,Suspect
+CASE-042,P-0357,Suspect
+CASE-055,P-0358,Witness
+CASE-051,P-0358,Suspect
+CASE-010,P-0359,Suspect
+CASE-031,P-0359,Suspect
+CASE-048,P-0360,Suspect
+CASE-045,P-0360,Witness
+CASE-029,P-0361,Witness
+CASE-037,P-0362,Person of Interest
+CASE-022,P-0363,Suspect
+CASE-046,P-0364,Suspect
+CASE-032,P-0365,Victim
+CASE-036,P-0366,Person of Interest
+CASE-026,P-0367,Witness
+CASE-040,P-0368,Person of Interest
+CASE-056,P-0369,Suspect
+CASE-032,P-0369,Suspect
+CASE-037,P-0370,Suspect
+CASE-058,P-0371,Witness
+CASE-008,P-0372,Witness
+CASE-032,P-0372,Witness
+CASE-028,P-0373,Suspect
+CASE-013,P-0374,Witness
+CASE-033,P-0375,Suspect
+CASE-022,P-0376,Witness
+CASE-059,P-0376,Person of Interest
+CASE-009,P-0377,Person of Interest
+CASE-025,P-0378,Person of Interest
+CASE-027,P-0378,Victim
+CASE-051,P-0379,Victim
+CASE-031,P-0379,Person of Interest
+CASE-019,P-0380,Victim
+CASE-031,P-0381,Suspect
+CASE-039,P-0382,Witness
+CASE-032,P-0383,Suspect
+CASE-020,P-0383,Witness
+CASE-023,P-0384,Suspect
+CASE-057,P-0384,Suspect
+CASE-017,P-0384,Person of Interest
+CASE-003,P-0385,Suspect
+CASE-052,P-0385,Suspect
+CASE-008,P-0386,Witness
+CASE-022,P-0387,Victim
+CASE-050,P-0388,Witness
+CASE-057,P-0388,Person of Interest
+CASE-056,P-0389,Witness
+CASE-033,P-0389,Suspect
+CASE-029,P-0390,Victim
+CASE-049,P-0391,Victim
+CASE-008,P-0391,Witness
+CASE-007,P-0391,Person of Interest
+CASE-036,P-0392,Suspect
+CASE-041,P-0393,Suspect
+CASE-024,P-0394,Suspect
+CASE-029,P-0395,Victim
+CASE-056,P-0396,Suspect
+CASE-022,P-0397,Person of Interest
+CASE-013,P-0398,Suspect
+CASE-050,P-0399,Suspect
+CASE-031,P-0400,Suspect
+CASE-022,P-0400,Suspect
+CASE-046,P-0401,Victim

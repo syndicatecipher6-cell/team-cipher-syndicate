@@ -1,0 +1,61 @@
+case_id,fir_number,crime_type,district,state,status
+CASE-001,FIR/CHE/2023/383,Financial Fraud,Chennai,Tamil Nadu,Chargesheet Filed
+CASE-002,FIR/JOD/2024/161,Extortion,Jodhpur,Rajasthan,Closed
+CASE-003,FIR/CHE/2024/171,Drug Trafficking,Chennai,Tamil Nadu,Under Investigation
+CASE-004,FIR/BHO/2024/282,Drug Trafficking,Bhopal,Madhya Pradesh,Open
+CASE-005,FIR/MYS/2025/887,Money Laundering,Mysuru,Karnataka,Under Investigation
+CASE-006,FIR/BHO/2025/208,Drug Trafficking,Bhopal,Madhya Pradesh,Closed
+CASE-007,FIR/BEN/2023/174,Kidnapping,Bengaluru Urban,Karnataka,Cold Case
+CASE-008,FIR/WAR/2024/119,Drug Trafficking,Warangal,Telangana,Under Investigation
+CASE-009,FIR/PUN/2023/780,Money Laundering,Pune,Maharashtra,Closed
+CASE-010,FIR/MYS/2025/437,Money Laundering,Mysuru,Karnataka,Cold Case
+CASE-011,FIR/PUN/2025/824,Drug Trafficking,Pune,Maharashtra,Chargesheet Filed
+CASE-012,FIR/LUC/2024/964,Kidnapping,Lucknow,Uttar Pradesh,Cold Case
+CASE-013,FIR/HYD/2023/493,Drug Trafficking,Hyderabad,Telangana,Open
+CASE-014,FIR/CHA/2025/467,Human Trafficking,Chandigarh,Punjab,Closed
+CASE-015,FIR/JOD/2023/747,Kidnapping,Jodhpur,Rajasthan,Closed
+CASE-016,FIR/NEW/2024/182,Drug Trafficking,New Delhi,Delhi,Closed
+CASE-017,FIR/COI/2023/667,Financial Fraud,Coimbatore,Tamil Nadu,Chargesheet Filed
+CASE-018,FIR/COI/2024/812,Money Laundering,Coimbatore,Tamil Nadu,Open
+CASE-019,FIR/JAI/2024/186,Drug Trafficking,Jaipur,Rajasthan,Under Investigation
+CASE-020,FIR/MYS/2023/297,Financial Fraud,Mysuru,Karnataka,Cold Case
+CASE-021,FIR/HYD/2024/498,Kidnapping,Hyderabad,Telangana,Cold Case
+CASE-022,FIR/AHM/2024/646,Drug Trafficking,Ahmedabad,Gujarat,Open
+CASE-023,FIR/MUM/2024/157,Human Trafficking,Mumbai,Maharashtra,Open
+CASE-024,FIR/JOD/2023/316,Arms Dealing,Jodhpur,Rajasthan,Chargesheet Filed
+CASE-025,FIR/NEW/2023/858,Terror Financing,New Delhi,Delhi,Under Investigation
+CASE-026,FIR/NAG/2023/853,Smuggling,Nagpur,Maharashtra,Chargesheet Filed
+CASE-027,FIR/PUN/2024/733,Financial Fraud,Pune,Maharashtra,Under Investigation
+CASE-028,FIR/MYS/2023/276,Financial Fraud,Mysuru,Karnataka,Closed
+CASE-029,FIR/BEN/2024/725,Smuggling,Bengaluru Urban,Karnataka,Cold Case
+CASE-030,FIR/NAG/2023/216,Drug Trafficking,Nagpur,Maharashtra,Cold Case
+CASE-031,FIR/BHO/2023/164,Cybercrime,Bhopal,Madhya Pradesh,Chargesheet Filed
+CASE-032,FIR/SUR/2025/794,Money Laundering,Surat,Gujarat,Closed
+CASE-033,FIR/BEN/2025/689,Arms Dealing,Bengaluru Urban,Karnataka,Under Investigation
+CASE-034,FIR/SUR/2023/882,Financial Fraud,Surat,Gujarat,Cold Case
+CASE-035,FIR/CHE/2024/164,Kidnapping,Chennai,Tamil Nadu,Closed
+CASE-036,FIR/MYS/2024/272,Human Trafficking,Mysuru,Karnataka,Cold Case
+CASE-037,FIR/CHE/2024/349,Terror Financing,Chennai,Tamil Nadu,Open
+CASE-038,FIR/MYS/2023/910,Terror Financing,Mysuru,Karnataka,Chargesheet Filed
+CASE-039,FIR/CHE/2023/598,Kidnapping,Chennai,Tamil Nadu,Open
+CASE-040,FIR/PUN/2023/191,Terror Financing,Pune,Maharashtra,Closed
+CASE-041,FIR/LUC/2025/926,Drug Trafficking,Lucknow,Uttar Pradesh,Under Investigation
+CASE-042,FIR/COI/2023/755,Extortion,Coimbatore,Tamil Nadu,Cold Case
+CASE-043,FIR/KAN/2024/344,Smuggling,Kanpur,Uttar Pradesh,Cold Case
+CASE-044,FIR/MUM/2025/284,Drug Trafficking,Mumbai,Maharashtra,Cold Case
+CASE-045,FIR/NAG/2025/946,Extortion,Nagpur,Maharashtra,Closed
+CASE-046,FIR/LUC/2023/671,Cybercrime,Lucknow,Uttar Pradesh,Under Investigation
+CASE-047,FIR/BEN/2025/197,Terror Financing,Bengaluru Urban,Karnataka,Closed
+CASE-048,FIR/NEW/2025/324,Drug Trafficking,New Delhi,Delhi,Under Investigation
+CASE-049,FIR/WAR/2023/298,Kidnapping,Warangal,Telangana,Under Investigation
+CASE-050,FIR/PAT/2024/280,Smuggling,Patna,Bihar,Open
+CASE-051,FIR/MUM/2025/472,Extortion,Mumbai,Maharashtra,Under Investigation
+CASE-052,FIR/LUC/2024/442,Terror Financing,Lucknow,Uttar Pradesh,Chargesheet Filed
+CASE-053,FIR/MUM/2023/858,Financial Fraud,Mumbai,Maharashtra,Cold Case
+CASE-054,FIR/CHE/2023/904,Financial Fraud,Chennai,Tamil Nadu,Chargesheet Filed
+CASE-055,FIR/KOL/2023/172,Cybercrime,Kolkata,West Bengal,Chargesheet Filed
+CASE-056,FIR/CHA/2025/433,Money Laundering,Chandigarh,Punjab,Under Investigation
+CASE-057,FIR/SUR/2023/897,Kidnapping,Surat,Gujarat,Closed
+CASE-058,FIR/HYD/2023/342,Money Laundering,Hyderabad,Telangana,Under Investigation
+CASE-059,FIR/JOD/2023/175,Drug Trafficking,Jodhpur,Rajasthan,Cold Case
+CASE-060,FIR/PAT/2023/546,Smuggling,Patna,Bihar,Under Investigation
