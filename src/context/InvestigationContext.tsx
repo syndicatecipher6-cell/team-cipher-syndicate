@@ -27,6 +27,8 @@ interface InvestigationContextType {
 const InvestigationContext = createContext<InvestigationContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'nexusnet_investigation_state_v2';
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const SUPPORTED_UPLOAD_EXTENSIONS = new Set(['csv', 'json', 'pdf', 'txt']);
 
 function arrayOrEmpty<T>(value: unknown): T[] {
   return Array.isArray(value) ? value as T[] : [];
@@ -173,19 +175,28 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
       const jobId = `JOB-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const ext = file.name.split('.').pop()?.toLowerCase() || 'text';
       const fileType = ext === 'csv' ? 'csv' : ext === 'json' ? 'json' : ext === 'pdf' ? 'pdf' : 'text';
+      const validationError = !SUPPORTED_UPLOAD_EXTENSIONS.has(ext)
+        ? 'Unsupported file type. Upload CSV, JSON, PDF, or TXT files.'
+        : file.size === 0
+          ? 'The selected file is empty.'
+          : file.size > MAX_UPLOAD_BYTES
+            ? 'File exceeds the 25 MB upload limit.'
+            : '';
 
       const initialJob: PipelineJob = {
         id: jobId,
         fileName: file.name,
         fileType,
-        status: 'processing',
-        progress: 20,
+        status: validationError ? 'failed' : 'processing',
+        progress: validationError ? 100 : 20,
         fileSize: `${(file.size / 1024).toFixed(1)} KB`,
-        stageMessage: 'Parsing schema & headers...',
+        stageMessage: validationError || 'Parsing schema & headers...',
+        errorMessage: validationError || undefined,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setPipelineJobs((prev) => [initialJob, ...prev]);
+      if (validationError) continue;
 
       try {
         const text = await file.text();

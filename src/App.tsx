@@ -15,14 +15,19 @@ import { PersonPage } from './pages/PersonPage';
 import { RetrievalPage } from './pages/RetrievalPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TimelinePage } from './pages/TimelinePage';
+import { hasValidDemoSession } from './security/demoSession';
+
+function ProtectedWorkspace() {
+  return hasValidDemoSession() ? <AppShell /> : <Navigate to="/login" replace />;
+}
 
 export default function App() {
   return (
     <InvestigationProvider>
       <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route element={<AppShell />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route element={<ProtectedWorkspace />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/ingestion" element={<DataIngestionPage />} />
           <Route path="/entities" element={<EntitiesIdentitiesPage />} />
