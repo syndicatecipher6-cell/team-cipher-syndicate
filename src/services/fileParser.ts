@@ -217,13 +217,36 @@ function sentenceContaining(text: string, value: string): string {
 
 function extractPeopleFromText(text: string): ExtractedTextPerson[] {
   const name = String.raw`[\p{L}][\p{L}'-]*(?:\s+[\p{L}][\p{L}'-]*){1,3}`;
+  const properName = String.raw`[\p{Lu}][\p{L}'-]*(?:\s+[\p{Lu}][\p{L}'-]*){1,3}`;
   const title = String.raw`(?:(?:mr|mrs|ms|miss|dr|shri|smt)\.?\s+)?`;
   const role = String.raw`(suspect|accused|witness|victim|person\s+of\s+interest)`;
   const matches: Array<{ name: string; role: string }> = [];
+  const nonPersonTerms = new Set([
+    'case narrative',
+    'crime branch',
+    'economic offences wing',
+    'police station',
+    'singhania exports',
+    'mahindra scorpio',
+    'hyundai creta',
+    'tata 407',
+    'existing mumbai network',
+  ]);
+  const isPlausibleName = (value: string) => {
+    const cleaned = value.trim().replace(/\s+/g, ' ');
+    const words = cleaned.split(' ');
+    if (words.length < 2 || words.length > 4) return false;
+    if (!words.every((word) => /^\p{Lu}[\p{L}'-]*$/u.test(word))) return false;
+    return !nonPersonTerms.has(normalizePersonName(cleaned));
+  };
+  const addMatch = (candidate: string, matchedRole = 'person of interest') => {
+    const cleaned = candidate.trim().replace(/[’']s$/i, '').replace(/\s+/g, ' ');
+    if (isPlausibleName(cleaned)) matches.push({ name: cleaned, role: matchedRole });
+  };
   const collect = (pattern: RegExp, nameGroup: number, roleGroup: number) => {
     for (const match of text.matchAll(pattern)) {
       if (match[nameGroup] && match[roleGroup]) {
-        matches.push({ name: match[nameGroup].trim().replace(/\s+/g, ' '), role: match[roleGroup] });
+        addMatch(match[nameGroup], match[roleGroup]);
       }
     }
   };
@@ -232,6 +255,36 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
   collect(new RegExp(String.raw`\b${title}(${name})\s+(?:is|was)\s+(?:the\s+)?(?:primary\s+|main\s+)?${role}\b`, 'giu'), 1, 2);
   collect(new RegExp(String.raw`\b${role}\s+(?:named\s+|identified\s+as\s+)?${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|used|uses|resides|residing|with)\b|$)`, 'giu'), 2, 1);
   collect(new RegExp(String.raw`\b${role}\s*(?:name\s*)?(?:is|was|named)?\s*[:\-]\s*${title}(${name})(?=[,.;\n]|$)`, 'giu'), 2, 1);
+
+  // Narrative FIRs often identify people without an explicit role label. Only
+  // use affirmative sentences and strong person-introduction contexts so a
+  // negative statement such as "no connection with X" does not create a link.
+  const sentences = text.split(/(?<=[.!?])\s+|\n+/).map((sentence) => sentence.trim()).filter(Boolean);
+  const negativeRelationship = /\b(?:no\s+(?:known\s+|direct\s+|shared\s+)?(?:financial\s+)?(?:connection|transaction|communication|relationship|overlap)|(?:do|does|did)\s+not\s+(?:initially\s+)?(?:appear|establish)|not\s+(?:been\s+)?established|unrelated)\b/i;
+  sentences.forEach((sentence) => {
+    if (negativeRelationship.test(sentence)) return;
+
+    const patterns = [
+      new RegExp(String.raw`\b(?:[Ii]nvestigators?|[Oo]fficers?|[Rr]ecords?|[Aa]nalysis|[Rr]eview|[Aa]ctivity|[Tt]ransfers?|[Tt]ransactions?)\s+(?:also\s+|therefore\s+)?(?:identified|identify|involved|involving|referenced)\s+(?:the\s+registered\s+(?:owner|user|operator)\s+as\s+)?(${properName})(?=,|\s+(?:as|through|in|during|who|whose|already|previously|from|to|and)\b|$)`, 'gu'),
+      new RegExp(String.raw`\b(?:[Ii]dentified|[Ii]nvolving|[Ii]nvolved|[Rr]egistered\s+to|[Rr]egistered\s+owner\s+as|[Aa]ccount\s+registered\s+to|[Aa]ssociated\s+with|[Cc]ontact\s+with|[Ll]inked\s+to|[Rr]eferenced)\s+(${properName})(?=,|\s+(?:as|through|in|during|who|whose|already|previously|from|to|and|was|is|had|has)\b|$)`, 'gu'),
+      new RegExp(String.raw`\b(${properName}),\s*(?:resident\s+of|previously\s+(?:identified|referenced)|already\s+(?:connected|listed|referenced)|who\s+(?:appears|is|was|has|had))\b`, 'gu'),
+      new RegExp(String.raw`\b(${properName})\s+(?:was|is)\s+(?:previously\s+|already\s+)?(?:identified|associated|listed|observed|connected|registered|referenced)\b`, 'gu'),
+      new RegExp(String.raw`\b(?:between|from)\s+(${properName})\s+(?:and|to)\s+(${properName})(?=[,.;]|\s|$)`, 'gu'),
+      new RegExp(String.raw`\b(${properName})\s+and\s+(${properName})\s+as\s+parties\b`, 'gu'),
+      new RegExp(String.raw`\b(${properName})\s+(?:had|has|was|is)\s+(?:earlier\s+|previously\s+)?(?:communicated|exchanged|transferred|connected|linked|appeared|received|made|recorded)\b`, 'gu'),
+      new RegExp(String.raw`\b(?:with|to|from|through)\s+(${properName})(?:'s)?(?=[,.;]|\s|$)`, 'gu'),
+      new RegExp(String.raw`\b(?:involving|linking|connecting)\s+(${properName})(?=,)\s*,\s*(${properName})(?=\s+and\s+)\s+and\s+(${properName})(?=[,.;]|$)`, 'gu'),
+      new RegExp(String.raw`\b(?:involving|linking|connecting)\s+(${properName})(?=\s+and\s+)\s+and\s+(${properName})(?=[,.;]|$)`, 'gu'),
+    ];
+
+    patterns.forEach((pattern) => {
+      for (const match of sentence.matchAll(pattern)) {
+        addMatch(match[1]);
+        if (match[2]) addMatch(match[2]);
+        if (match[3]) addMatch(match[3]);
+      }
+    });
+  });
 
   const resolved = new Map<string, ExtractedTextPerson>();
   matches.forEach((match) => {
@@ -713,13 +766,14 @@ export function ingestFileContent(
       });
     }
   } else if (lowerName.endsWith('.txt')) {
-    const caseMatch = content.match(/\bCASE[\s:#-]*(\d{1,12})\b/i)
-      ?? fileName.match(/\bCASE[\s_-]*(\d{1,12})\b/i);
-    const firMatch = content.match(/\bFIR(?:\s*(?:NO\.?|NUMBER))?[\s:#/-]*([A-Z0-9][A-Z0-9/-]{1,30})/i);
+    const caseMatch = content.match(/^\s*(?:CASE|FIR)\s*[:#-]?\s*(\d{1,12})\b/im)
+      ?? fileName.match(/\b(?:CASE|FIR)[\s_-]*(\d{1,12})\b/i);
+    const firMatch = content.match(/^\s*FIR\s*(?:NO\.?|NUMBER)\s*:\s*([^\r\n]+)/im)
+      ?? content.match(/\bFIR(?:\s*(?:NO\.?|NUMBER))?[\s:#/-]*([A-Z0-9][A-Z0-9/-]{1,30})/i);
     const caseId = caseMatch
-      ? `CASE-${caseMatch[1]}`
+      ? `CASE-${caseMatch[1].padStart(3, '0')}`
       : `CASE-TXT-${stableId(`${fileName}:${content.slice(0, 160)}`)}`;
-    const firNumber = firMatch?.[0].trim() || `FIR/${fileName.replace(/\.[^/.]+$/, '')}`;
+    const firNumber = firMatch?.[1]?.trim() || firMatch?.[0]?.trim() || `FIR/${fileName.replace(/\.[^/.]+$/, '')}`;
     const crimeType = /financial|bank|transaction|fraud/i.test(content)
       ? 'Financial Fraud'
       : /cyber|online|phishing|digital/i.test(content)
