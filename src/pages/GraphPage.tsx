@@ -11,8 +11,10 @@ export function GraphPage() {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   
   const graphData = useMemo(() => {
-    const entityById = new Map(dataset.graphData.nodes.map(node => [node.id, node]));
-    const directCasePersonEdges = dataset.graphData.edges.flatMap(edge => {
+    const datasetNodes = Array.isArray(dataset.graphData?.nodes) ? dataset.graphData.nodes : [];
+    const datasetEdges = Array.isArray(dataset.graphData?.edges) ? dataset.graphData.edges : [];
+    const entityById = new Map(datasetNodes.map(node => [node.id, node]));
+    const directCasePersonEdges = datasetEdges.flatMap(edge => {
       const source = entityById.get(edge.source);
       const target = entityById.get(edge.target);
       if (source?.type === 'case' && target?.type === 'person') {
@@ -41,7 +43,7 @@ export function GraphPage() {
       visibleNodeIds.add(personId);
     });
 
-    const nodes = dataset.graphData.nodes.filter(node => visibleNodeIds.has(node.id)).map(n => ({
+    const nodes = datasetNodes.filter(node => visibleNodeIds.has(node.id)).map(n => ({
         id: n.id,
         name: n.label || n.id,
         type: n.type,

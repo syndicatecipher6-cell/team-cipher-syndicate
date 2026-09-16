@@ -28,6 +28,53 @@ const InvestigationContext = createContext<InvestigationContextType | undefined>
 
 const STORAGE_KEY = 'nexusnet_investigation_state_v2';
 
+function arrayOrEmpty<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value as T[] : [];
+}
+
+function restoreStoredDataset(value: unknown): ParsedDataset | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const stored = value as Partial<ParsedDataset> & {
+    graphData?: { nodes?: unknown; edges?: unknown };
+    stats?: Partial<ParsedDataset['stats']>;
+  };
+  const empty = createEmptyDataset();
+  const nodes = arrayOrEmpty<ParsedDataset['graphData']['nodes'][number]>(stored.graphData?.nodes)
+    .filter((node) => node && typeof node.id === 'string' && typeof node.type === 'string');
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const edges = arrayOrEmpty<ParsedDataset['graphData']['edges'][number]>(stored.graphData?.edges)
+    .map((edge) => {
+      const source = typeof edge?.source === 'string'
+        ? edge.source
+        : (edge?.source as unknown as { id?: unknown })?.id;
+      const target = typeof edge?.target === 'string'
+        ? edge.target
+        : (edge?.target as unknown as { id?: unknown })?.id;
+      return typeof source === 'string' && typeof target === 'string'
+        ? { ...edge, source, target }
+        : null;
+    })
+    .filter((edge): edge is ParsedDataset['graphData']['edges'][number] =>
+      edge !== null && nodeIds.has(edge.source) && nodeIds.has(edge.target)
+    );
+
+  return {
+    cases: arrayOrEmpty(stored.cases),
+    persons: arrayOrEmpty(stored.persons),
+    phones: arrayOrEmpty(stored.phones),
+    vehicles: arrayOrEmpty(stored.vehicles),
+    accounts: arrayOrEmpty(stored.accounts),
+    transactions: arrayOrEmpty(stored.transactions),
+    timelineEvents: arrayOrEmpty(stored.timelineEvents),
+    graphData: { nodes, edges },
+    evidence: arrayOrEmpty(stored.evidence),
+    searchResults: arrayOrEmpty(stored.searchResults),
+    alerts: arrayOrEmpty(stored.alerts),
+    stats: { ...empty.stats, ...(stored.stats ?? {}) },
+  };
+}
+
 export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Always start clean: zero mock data on initial load
   const [dataset, setDataset] = useState<ParsedDataset>(() => {
@@ -36,17 +83,19 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.isDataLoaded && parsed.dataset) {
+          const restoredDataset = restoreStoredDataset(parsed.dataset);
+          if (!restoredDataset) throw new Error('Invalid stored investigation data');
           // Sync with mockData storage
           setActiveDataset({
-            cases: parsed.dataset.cases,
-            persons: parsed.dataset.persons,
-            graphData: parsed.dataset.graphData,
-            evidence: parsed.dataset.evidence,
-            timelineEvents: parsed.dataset.timelineEvents,
-            searchResults: parsed.dataset.searchResults,
-            stats: parsed.dataset.stats,
+            cases: restoredDataset.cases,
+            persons: restoredDataset.persons,
+            graphData: restoredDataset.graphData,
+            evidence: restoredDataset.evidence,
+            timelineEvents: restoredDataset.timelineEvents,
+            searchResults: restoredDataset.searchResults,
+            stats: restoredDataset.stats,
           });
-          return parsed.dataset;
+          return restoredDataset;
         }
       }
     } catch {
