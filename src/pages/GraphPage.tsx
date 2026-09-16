@@ -47,6 +47,8 @@ export function GraphPage() {
         id: n.id,
         name: n.label || n.id,
         type: n.type,
+        x: undefined as number | undefined,
+        y: undefined as number | undefined,
         fx: undefined as number | undefined,
         fy: undefined as number | undefined,
       }));
@@ -86,18 +88,21 @@ export function GraphPage() {
       const layoutWidth = Math.max(320, Math.min(1000, dimensions.width * 0.82));
       const componentWidth = layoutWidth / Math.max(1, components.length);
       const positionRow = (ids: string[], centerX: number, y: number) => {
-        const spacing = Math.min(150, componentWidth / Math.max(2, ids.length));
+        const spacing = Math.min(180, componentWidth / Math.max(1.6, ids.length));
         ids.forEach((id, index) => {
           const node = nodeById.get(id);
           if (!node) return;
-          node.fx = centerX + (index - (ids.length - 1) / 2) * spacing;
+          const x = centerX + (index - (ids.length - 1) / 2) * spacing;
+          node.x = x;
+          node.y = y;
+          node.fx = x;
           node.fy = y;
         });
       };
       components.forEach((component, index) => {
         const centerX = -layoutWidth / 2 + componentWidth * (index + 0.5);
-        positionRow(component.filter(id => nodeById.get(id)?.type === 'case'), centerX, -120);
-        positionRow(component.filter(id => nodeById.get(id)?.type === 'person'), centerX, 80);
+        positionRow(component.filter(id => nodeById.get(id)?.type === 'case'), centerX, -70);
+        positionRow(component.filter(id => nodeById.get(id)?.type === 'person'), centerX, 95);
       });
     }
 
@@ -134,6 +139,9 @@ export function GraphPage() {
           fgRef.current.d3Force('charge').strength(-800);
           fgRef.current.d3Force('link').distance(130);
           fgRef.current.d3ReheatSimulation();
+          fgRef.current.zoomToFit(0, 110);
+          const fittedZoom = fgRef.current.zoom();
+          if (fittedZoom > 1.15) fgRef.current.zoom(1.15, 0);
         }
       }, 100);
     }
@@ -190,43 +198,72 @@ export function GraphPage() {
                 ref={fgRef}
                 graphData={graphData}
                 nodeLabel="name"
-                nodeRelSize={6}
-                linkColor={() => '#64748b'}
-                linkWidth={link => ((link as any).weight || 1) * 2.5}
-                linkDirectionalArrowLength={5}
+                nodeRelSize={14}
+                linkColor={() => '#718096'}
+                linkWidth={link => ((link as any).weight || 1) * 2}
+                linkDirectionalArrowLength={6}
                 linkDirectionalArrowRelPos={1}
-                linkCurvature={0.1}
+                linkCurvature={0.06}
                 linkLabel={(link: any) => link.type || 'Relationship'}
                 onNodeClick={handleNodeClick}
                 width={dimensions.width}
                 height={dimensions.height}
                 nodeCanvasObject={(node: any, ctx, globalScale) => {
                   const label = node.name || 'Unknown';
-                  const fontSize = 12 / globalScale;
-                  ctx.font = `${fontSize}px Sans-Serif`;
+                  const fontSize = 12.5 / globalScale;
+                  ctx.font = `600 ${fontSize}px Inter, Sans-Serif`;
                   
-                  const r = 7;
+                  const isCase = node.type === 'case';
+                  const isSelected = selectedNode?.id === node.id;
+                  const r = (isCase ? 9 : 10) / Math.max(0.82, Math.min(1.08, globalScale));
+
+                  if (isSelected) {
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, r + 5 / globalScale, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = isCase ? 'rgba(245, 158, 11, 0.18)' : 'rgba(37, 99, 235, 0.16)';
+                    ctx.fill();
+                  }
                   
                   // Draw circle
                   ctx.beginPath();
                   ctx.arc(node.x, node.y, r, 0, 2 * Math.PI, false);
-                  ctx.fillStyle = node.type === 'case' ? '#f59e0b' : '#2563eb';
+                  ctx.fillStyle = isCase ? '#f59e0b' : '#2563eb';
                   ctx.fill();
                   
                   // Draw border
-                  ctx.lineWidth = 1 / globalScale;
+                  ctx.lineWidth = (isSelected ? 2.5 : 1.75) / globalScale;
                   ctx.strokeStyle = '#ffffff';
                   ctx.stroke();
 
                   // Draw label
+                  const labelWidth = ctx.measureText(label).width;
+                  const labelX = node.x;
+                  const labelY = node.y + r + fontSize * 1.45;
+                  const padX = 5 / globalScale;
+                  const padY = 3 / globalScale;
+                  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+                  ctx.strokeStyle = 'rgba(203, 213, 225, 0.9)';
+                  ctx.lineWidth = 0.75 / globalScale;
+                  ctx.beginPath();
+                  ctx.roundRect(
+                    labelX - labelWidth / 2 - padX,
+                    labelY - fontSize / 2 - padY,
+                    labelWidth + padX * 2,
+                    fontSize + padY * 2,
+                    4 / globalScale
+                  );
+                  ctx.fill();
+                  ctx.stroke();
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'middle';
                   ctx.fillStyle = '#1e293b';
-                  ctx.fillText(label, node.x, node.y + r + fontSize);
+                  ctx.fillText(label, labelX, labelY);
                 }}
                 onEngineStop={() => {
                   if (fgRef.current) {
-                    fgRef.current.zoomToFit(400, 50);
+                    fgRef.current.zoomToFit(0, 110);
+                    const fittedZoom = fgRef.current.zoom();
+                    if (fittedZoom > 1.15) fgRef.current.zoom(1.15, 0);
                   }
                 }}
               />

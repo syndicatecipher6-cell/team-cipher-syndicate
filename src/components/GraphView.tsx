@@ -44,11 +44,27 @@ export function GraphView({ data, onNodeSelect, onEdgeSelect, selectedPath = [],
     const personNodes = data.nodes.filter((node) => node.type === 'person').sort((a, b) => a.id.localeCompare(b.id));
     const artifactRanks: Record<EntityType, number> = { vehicle: 0, phone: 1, account: 2, transaction: 3, location: 4, evidence: 5, case: 6, person: 7 };
     const artifactNodes = data.nodes.filter((node) => node.type !== 'case' && node.type !== 'person').sort((a, b) => artifactRanks[a.type] - artifactRanks[b.type] || a.id.localeCompare(b.id));
-    const distributedX = (index: number, count: number, margin: number) => count === 1 ? graphWidth / 2 : margin + index * ((graphWidth - margin * 2) / (count - 1));
+    const positionInBand = (node: GraphNode, nodes: GraphNode[], startY: number, endY: number, margin: number) => {
+      const index = nodes.findIndex((item) => item.id === node.id);
+      const availableWidth = Math.max(180, graphWidth - margin * 2);
+      const columns = Math.max(1, Math.min(nodes.length, Math.floor(availableWidth / 120)));
+      const rows = Math.max(1, Math.ceil(nodes.length / columns));
+      const row = Math.floor(index / columns);
+      const column = index % columns;
+      const itemsInRow = Math.min(columns, nodes.length - row * columns);
+      const rowWidth = Math.min(availableWidth, Math.max(0, itemsInRow - 1) * 120);
+      const x = itemsInRow === 1
+        ? graphWidth / 2
+        : graphWidth / 2 - rowWidth / 2 + column * (rowWidth / (itemsInRow - 1));
+      const y = rows === 1
+        ? (startY + endY) / 2
+        : startY + row * ((endY - startY) / (rows - 1));
+      return { x, y };
+    };
     const positionFor = (node: GraphNode) => {
-      if (node.type === 'case') return { x: distributedX(caseNodes.findIndex((item) => item.id === node.id), caseNodes.length, graphWidth * .12), y: graphHeight * .16 };
-      if (node.type === 'person') return { x: distributedX(personNodes.findIndex((item) => item.id === node.id), personNodes.length, graphWidth * .14), y: graphHeight * .48 };
-      return { x: distributedX(artifactNodes.findIndex((item) => item.id === node.id), artifactNodes.length, graphWidth * .08), y: graphHeight * .80 };
+      if (node.type === 'case') return positionInBand(node, caseNodes, graphHeight * .11, graphHeight * .24, graphWidth * .09);
+      if (node.type === 'person') return positionInBand(node, personNodes, graphHeight * .42, graphHeight * .56, graphWidth * .09);
+      return positionInBand(node, artifactNodes, graphHeight * .73, graphHeight * .88, graphWidth * .07);
     };
     const elements = [
       ...data.nodes.map((node) => ({ data: { id: node.id, displayLabel: `${node.label}\n${nodeDetail(node)}`, type: node.type, color: colors[node.type], icon: iconDataUri(node.type) }, position: positionFor(node) })),
@@ -57,13 +73,13 @@ export function GraphView({ data, onNodeSelect, onEdgeSelect, selectedPath = [],
     const cy = cytoscape({
       container: containerRef.current, elements,
       style: [
-        { selector: 'node', style: { 'background-color': 'data(color)', 'background-image': 'data(icon)', 'background-fit': 'contain', 'background-width': '54%', 'background-height': '54%', 'background-repeat': 'no-repeat', label: 'data(displayLabel)', color: '#18344A', 'font-size': 8, 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '105px', 'text-valign': 'bottom', 'text-halign': 'center', 'text-margin-y': 9, width: 40, height: 40, 'border-color': '#FFFFFF', 'border-width': 5 } },
-        { selector: 'node.hub', style: { width: 48, height: 48, 'border-width': 6, 'border-color': '#DCEDEA', 'font-size': 9 } },
-        { selector: 'node:selected', style: { 'border-color': '#E4C98E', 'border-width': 6 } },
-        { selector: 'edge', style: { width: 1.45, 'line-color': '#7298AB', 'target-arrow-color': '#7298AB', 'target-arrow-shape': 'triangle', 'arrow-scale': .58, 'curve-style': 'bezier', opacity: .72, label: '', 'font-size': 7, color: '#486274', 'text-background-color': '#F4F7F9', 'text-background-opacity': .9, 'text-background-padding': '2px' } },
+        { selector: 'node', style: { 'background-color': 'data(color)', 'background-image': 'data(icon)', 'background-fit': 'contain', 'background-width': '50%', 'background-height': '50%', 'background-repeat': 'no-repeat', label: 'data(displayLabel)', color: '#18344A', 'font-size': 9, 'font-weight': 'bold', 'text-wrap': 'wrap', 'text-max-width': '120px', 'text-valign': 'bottom', 'text-halign': 'center', 'text-margin-y': 11, 'text-background-color': '#FFFFFF', 'text-background-opacity': .94, 'text-background-padding': '4px', 'text-border-color': '#D8E2E8', 'text-border-width': 1, 'text-border-opacity': .9, width: 46, height: 46, 'border-color': '#FFFFFF', 'border-width': 4, 'overlay-opacity': 0 } },
+        { selector: 'node.hub', style: { width: 54, height: 54, 'border-width': 6, 'border-color': '#CFE5E2', 'font-size': 10 } },
+        { selector: 'node:selected', style: { 'border-color': '#F2C66D', 'border-width': 7 } },
+        { selector: 'edge', style: { width: 1.75, 'line-color': '#7895A6', 'target-arrow-color': '#7895A6', 'target-arrow-shape': 'triangle', 'arrow-scale': .72, 'curve-style': 'bezier', opacity: .78, label: '', 'font-size': 8, color: '#365367', 'text-background-color': '#FFFFFF', 'text-background-opacity': .96, 'text-background-padding': '3px', 'text-border-color': '#D8E2E8', 'text-border-width': 1, 'text-border-opacity': .8 } },
         { selector: 'edge[crossCase = 1]', style: { 'line-style': 'dashed', 'line-dash-pattern': [5, 5], 'line-color': '#5CA6A0', 'target-arrow-color': '#5CA6A0' } },
-        { selector: 'edge:selected', style: { label: 'data(label)', 'line-color': '#C58A32', 'target-arrow-color': '#C58A32', width: 3, opacity: 1 } },
-        { selector: '.path', style: { 'line-color': '#C58A32', 'target-arrow-color': '#C58A32', width: 3.5, opacity: 1 } },
+        { selector: 'edge:selected', style: { label: 'data(label)', 'line-color': '#C58A32', 'target-arrow-color': '#C58A32', width: 3.25, opacity: 1 } },
+        { selector: '.path', style: { 'line-color': '#C58A32', 'target-arrow-color': '#C58A32', width: 3.75, opacity: 1 } },
       ],
       layout: { name: 'preset', fit: false, animate: false },
       minZoom: .4, maxZoom: 2.4,
