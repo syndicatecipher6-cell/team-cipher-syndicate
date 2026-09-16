@@ -104,6 +104,11 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
     setPipelineJobs([]);
     clearActiveDataset();
     try {
+      fetch('/api/ingest/clear', { method: 'POST' }).catch(() => {});
+    } catch {
+      // ignore
+    }
+    try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
       // ignore
@@ -163,6 +168,16 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
             searchResults: result.updated.searchResults,
             stats: result.updated.stats,
           });
+
+          // Sync with Python FastAPI backend asynchronously
+          try {
+            const formData = new FormData();
+            formData.append('files', file);
+            fetch('/api/ingest/upload', { method: 'POST', body: formData }).catch(() => {});
+          } catch {
+            // ignore
+          }
+
           return result.updated;
         });
 
@@ -344,6 +359,12 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setPipelineJobs([job1, job2]);
     setDataset(sampleDataset);
+
+    try {
+      fetch('/api/ingest/sample', { method: 'POST' }).catch(() => {});
+    } catch {
+      // ignore
+    }
   }, []);
 
   const searchEntities = useCallback(
