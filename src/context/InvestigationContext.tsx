@@ -114,8 +114,6 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       // ignore
     }
-    // Delete from Supabase backend too
-    void deleteAllSupabaseJobs();
   }, []);
 
   const uploadFiles = useCallback(async (files: FileList | File[]) => {
