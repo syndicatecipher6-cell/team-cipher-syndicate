@@ -16,6 +16,7 @@
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-force-graph-2d": "^1.29.1",
     "react-router-dom": "latest",
     "vite": "latest"
   },
