@@ -12,7 +12,7 @@ import {
   setActiveDataset,
   clearActiveDataset,
 } from '../data/mockData';
-import { insertSupabaseJob, deleteAllSupabaseJobs } from '../services/supabaseService';
+import { insertSupabaseJob } from '../services/supabaseService';
 
 interface InvestigationContextType {
   isDataLoaded: boolean;

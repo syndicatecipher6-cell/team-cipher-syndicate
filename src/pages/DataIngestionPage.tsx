@@ -7,19 +7,14 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  RotateCcw,
-  Sparkles,
-  PhoneCall,
-  Landmark,
 } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
 import { useNavigate } from 'react-router-dom';
 
 export function DataIngestionPage() {
-  const { pipelineJobs, uploadFiles, loadSampleSIHData, clearAllData, isDataLoaded } = useInvestigation();
+  const { pipelineJobs, uploadFiles, isDataLoaded } = useInvestigation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [loadingSample, setLoadingSample] = useState(false);
   const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,12 +39,6 @@ export function DataIngestionPage() {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       void uploadFiles(e.dataTransfer.files);
     }
-  };
-
-  const handleLoadSample = async () => {
-    setLoadingSample(true);
-    await loadSampleSIHData();
-    setLoadingSample(false);
   };
 
   const getFileIcon = (fileType: string) => {
