@@ -71,12 +71,6 @@ export function DataIngestionPage() {
       <div className="upload-column">
         <div className="section-title-row">
           <h1 className="section-heading">Upload New Data</h1>
-          {isDataLoaded && (
-            <button className="reset-button" onClick={clearAllData} title="Reset all data back to clean zero state">
-              <RotateCcw size={14} />
-              <span>Clear Data</span>
-            </button>
-          )}
         </div>
 
         {/* Drag & Drop Card */}
@@ -115,64 +109,7 @@ export function DataIngestionPage() {
           </button>
         </div>
 
-        {/* Live Connect Sources */}
-        <div className="live-sources-section">
-          <span className="live-sources-label">Or connect live sources:</span>
-          <div className="live-sources-row">
-            <button
-              type="button"
-              className="live-source-card"
-              onClick={() => alert('CDR Database API integration endpoint connected.')}
-            >
-              <span className="live-source-icon text-red">
-                <PhoneCall size={18} />
-              </span>
-              <span className="live-source-text">CDR Database API</span>
-            </button>
 
-            <button
-              type="button"
-              className="live-source-card"
-              onClick={() => alert('Financial Records API integration endpoint connected.')}
-            >
-              <span className="live-source-icon text-green">
-                <FileSpreadsheet size={18} />
-              </span>
-              <span className="live-source-text">Financial Records API</span>
-            </button>
-
-            <button
-              type="button"
-              className="live-source-card"
-              onClick={() => alert('National Crime DB API integration endpoint connected.')}
-            >
-              <span className="live-source-icon text-indigo">
-                <Landmark size={18} />
-              </span>
-              <span className="live-source-text">National Crime DB</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 1-Click SIH Benchmark Dataset Loader */}
-        <div className="sample-loader-card">
-          <div className="sample-loader-info">
-            <div className="sample-sparkle">
-              <Sparkles size={16} />
-            </div>
-            <div>
-              <strong>Smart India Hackathon Sample Data</strong>
-              <p>Load the verified SIH multi-source dataset (CDRs, FIRs, Bank Trails) with one click to test analytics.</p>
-            </div>
-          </div>
-          <button
-            className="sample-load-button"
-            onClick={handleLoadSample}
-            disabled={loadingSample}
-          >
-            {loadingSample ? 'Processing...' : 'Load Sample SIH Dataset'}
-          </button>
-        </div>
 
         {isDataLoaded && (
           <div className="pipeline-success-banner">
