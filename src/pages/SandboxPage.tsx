@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { FlaskConical, ShieldCheck } from 'lucide-react';
+import { SandboxGraphComparison } from '../components/SandboxGraphComparison';
 import { Button, PageHeader, Panel } from '../components/ui';
 import { useInvestigation } from '../context/InvestigationContext';
 import { investigationService } from '../services';
-import type { SandboxOperation, SandboxSession } from '../types/domain';
+import type { GraphData, GraphEdge, SandboxModification, SandboxOperation, SandboxSession } from '../types/domain';
 
 const operations: Array<{ value: SandboxOperation; label: string }> = [
   { value: 'IDENTITY_MERGE', label: 'Assume two identities are the same' },
@@ -13,6 +14,89 @@ const operations: Array<{ value: SandboxOperation; label: string }> = [
   { value: 'ENTITY_SPLIT', label: 'Split one identity into two' },
   { value: 'TIMELINE_CHANGE', label: 'Change a timeline event' },
 ];
+
+function scopedGraph(graph: GraphData, baseCaseId: string): GraphData {
+  const nodeIds = new Set([baseCaseId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    graph.edges.forEach((edge) => {
+      if (nodeIds.has(edge.source) || nodeIds.has(edge.target)) {
+        if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) changed = true;
+        nodeIds.add(edge.source);
+        nodeIds.add(edge.target);
+      }
+    });
+  }
+  return {
+    nodes: graph.nodes.filter((node) => nodeIds.has(node.id)),
+    edges: graph.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)),
+  };
+}
+
+function applyHypotheticalChanges(original: GraphData, modifications: SandboxModification[]): GraphData {
+  const graph: GraphData = {
+    nodes: original.nodes.map((node) => ({ ...node, metadata: { ...node.metadata } })),
+    edges: original.edges.map((edge) => ({ ...edge, evidenceIds: [...edge.evidenceIds] })),
+  };
+
+  modifications.forEach((modification) => {
+    const parameters = modification.parameters;
+    if (modification.operation === 'IDENTITY_MERGE') {
+      const source = String(parameters.source_entity_id);
+      const target = String(parameters.target_entity_id);
+      graph.nodes = graph.nodes.filter((node) => node.id !== source);
+      graph.edges = graph.edges
+        .map((edge) => ({
+          ...edge,
+          source: edge.source === source ? target : edge.source,
+          target: edge.target === source ? target : edge.target,
+        }))
+        .filter((edge) => edge.source !== edge.target);
+      const seen = new Set<string>();
+      graph.edges = graph.edges.filter((edge) => {
+        const key = `${edge.source}|${edge.relationship}|${edge.target}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    } else if (modification.operation === 'RELATIONSHIP_ADD') {
+      graph.edges.push({
+        id: `SBX-EDGE-${modification.modification_id}`,
+        source: String(parameters.source),
+        target: String(parameters.target),
+        relationship: String(parameters.relationship).toUpperCase(),
+        evidenceIds: [...(modification.evidence_ids ?? [])],
+        priority: 'Low',
+      });
+    } else if (modification.operation === 'RELATIONSHIP_REMOVE') {
+      graph.edges = graph.edges.filter((edge) => edge.id !== String(parameters.edge_id));
+    } else if (modification.operation === 'EVIDENCE_DISPUTE') {
+      const evidenceId = String(parameters.evidence_id);
+      graph.edges = graph.edges.map((edge) => ({
+        ...edge,
+        evidenceIds: edge.evidenceIds.filter((id) => id !== evidenceId),
+      }));
+    } else if (modification.operation === 'ENTITY_SPLIT') {
+      const originalNode = graph.nodes.find((node) => node.id === String(parameters.entity_id));
+      if (!originalNode) return;
+      const newId = String(parameters.new_entity_id);
+      graph.nodes.push({
+        ...originalNode,
+        id: newId,
+        label: String(parameters.new_label || `${originalNode.label} (hypothetical split)`),
+        metadata: { ...originalNode.metadata, sandboxLabel: 'HYPOTHETICAL / SANDBOX' },
+      });
+      const selectedEdgeIds = new Set(Array.isArray(parameters.edge_ids) ? parameters.edge_ids.map(String) : []);
+      graph.edges = graph.edges.map((edge): GraphEdge => selectedEdgeIds.has(edge.id) ? {
+        ...edge,
+        source: edge.source === originalNode.id ? newId : edge.source,
+        target: edge.target === originalNode.id ? newId : edge.target,
+      } : edge);
+    }
+  });
+  return graph;
+}
 
 export function SandboxPage() {
   const { dataset, isDataLoaded } = useInvestigation();
@@ -26,9 +110,17 @@ export function SandboxPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const beforeGraph = useMemo(
+    () => scopedGraph(dataset.graphData, baseCaseId),
+    [dataset.graphData, baseCaseId],
+  );
   const entityOptions = useMemo(
-    () => dataset.graphData.nodes.filter((node) => node.type !== 'case'),
-    [dataset.graphData.nodes],
+    () => beforeGraph.nodes.filter((node) => node.type !== 'case'),
+    [beforeGraph.nodes],
+  );
+  const afterGraph = useMemo(
+    () => applyHypotheticalChanges(beforeGraph, session?.modifications ?? []),
+    [beforeGraph, session?.modifications],
   );
 
   const createSession = async () => {
@@ -156,6 +248,7 @@ export function SandboxPage() {
                     <p key={item.modification_id}><strong>{item.operation}</strong> · {item.rationale || 'No rationale supplied'}</p>
                   )) : <p>No hypothetical modifications applied yet.</p>}
                 </section>
+                <SandboxGraphComparison before={beforeGraph} after={afterGraph} modifications={session.modifications} />
               </div>
             ) : <div className="context-placeholder"><FlaskConical /><strong>Create a sandbox session</strong><p>A before-versus-after comparison will appear here.</p></div>}
           </Panel>
