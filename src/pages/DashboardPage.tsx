@@ -110,6 +110,7 @@ export function DashboardPage() {
           >
             <GraphView
               data={filteredGraph}
+              showListOption={false}
               onNodeSelect={(item) => { setEdge(undefined); setNode(item); }}
               onEdgeSelect={(item) => { setNode(undefined); setEdge(item); }}
             />
