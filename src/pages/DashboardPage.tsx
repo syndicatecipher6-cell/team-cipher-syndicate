@@ -14,6 +14,8 @@ import { EntityDetailsPanel, EvidenceDrawer } from '../components/Drawers';
 import { Button, PageHeader, Panel, StatCard } from '../components/ui';
 import { useInvestigation } from '../context/InvestigationContext';
 import type { GraphEdge, GraphNode } from '../types/domain';
+import { getWorkspaceSession } from '../security/demoSession';
+import { downloadInvestigationReport } from '../utils/reportPdf';
 
 export function DashboardPage() {
   const { dataset, isDataLoaded } = useInvestigation();
@@ -28,11 +30,10 @@ export function DashboardPage() {
       alert('No data available to generate a report. Please upload investigation files first.');
       return;
     }
-    alert(
-      `Intelligence Report Generated:\n\nActive Cases: ${dataset.cases.length}\nTotal Tracked Entities: ${
-        dataset.persons.length + dataset.phones.length + dataset.vehicles.length
-      }\nHigh Risk Alerts: ${dataset.stats.alerts}\n\nEvidence-grounded dossier ready for review.`
-    );
+    downloadInvestigationReport(dataset, {
+      stationName: getWorkspaceSession()?.stationName ?? 'Investigator',
+      timeRange,
+    });
   };
 
   const filteredGraph = selectedCase
