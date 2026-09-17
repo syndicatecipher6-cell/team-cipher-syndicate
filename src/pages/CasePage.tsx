@@ -6,16 +6,17 @@ import { evidence, persons, timelineEvents } from '../data/mockData';
 import { useAsync } from '../hooks/useAsync';
 import { investigationService } from '../services';
 import { getWorkspaceSession } from '../security/demoSession';
-import { fetchSharedCase } from '../services/supabaseService';
+import { useInvestigation } from '../context/InvestigationContext';
 
 export function CasePage() {
   const { caseId = '' } = useParams();
+  const { loadSharedCase } = useInvestigation();
   const { data: caseResult, loading } = useAsync(async () => {
     const localItem = await investigationService.getCase(caseId);
     if (localItem) return { item: localItem, stationName: '' };
     const stationSession = getWorkspaceSession();
     if (stationSession?.mode !== 'supabase' || !stationSession.accessToken) return undefined;
-    const sharedItem = await fetchSharedCase(caseId, stationSession.accessToken);
+    const sharedItem = await loadSharedCase(caseId);
     if (!sharedItem) return undefined;
     return {
       item: {
@@ -30,10 +31,16 @@ export function CasePage() {
       },
       stationName: sharedItem.station_name,
     };
-  }, [caseId]);
+  }, [caseId, loadSharedCase]);
   const item = caseResult?.item;
-  const { data: graph } = useAsync(() => investigationService.getGraph([caseId]), [caseId]);
-  const { data: brief, loading: briefLoading } = useAsync(() => investigationService.getCaseIntelligenceBrief(caseId), [caseId]);
+  const { data: graph } = useAsync(
+    () => item ? investigationService.getGraph([caseId]) : Promise.resolve({ nodes: [], edges: [] }),
+    [caseId, item],
+  );
+  const { data: brief, loading: briefLoading } = useAsync(
+    () => item ? investigationService.getCaseIntelligenceBrief(caseId) : Promise.resolve(undefined),
+    [caseId, item],
+  );
   if (loading) return <LoadingState />; if (!item) return <EmptyState title="Case record not found" />;
   return <><PageHeader eyebrow="Case workspace" title={item.case_id} description={`${item.fir_number} · ${item.crime_type}`} actions={<><Link className="button button--secondary" to={`/cross-case?cases=${item.case_id}`}><GitCompareArrows size={15} />Cross-case finder</Link><Link className="button button--primary" to={`/graph?caseId=${item.case_id}`}><Network size={15} />Open graph</Link></>} />
     {caseResult.stationName && <p className="verification-note">Shared securely by {caseResult.stationName}. Cross-station access is recorded by the shared data service.</p>}

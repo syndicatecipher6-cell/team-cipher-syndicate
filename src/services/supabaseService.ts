@@ -3,6 +3,8 @@
  * Requires no external npm packages; works in both Vite browser and Node.
  */
 
+import type { ParsedDataset } from './fileParser';
+
 export interface SupabaseConfig {
   url: string;
   anonKey: string;
@@ -28,6 +30,7 @@ export interface SharedCaseRecord {
   station_name: string;
   source_filename: string;
   uploaded_at: string;
+  dataset_payload?: ParsedDataset;
 }
 
 export function getSupabaseConfig(): SupabaseConfig {

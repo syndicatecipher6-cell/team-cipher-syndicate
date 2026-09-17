@@ -2,9 +2,12 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import styles from './GraphPage.module.css';
 import { useInvestigation } from '../context/InvestigationContext';
+import { useSearchParams } from 'react-router-dom';
 
 export function GraphPage() {
   const { dataset } = useInvestigation();
+  const [searchParams] = useSearchParams();
+  const scopedCaseId = searchParams.get('caseId');
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const fgRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,7 +39,9 @@ export function GraphPage() {
         .filter(([, caseIds]) => caseIds.size >= 2)
         .map(([personId]) => personId)
     );
-    const visibleRelationships = directCasePersonEdges.filter(({ personId }) => commonPersonIds.has(personId));
+    const visibleRelationships = scopedCaseId
+      ? directCasePersonEdges.filter(({ caseId }) => caseId === scopedCaseId)
+      : directCasePersonEdges.filter(({ personId }) => commonPersonIds.has(personId));
     const visibleNodeIds = new Set<string>();
     visibleRelationships.forEach(({ caseId, personId }) => {
       visibleNodeIds.add(caseId);
@@ -107,7 +112,7 @@ export function GraphPage() {
     }
 
     return { nodes, links };
-  }, [dataset.graphData, dimensions.width]);
+  }, [dataset.graphData, dimensions.width, scopedCaseId]);
 
   const [isLoading] = useState(false);
 

@@ -26,6 +26,9 @@ create table if not exists public.shared_cases (
   uploaded_at timestamptz not null default now()
 );
 
+alter table public.shared_cases
+  add column if not exists dataset_payload jsonb not null default '{}'::jsonb;
+
 create table if not exists public.shared_case_access_log (
   access_id bigint generated always as identity primary key,
   case_id text not null references public.shared_cases(case_id) on delete cascade,

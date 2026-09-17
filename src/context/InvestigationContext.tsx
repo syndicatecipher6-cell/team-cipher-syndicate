@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import type { PipelineJob, SearchResult } from '../types/domain';
 import {
   ParsedDataset,
@@ -12,7 +12,8 @@ import {
   setActiveDataset,
   clearActiveDataset,
 } from '../data/mockData';
-import { insertSupabaseJob, publishSharedCases, searchSharedCases } from '../services/supabaseService';
+import { fetchSharedCase, insertSupabaseJob, publishSharedCases, searchSharedCases } from '../services/supabaseService';
+import type { SharedCaseRecord } from '../services/supabaseService';
 import { getWorkspaceSession } from '../security/demoSession';
 
 interface InvestigationContextType {
@@ -23,6 +24,7 @@ interface InvestigationContextType {
   loadSampleSIHData: () => Promise<void>;
   clearAllData: () => void;
   searchEntities: (query: string, type?: string) => Promise<SearchResult[]>;
+  loadSharedCase: (caseId: string) => Promise<SharedCaseRecord | undefined>;
 }
 
 const InvestigationContext = createContext<InvestigationContextType | undefined>(undefined);
@@ -78,7 +80,109 @@ function restoreStoredDataset(value: unknown): ParsedDataset | null {
   };
 }
 
+function uniqueBy<T>(items: T[], key: (item: T) => string): T[] {
+  const values = new Map<string, T>();
+  items.forEach((item) => values.set(key(item), item));
+  return [...values.values()];
+}
+
+function mergeDataset(current: ParsedDataset, incoming: ParsedDataset): ParsedDataset {
+  const cases = uniqueBy([...current.cases, ...incoming.cases], (item) => item.case_id);
+  const persons = uniqueBy([...current.persons, ...incoming.persons], (item) => item.person_id);
+  const phones = uniqueBy([...current.phones, ...incoming.phones], (item) => item.phone_id);
+  const vehicles = uniqueBy([...current.vehicles, ...incoming.vehicles], (item) => item.vehicle_id);
+  const accounts = uniqueBy([...current.accounts, ...incoming.accounts], (item) => item.account_id);
+  const transactions = uniqueBy([...current.transactions, ...incoming.transactions], (item) => item.txn_id);
+  const timelineEvents = uniqueBy([...current.timelineEvents, ...incoming.timelineEvents], (item) => item.event_id);
+  const evidence = uniqueBy([...current.evidence, ...incoming.evidence], (item) => item.evidence_id);
+  const nodes = uniqueBy([...current.graphData.nodes, ...incoming.graphData.nodes], (item) => item.id);
+  const edges = uniqueBy([...current.graphData.edges, ...incoming.graphData.edges], (item) => item.id);
+  const searchResults = uniqueBy([...current.searchResults, ...incoming.searchResults], (item) => item.id);
+  const alerts = uniqueBy([...current.alerts, ...incoming.alerts], (item) => item.id);
+  return {
+    cases,
+    persons,
+    phones,
+    vehicles,
+    accounts,
+    transactions,
+    timelineEvents,
+    graphData: { nodes, edges },
+    evidence,
+    searchResults,
+    alerts,
+    stats: {
+      cases: cases.length,
+      persons: persons.length,
+      phones: phones.length,
+      vehicles: vehicles.length,
+      transactions: transactions.length,
+      cdrRecords: phones.length * 2 + timelineEvents.length,
+      networks: Math.max(current.stats.networks, incoming.stats.networks),
+      alerts: alerts.length,
+    },
+  };
+}
+
+function buildCasePayload(source: ParsedDataset, caseId: string): ParsedDataset {
+  const nodeIds = new Set<string>([caseId]);
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    source.graphData.edges.forEach((edge) => {
+      if (nodeIds.has(edge.source) && !nodeIds.has(edge.target)) {
+        nodeIds.add(edge.target);
+        expanded = true;
+      }
+      if (nodeIds.has(edge.target) && !nodeIds.has(edge.source)) {
+        nodeIds.add(edge.source);
+        expanded = true;
+      }
+    });
+  }
+  const nodes = source.graphData.nodes.filter((node) => nodeIds.has(node.id));
+  const edges = source.graphData.edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target));
+  const caseIds = new Set(nodes.filter((node) => node.type === 'case').map((node) => node.id));
+  caseIds.add(caseId);
+  const personIds = new Set(nodes.filter((node) => node.type === 'person').map((node) => node.id));
+  const evidenceIds = new Set(edges.flatMap((edge) => edge.evidenceIds));
+  const cases = source.cases.filter((item) => caseIds.has(item.case_id));
+  const persons = source.persons.filter((item) => personIds.has(item.person_id));
+  const phones = source.phones.filter((item) => nodeIds.has(item.phone_id));
+  const vehicles = source.vehicles.filter((item) => nodeIds.has(item.vehicle_id));
+  const accounts = source.accounts.filter((item) => nodeIds.has(item.account_id));
+  const transactions = source.transactions.filter((item) => nodeIds.has(item.txn_id));
+  const timelineEvents = source.timelineEvents.filter((item) => caseIds.has(item.case_id));
+  const evidence = source.evidence.filter((item) => caseIds.has(item.case_id) || evidenceIds.has(item.evidence_id));
+  const searchResults = source.searchResults.filter((item) => nodeIds.has(item.id) || caseIds.has(item.id));
+  const alerts = source.alerts.filter((item) => item.caseIds.some((id) => caseIds.has(id)));
+  return {
+    cases,
+    persons,
+    phones,
+    vehicles,
+    accounts,
+    transactions,
+    timelineEvents,
+    graphData: { nodes, edges },
+    evidence,
+    searchResults,
+    alerts,
+    stats: {
+      cases: cases.length,
+      persons: persons.length,
+      phones: phones.length,
+      vehicles: vehicles.length,
+      transactions: transactions.length,
+      cdrRecords: phones.length * 2 + timelineEvents.length,
+      networks: cases.length ? 1 : 0,
+      alerts: alerts.length,
+    },
+  };
+}
+
 export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const loadedSharedPayloads = useRef(new Set<string>());
   // Always start clean: zero mock data on initial load
   const [dataset, setDataset] = useState<ParsedDataset>(() => {
     try {
@@ -254,6 +358,7 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
                 station_name: stationSession.stationName,
                 source_filename: file.name,
                 uploaded_at: new Date().toISOString(),
+                dataset_payload: buildCasePayload(result.updated, item.case_id),
               })),
               stationSession.accessToken,
             ).then((shared) => {
@@ -475,6 +580,22 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
       ) return localResults;
 
       const sharedCases = await searchSharedCases(needle, stationSession.accessToken);
+      const newPayloads = sharedCases.filter((item) => {
+        const version = `${item.case_id}:${item.uploaded_at}`;
+        if (!item.dataset_payload || loadedSharedPayloads.current.has(version)) return false;
+        loadedSharedPayloads.current.add(version);
+        return true;
+      });
+      if (newPayloads.length) {
+        setDataset((current) => {
+          const merged = newPayloads.reduce(
+            (next, item) => mergeDataset(next, restoreStoredDataset(item.dataset_payload) ?? createEmptyDataset()),
+            current,
+          );
+          setActiveDataset(merged);
+          return merged;
+        });
+      }
       const localIds = new Set(localResults.map((item) => item.id));
       const sharedResults: SearchResult[] = sharedCases
         .filter((item) => !localIds.has(item.case_id))
@@ -493,6 +614,22 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
     [dataset.searchResults]
   );
 
+  const loadSharedCase = useCallback(async (caseId: string) => {
+    const stationSession = getWorkspaceSession();
+    if (stationSession?.mode !== 'supabase' || !stationSession.accessToken) return undefined;
+    const sharedItem = await fetchSharedCase(caseId, stationSession.accessToken);
+    const restored = restoreStoredDataset(sharedItem?.dataset_payload);
+    if (sharedItem && restored) {
+      loadedSharedPayloads.current.add(`${sharedItem.case_id}:${sharedItem.uploaded_at}`);
+      setDataset((current) => {
+        const merged = mergeDataset(current, restored);
+        setActiveDataset(merged);
+        return merged;
+      });
+    }
+    return sharedItem;
+  }, []);
+
   return (
     <InvestigationContext.Provider
       value={{
@@ -503,6 +640,7 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
         loadSampleSIHData,
         clearAllData,
         searchEntities,
+        loadSharedCase,
       }}
     >
       {children}
