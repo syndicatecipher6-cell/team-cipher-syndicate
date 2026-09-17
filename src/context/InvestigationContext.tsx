@@ -12,7 +12,8 @@ import {
   setActiveDataset,
   clearActiveDataset,
 } from '../data/mockData';
-import { insertSupabaseJob } from '../services/supabaseService';
+import { insertSupabaseJob, publishSharedCases, searchSharedCases } from '../services/supabaseService';
+import { getWorkspaceSession } from '../security/demoSession';
 
 interface InvestigationContextType {
   isDataLoaded: boolean;
@@ -242,6 +243,24 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
           // Direct browser-to-Supabase cloud sync
           void insertSupabaseJob(file.name, ext, nodesCreated, edgesCreated);
 
+          const stationSession = getWorkspaceSession();
+          if (stationSession?.mode === 'supabase' && stationSession.accessToken) {
+            const previousCases = new Map(prevData.cases.map((item) => [item.case_id, JSON.stringify(item)]));
+            const changedCases = result.updated.cases.filter(
+              (item) => previousCases.get(item.case_id) !== JSON.stringify(item),
+            );
+            void publishSharedCases(
+              changedCases.map((item) => ({
+                ...item,
+                station_id: stationSession.stationId,
+                station_name: stationSession.stationName,
+                source_filename: file.name,
+                uploaded_at: new Date().toISOString(),
+              })),
+              stationSession.accessToken,
+            );
+          }
+
           return result.updated;
         });
 
@@ -260,7 +279,7 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
               : j
           )
         );
-      } catch (err: any) {
+      } catch (err: unknown) {
         setPipelineJobs((prev) =>
           prev.map((j) =>
             j.id === jobId
@@ -268,7 +287,7 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
                   ...j,
                   status: 'failed',
                   progress: 100,
-                  errorMessage: err?.message || 'Schema mismatch or corrupted file content',
+                  errorMessage: err instanceof Error ? err.message : 'Schema mismatch or corrupted file content',
                   stageMessage: 'Failed during processing',
                 }
               : j
@@ -434,11 +453,34 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
   const searchEntities = useCallback(
     async (query: string, type?: string): Promise<SearchResult[]> => {
       const needle = query.trim().toLowerCase();
-      return dataset.searchResults.filter(
+      const localResults = dataset.searchResults.filter(
         (item) =>
           (!type || type === 'all' || item.type === type) &&
           (!needle || `${item.label} ${item.secondary} ${item.id}`.toLowerCase().includes(needle))
       );
+      const stationSession = getWorkspaceSession();
+      if (
+        !needle ||
+        (type && type !== 'all' && type !== 'case') ||
+        stationSession?.mode !== 'supabase' ||
+        !stationSession.accessToken
+      ) return localResults;
+
+      const sharedCases = await searchSharedCases(query, stationSession.accessToken);
+      const localIds = new Set(localResults.map((item) => item.id));
+      const sharedResults: SearchResult[] = sharedCases
+        .filter((item) => !localIds.has(item.case_id))
+        .map((item) => ({
+          id: item.case_id,
+          type: 'case',
+          label: item.case_id,
+          secondary: `${item.fir_number} · ${item.crime_type}`,
+          relatedCases: [item.case_id],
+          relationshipCount: 0,
+          source: `${item.station_name} · Shared case registry`,
+          lastActivity: item.date_filed,
+        }));
+      return [...localResults, ...sharedResults];
     },
     [dataset.searchResults]
   );

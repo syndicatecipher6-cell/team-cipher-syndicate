@@ -5,13 +5,38 @@ import { EmptyState, EntityBadge, LoadingState, PageHeader, Panel, StatusBadge }
 import { evidence, persons, timelineEvents } from '../data/mockData';
 import { useAsync } from '../hooks/useAsync';
 import { investigationService } from '../services';
+import { getWorkspaceSession } from '../security/demoSession';
+import { fetchSharedCase } from '../services/supabaseService';
 
 export function CasePage() {
-  const { caseId = '' } = useParams(); const { data: item, loading } = useAsync(() => investigationService.getCase(caseId), [caseId]);
+  const { caseId = '' } = useParams();
+  const { data: caseResult, loading } = useAsync(async () => {
+    const localItem = await investigationService.getCase(caseId);
+    if (localItem) return { item: localItem, stationName: '' };
+    const stationSession = getWorkspaceSession();
+    if (stationSession?.mode !== 'supabase' || !stationSession.accessToken) return undefined;
+    const sharedItem = await fetchSharedCase(caseId, stationSession.accessToken);
+    if (!sharedItem) return undefined;
+    return {
+      item: {
+        case_id: sharedItem.case_id,
+        fir_number: sharedItem.fir_number,
+        crime_type: sharedItem.crime_type,
+        district: sharedItem.district,
+        state: sharedItem.state,
+        date_filed: sharedItem.date_filed,
+        status: sharedItem.status,
+        summary: sharedItem.summary,
+      },
+      stationName: sharedItem.station_name,
+    };
+  }, [caseId]);
+  const item = caseResult?.item;
   const { data: graph } = useAsync(() => investigationService.getGraph([caseId]), [caseId]);
   const { data: brief, loading: briefLoading } = useAsync(() => investigationService.getCaseIntelligenceBrief(caseId), [caseId]);
   if (loading) return <LoadingState />; if (!item) return <EmptyState title="Case record not found" />;
   return <><PageHeader eyebrow="Case workspace" title={item.case_id} description={`${item.fir_number} · ${item.crime_type}`} actions={<><Link className="button button--secondary" to={`/cross-case?cases=${item.case_id}`}><GitCompareArrows size={15} />Cross-case finder</Link><Link className="button button--primary" to={`/graph?caseId=${item.case_id}`}><Network size={15} />Open graph</Link></>} />
+    {caseResult.stationName && <p className="verification-note">Shared securely by {caseResult.stationName}. Cross-station access is recorded by the shared data service.</p>}
     <Panel className="case-overview"><div className="case-heading"><EntityBadge type="case" /><StatusBadge>{item.status}</StatusBadge></div><dl className="case-metadata"><div><dt>FIR number</dt><dd>{item.fir_number}</dd></div><div><dt>Date filed</dt><dd>{new Date(item.date_filed).toLocaleDateString('en-IN')}</dd></div><div><dt>District</dt><dd>{item.district}</dd></div><div><dt>State</dt><dd>{item.state}</dd></div></dl><div className="summary-block"><span>Case summary</span><p>{item.summary}</p></div></Panel>
     <Panel title="AI Case Intelligence Brief" subtitle="Automatically grounded in the current case graph and cited records">
       {briefLoading ? <LoadingState label="Generating grounded case brief..." /> : brief ? <div className="summary-block"><span>{brief.generated_by}</span><p>{brief.overview}</p><p><strong>Key entities:</strong> {brief.key_entities.join(', ') || 'None identified'}</p><p><strong>Linked cases:</strong> {brief.linked_cases.join(', ') || 'No linked cases identified'}</p><p><strong>Investigation gaps:</strong> {brief.gaps.join(' ') || 'No explicit gaps detected'}</p><small>{brief.warnings.join(' ')}</small></div> : <p>Case intelligence brief is unavailable.</p>}

@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useInvestigation } from '../context/InvestigationContext';
-import { clearDemoSession } from '../security/demoSession';
+import { clearDemoSession, getWorkspaceSession } from '../security/demoSession';
 import type { SearchResult } from '../types/domain';
 import { EntityBadge, EmptyState } from '../components/ui';
 
@@ -29,6 +29,7 @@ export function AppShell() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const navigate = useNavigate();
   const { dataset, isDataLoaded, clearAllData, searchEntities } = useInvestigation();
+  const workspaceSession = getWorkspaceSession();
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -144,8 +145,8 @@ export function AppShell() {
                 aria-haspopup="true"
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
               >
-                <span>INV</span>
-                <div><strong>Investigator</strong><small>Analysis workspace</small></div>
+                <span>{workspaceSession?.stationName.split(/\s+/).map((word) => word[0]).join('').slice(0, 3).toUpperCase() || 'INV'}</span>
+                <div><strong>{workspaceSession?.stationName || 'Investigator'}</strong><small>{workspaceSession?.mode === 'supabase' ? 'Shared station workspace' : 'Analysis workspace'}</small></div>
                 <ChevronDown
                   size={14}
                   style={{
@@ -161,7 +162,7 @@ export function AppShell() {
                     <User size={15} />
                     <div className="profile-info-text">
                       <span className="profile-info-sub">Profile name</span>
-                      <strong className="profile-info-title">Admin</strong>
+                      <strong className="profile-info-title">{workspaceSession?.stationName || 'Admin'}</strong>
                     </div>
                   </div>
                   <div className="profile-dropdown-divider" />
