@@ -17,6 +17,7 @@ import type {
   SandboxModificationInput,
   SandboxSession,
 } from '../types/domain';
+import { answerLocalInvestigation } from './localInvestigator';
 
 const pause = <T,>(value: T, ms = 120) =>
   new Promise<T>((resolve) => window.setTimeout(() => resolve(value), ms));
@@ -294,78 +295,13 @@ export const mockInvestigationService: InvestigationService = {
       return pause(assistantDemo, 400);
     }
 
-    const q = question.toLowerCase();
-
-    // Contextual query matching
-    const matchedPerson = persons.find(
-      (p) => q.includes(p.name.toLowerCase()) || q.includes(p.person_id.toLowerCase())
-    );
-    const matchedCase = cases.find(
-      (c) => q.includes(c.case_id.toLowerCase()) || q.includes(c.crime_type.toLowerCase())
-    );
-
-    if (matchedPerson) {
-      const relatedCases = matchedPerson.caseIds.join(', ');
-      const relEdges = graphData.edges.filter(
-        (e) => e.source === matchedPerson.person_id || e.target === matchedPerson.person_id
-      );
-      const evIds = Array.from(new Set(relEdges.flatMap((e) => e.evidenceIds || [])));
-
-      return pause<AssistantResponse>(
-        {
-          answer: `Identified profile for ${matchedPerson.name} (${matchedPerson.person_id}) with current status '${matchedPerson.role}'. Connected to case(s): ${relatedCases}. Discovered ${relEdges.length} verified network links across ingested records.`,
-          recordCount: relEdges.length,
-          entities: [matchedPerson.person_id],
-          cases: matchedPerson.caseIds,
-          evidenceIds: evIds,
-          suggestedQuestions: [
-            `What accounts or phones are associated with ${matchedPerson.name}?`,
-            `Show timeline events for ${matchedPerson.person_id}`,
-            `Are there hidden connections to other suspects?`,
-          ],
-        },
-        500
-      );
-    }
-
-    if (matchedCase) {
-      const casePersons = persons.filter((p) => p.caseIds.includes(matchedCase.case_id));
-      const caseEvs = evidence.filter((e) => e.case_id === matchedCase.case_id);
-
-      return pause<AssistantResponse>(
-        {
-          answer: `Investigation workspace for ${matchedCase.case_id} (${matchedCase.fir_number}). Crime type: ${matchedCase.crime_type} registered in ${matchedCase.district}, ${matchedCase.state}. Active suspects/witnesses: ${casePersons.map((p) => p.name).join(', ') || 'None registered'}. Total supporting evidence items: ${caseEvs.length}.`,
-          recordCount: caseEvs.length,
-          entities: casePersons.map((p) => p.person_id),
-          cases: [matchedCase.case_id],
-          evidenceIds: caseEvs.map((e) => e.evidence_id),
-          suggestedQuestions: [
-            `Find cross-case overlaps for ${matchedCase.case_id}`,
-            `Trace communication logs in ${matchedCase.district}`,
-            `Generate chronological timeline for ${matchedCase.case_id}`,
-          ],
-        },
-        500
-      );
-    }
-
-    // General query response based on ingested files
-    const topEntities = persons.slice(0, 3).map((p) => p.name);
-    return pause<AssistantResponse>(
-      {
-        answer: `NexusNet analysis of active ingested records: Tracking ${cases.length} case(s), ${persons.length} person(s), and ${graphData.edges.length} graph relationships across jurisdictions. Key entities under observation: ${topEntities.join(', ') || 'None'}. All findings are linked to original source records.`,
-        recordCount: graphData.edges.length,
-        entities: persons.slice(0, 3).map((p) => p.person_id),
-        cases: cases.map((c) => c.case_id),
-        evidenceIds: evidence.slice(0, 3).map((e) => e.evidence_id),
-        suggestedQuestions: [
-          `Find cross-case connections between active cases`,
-          `Show highest priority evidence links`,
-          `Analyze hidden financial transactions`,
-        ],
-      },
-      500
-    );
+    return pause<AssistantResponse>(answerLocalInvestigation(question, {
+      cases,
+      persons,
+      evidence,
+      graph: graphData,
+      timeline: timelineEvents,
+    }), 500);
   },
 
   getCaseIntelligenceBrief: (caseId) => {

@@ -68,6 +68,19 @@ class GroundedInvestigatorTests(unittest.TestCase):
         self.assertTrue(any(finding.citations for finding in result.findings))
         self.assertIn("AI output is investigative support", result.warnings[0])
 
+    def test_different_question_intents_return_different_answers(self) -> None:
+        shared = investigator_service.answer(
+            "Which entities are common across the active cases?",
+            "test-investigator",
+        )
+        evidence = investigator_service.answer(
+            "What evidence links Person Alpha?",
+            "test-investigator",
+        )
+        self.assertNotEqual(shared.answer, evidence.answer)
+        self.assertIn("Person Alpha", shared.answer)
+        self.assertIn("Supporting records", evidence.answer)
+
     def test_sandbox_merge_does_not_mutate_production_graph(self) -> None:
         original_node_ids = set(data_processor.graph_nodes)
         session = sandbox_service.create("CASE-103", "test-investigator")

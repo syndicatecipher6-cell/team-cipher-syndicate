@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, deque
 from typing import Any, Dict, Iterable, List, Optional, Set
 
 from app.config import settings
@@ -60,6 +60,27 @@ class InvestigationReasoningService:
         return plan
 
     @staticmethod
+    def _intent(question: str) -> str:
+        lowered = question.casefold()
+        financial_terms = ("money", "financial", "transaction", "account", "bank", "transfer", "payment")
+        communication_terms = ("phone", "call", "communication", "contact", "cdr", "message")
+        if any(term in lowered for term in financial_terms) and any(term in lowered for term in communication_terms):
+            return "trails"
+        checks = (
+            ("path", ("shortest path", "path between", "how is", "how are", "connected")),
+            ("shared", ("common", "shared", "overlap", "cross-case", "across case")),
+            ("timeline", ("timeline", "chronolog", "when ", "sequence", "before", "after")),
+            ("financial", ("money", "financial", "transaction", "account", "bank", "transfer", "payment")),
+            ("communication", ("phone", "call", "communication", "contact", "cdr", "message")),
+            ("anomaly", ("anomal", "suspicious", "unusual", "high-risk", "high risk", "pattern")),
+            ("evidence", ("evidence", "proof", "source", "support", "record")),
+        )
+        for intent, terms in checks:
+            if any(term in lowered for term in terms):
+                return intent
+        return "summary"
+
+    @staticmethod
     def _citation(evidence: Evidence) -> EvidenceCitation:
         return EvidenceCitation(
             evidence_id=evidence.evidence_id,
@@ -110,6 +131,7 @@ class InvestigationReasoningService:
                 "target": edge.target,
                 "relationship": edge.relationship,
                 "evidence_ids": edge.evidenceIds,
+                "priority": edge.priority,
             }
             for edge in selected_edges[:80]
         ]
@@ -173,6 +195,141 @@ class InvestigationReasoningService:
             )
         return findings
 
+    @staticmethod
+    def _node_label(graph_context: Dict[str, Any], node_id: str) -> str:
+        node = next((item for item in graph_context["nodes"] if item["id"] == node_id), None)
+        if node and node.get("label") and node["label"] != node_id:
+            return f"{node['label']} ({node_id})"
+        return node_id
+
+    def _deterministic_answer(
+        self,
+        question: str,
+        entities: List[str],
+        cases: List[str],
+        graph_context: Dict[str, Any],
+        findings: List[InvestigationFinding],
+    ) -> str:
+        intent = self._intent(question)
+        edges = graph_context["edges"]
+        nodes = graph_context["nodes"]
+        case_ids = {node["id"] for node in nodes if node["type"] == "case"}
+
+        if intent == "shared":
+            entity_cases: Dict[str, Set[str]] = {}
+            for edge in edges:
+                case_id = edge["source"] if edge["source"] in case_ids else edge["target"] if edge["target"] in case_ids else None
+                entity_id = edge["target"] if case_id == edge["source"] else edge["source"] if case_id == edge["target"] else None
+                if case_id and entity_id and entity_id not in case_ids:
+                    entity_cases.setdefault(entity_id, set()).add(case_id)
+            shared = [(entity_id, sorted(linked)) for entity_id, linked in entity_cases.items() if len(linked) > 1]
+            if shared:
+                lines = [f"• {self._node_label(graph_context, entity_id)} is present in {', '.join(linked)}" for entity_id, linked in shared]
+                return "Shared entities found across the uploaded cases:\n" + "\n".join(lines)
+            return "No entity is currently linked to two or more uploaded cases in the extracted graph."
+
+        if intent == "path":
+            endpoints = list(dict.fromkeys(entities + cases))
+            if len(endpoints) < 2:
+                return "A path query needs two identifiable cases or entities. Include both names or IDs in the question."
+            adjacency: Dict[str, List[tuple[str, Dict[str, Any]]]] = {}
+            for edge in edges:
+                adjacency.setdefault(edge["source"], []).append((edge["target"], edge))
+                adjacency.setdefault(edge["target"], []).append((edge["source"], edge))
+            queue = deque([endpoints[0]])
+            parent: Dict[str, str] = {}
+            seen = {endpoints[0]}
+            while queue:
+                current = queue.popleft()
+                if current == endpoints[1]:
+                    break
+                for neighbor, _ in adjacency.get(current, []):
+                    if neighbor not in seen:
+                        seen.add(neighbor)
+                        parent[neighbor] = current
+                        queue.append(neighbor)
+            if endpoints[1] not in seen:
+                return f"No path was found between {endpoints[0]} and {endpoints[1]} in the uploaded graph."
+            path = [endpoints[1]]
+            while path[0] != endpoints[0]:
+                path.insert(0, parent[path[0]])
+            labels = [self._node_label(graph_context, node_id) for node_id in path]
+            return f"Shortest extracted path ({len(path) - 1} links):\n" + " → ".join(labels)
+
+        if intent == "timeline":
+            scoped = set(entities + cases)
+            rows = []
+            for _, row in data_processor.timeline_df.iterrows():
+                if scoped and str(row.get("case_id", "")) not in scoped and str(row.get("person_id", "")) not in scoped:
+                    continue
+                rows.append(
+                    f"• {row.get('timestamp', '') or 'Time not recorded'} — {row.get('event_type', '')} "
+                    f"({row.get('case_id', '')}): {row.get('notes', '')}"
+                )
+            if rows:
+                return "Chronological events from uploaded records:\n" + "\n".join(rows[:12])
+            return "No structured timeline event matching this question was extracted from the uploaded records."
+
+        if intent in {"financial", "communication", "trails"}:
+            terms = (
+                ("money", "financial", "transaction", "account", "bank", "transfer", "payment", "sent", "received")
+                if intent == "financial"
+                else ("phone", "call", "communication", "contact", "cdr", "message", "communicated")
+                if intent == "communication"
+                else ("money", "financial", "transaction", "account", "bank", "transfer", "payment", "sent", "received", "phone", "call", "communication", "contact", "cdr", "message", "communicated")
+            )
+            node_types = {"account", "transaction"} if intent == "financial" else {"phone"} if intent == "communication" else {"account", "transaction", "phone"}
+            matching = [
+                edge for edge in edges
+                if any(term in f"{edge['relationship']} {edge['source']} {edge['target']}".casefold() for term in terms)
+                or any(
+                    node["id"] in (edge["source"], edge["target"])
+                    and node["type"] in node_types
+                    for node in nodes
+                )
+            ]
+            title = "Financial trails" if intent == "financial" else "Communication links" if intent == "communication" else "Communication and financial trails"
+            if matching:
+                lines = [
+                    f"• {self._node_label(graph_context, edge['source'])} — {edge['relationship']} → "
+                    f"{self._node_label(graph_context, edge['target'])}"
+                    for edge in matching[:12]
+                ]
+                return f"{title} found in the uploaded graph:\n" + "\n".join(lines)
+            return f"No {title.casefold()} were extracted from the currently uploaded records."
+
+        if intent == "anomaly":
+            degree = Counter()
+            for edge in edges:
+                degree[edge["source"]] += 1
+                degree[edge["target"]] += 1
+            hubs = [(node_id, count) for node_id, count in degree.most_common(5) if count >= 3]
+            high_priority = [edge for edge in edges if edge.get("priority") == "High"]
+            leads = [f"• {self._node_label(graph_context, node_id)} has {count} direct graph links" for node_id, count in hubs]
+            if high_priority:
+                leads.append(f"• {len(high_priority)} relationship(s) are marked high priority in the extracted records")
+            if leads:
+                return "Potential review leads (not findings of guilt):\n" + "\n".join(leads)
+            return "No unusual high-priority or high-connectivity pattern was found in the extracted graph."
+
+        if intent == "evidence":
+            supported = [finding for finding in findings if finding.citations]
+            if supported:
+                return "Supporting records matching the question:\n" + "\n".join(
+                    f"• {finding.statement}" for finding in supported
+                )
+            return "No supporting evidence record matching this question is available in the uploaded data."
+
+        if findings and findings[0].status != "Unresolved":
+            return "Grounded findings for this question:\n" + "\n".join(
+                f"• [{finding.status}] {finding.statement}" for finding in findings
+            )
+        return (
+            f"Uploaded investigation overview: {len(case_ids)} scoped case(s), {len(nodes)} scoped entities, "
+            f"and {len(edges)} scoped relationship(s). Ask about shared entities, a path, evidence, "
+            "communications, financial trails, anomalies, or a timeline for a targeted answer."
+        )
+
     def answer(
         self,
         question: str,
@@ -207,7 +364,7 @@ class InvestigationReasoningService:
         ]
         llm_result = llm_provider.generate_json(question, safe_context, graph_context, plan)
         findings = fallback_findings
-        answer = "\n".join(f"[{finding.status}] {finding.statement}" for finding in findings)
+        answer = self._deterministic_answer(question, entities, cases, graph_context, findings)
         unresolved = [finding.statement for finding in findings if finding.status == "Unresolved"]
         suggestions = [
             "Show the evidence records supporting these findings.",
