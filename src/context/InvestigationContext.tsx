@@ -245,12 +245,10 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
 
           const stationSession = getWorkspaceSession();
           if (stationSession?.mode === 'supabase' && stationSession.accessToken) {
-            const previousCases = new Map(prevData.cases.map((item) => [item.case_id, JSON.stringify(item)]));
-            const changedCases = result.updated.cases.filter(
-              (item) => previousCases.get(item.case_id) !== JSON.stringify(item),
-            );
+            const uploadedCaseIds = new Set(result.touchedCaseIds);
+            const uploadedCases = result.updated.cases.filter((item) => uploadedCaseIds.has(item.case_id));
             void publishSharedCases(
-              changedCases.map((item) => ({
+              uploadedCases.map((item) => ({
                 ...item,
                 station_id: stationSession.stationId,
                 station_name: stationSession.stationName,

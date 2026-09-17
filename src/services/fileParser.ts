@@ -342,7 +342,7 @@ export function ingestFileContent(
   current: ParsedDataset,
   fileName: string,
   content: string
-): { updated: ParsedDataset; nodesCreated: number; edgesCreated: number } {
+): { updated: ParsedDataset; nodesCreated: number; edgesCreated: number; touchedCaseIds: string[] } {
   const updated: ParsedDataset = {
     ...current,
     cases: [...current.cases],
@@ -379,6 +379,7 @@ export function ingestFileContent(
 
   const nodesBefore = updated.graphData.nodes.length;
   const edgesBefore = updated.graphData.edges.length;
+  const touchedCaseIds = new Set<string>();
 
   const nodeMap = new Map<string, GraphNode>();
   updated.graphData.nodes.forEach((n) => nodeMap.set(n.id, n));
@@ -436,7 +437,7 @@ export function ingestFileContent(
     }
   } else if (lowerName.endsWith('.csv')) {
     const rows = parseCSV(content);
-    if (!rows.length) return { updated, nodesCreated: 0, edgesCreated: 0 };
+    if (!rows.length) return { updated, nodesCreated: 0, edgesCreated: 0, touchedCaseIds: [] };
 
     const first = rows[0];
     const personByNormalizedName = new Map<string, Person>();
@@ -516,6 +517,7 @@ export function ingestFileContent(
     // case and person records as mutually exclusive schemas.
     rows.forEach((r, rowIndex) => {
       const caseId = getFirstValue(r, ['case_id', 'case_number', 'case_no', 'fir_id']);
+      if (caseId) touchedCaseIds.add(caseId);
       const looksLikeCase = Boolean(caseId && (
         'fir_number' in r || 'crime_type' in r || 'case_id' in r || 'case_number' in r || 'case_no' in r
       ));
@@ -773,6 +775,7 @@ export function ingestFileContent(
     const caseId = caseMatch
       ? `CASE-${caseMatch[1].padStart(3, '0')}`
       : `CASE-TXT-${stableId(`${fileName}:${content.slice(0, 160)}`)}`;
+    touchedCaseIds.add(caseId);
     const firNumber = firMatch?.[1]?.trim() || firMatch?.[0]?.trim() || `FIR/${fileName.replace(/\.[^/.]+$/, '')}`;
     const crimeType = /financial|bank|transaction|fraud/i.test(content)
       ? 'Financial Fraud'
@@ -958,6 +961,7 @@ export function ingestFileContent(
   } else {
     // Binary/scanned documents need OCR; do not fabricate person or device nodes.
     const pseudoCaseId = `CASE-DOC-${stableId(fileName)}`;
+    touchedCaseIds.add(pseudoCaseId);
     if (!updated.cases.some((item) => item.case_id === pseudoCaseId)) {
       updated.cases.push({
         case_id: pseudoCaseId,
@@ -1053,5 +1057,5 @@ export function ingestFileContent(
   const nodesCreated = updated.graphData.nodes.length - nodesBefore;
   const edgesCreated = updated.graphData.edges.length - edgesBefore;
 
-  return { updated, nodesCreated, edgesCreated };
+  return { updated, nodesCreated, edgesCreated, touchedCaseIds: [...touchedCaseIds] };
 }
