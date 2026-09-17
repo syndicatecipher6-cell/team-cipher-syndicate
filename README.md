@@ -1,6 +1,8 @@
 # NexusNet Intelligence
 
-Production-oriented frontend prototype for SIH26189: an evidence-first, graph-centric investigation workspace that connects fragmented records without making legal conclusions.
+NexusNet Intelligence is an **evidence-first, graph-centric investigation platform** that connects fragmented records into a unified investigative network. It combines **knowledge graphs, relationship analysis, Investigation AI, and a secure sandbox** to help investigators trace entities, uncover connections, analyse evidence, and explore what-if scenarios through a single intelligent workspace.
+
+The platform transforms disconnected records into **connected, explainable, and actionable investigative intelligence**, while keeping every conclusion grounded in available evidence.
 
 ## Run locally
 
@@ -22,7 +24,9 @@ Copy `.env.example` to `.env` for local configuration. The application retains i
 
 ## Grounded AI Investigator
 
-The Investigation AI now plans a query, retrieves FIR evidence, adds graph context, reranks results, reports contradictions, and produces cited findings labelled **Verified Fact**, **Corroborated**, **Inferred**, or **Unresolved**. The language model is an explanation layer only: it has no database credentials, cannot execute unrestricted Cypher, and cannot modify production records.
+The Investigation AI **understands the investigator’s natural-language query, plans the required graph and evidence retrieval, fetches relevant FIR and case evidence, enriches it with knowledge-graph relationships, and reranks the retrieved evidence for relevance**. It then identifies supporting and conflicting evidence and produces a **grounded, cited response** with each finding classified as **Verified Fact, Corroborated, Inferred, or Unresolved**.
+
+The LLM serves primarily as the **natural-language understanding and explanation layer**. Database access, query validation, evidence retrieval, and record modification are controlled by the backend, ensuring that the model cannot directly execute unrestricted database operations or modify production records.
 
 Gemini is the only configured cloud provider. Add a server-side key to `.env` when ready:
 
@@ -37,7 +41,9 @@ Optional local GLiNER, embedding, and cross-encoder support is isolated in `back
 
 ## Investigation Sandbox
 
-The sandbox stores a base case plus an ordered modification log rather than duplicating the database. It supports identity merge, relationship add/remove, evidence dispute, entity split, and timeline change. Every result is labelled **HYPOTHETICAL / SANDBOX**, recalculates graph metrics and LPI, and never writes to the production graph.
+The Investigation Sandbox creates a **safe what-if environment** using the base case and an **ordered modification log**, instead of duplicating the production database. Investigators can simulate changes such as **merging identities, adding or removing relationships, disputing evidence, splitting entities, or modifying timelines**.
+
+After each change, the system **recalculates affected graph relationships, metrics, and LPI**, and clearly shows **how the connections and investigation picture change**. Every output is labelled **HYPOTHETICAL / SANDBOX**, and all modifications remain isolated from the production graph.
 
 ## Validate
 
