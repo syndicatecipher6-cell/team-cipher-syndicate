@@ -256,7 +256,18 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
                 uploaded_at: new Date().toISOString(),
               })),
               stationSession.accessToken,
-            );
+            ).then((shared) => {
+              if (shared) return;
+              setPipelineJobs((prev) => prev.map((job) => job.id === jobId
+                ? {
+                    ...job,
+                    status: 'failed',
+                    progress: 100,
+                    errorMessage: 'Local analysis completed, but Supabase case sharing failed. Check the shared_cases migration and station policies.',
+                    stageMessage: 'Shared registry sync failed',
+                  }
+                : job));
+            });
           }
 
           return result.updated;
@@ -458,13 +469,12 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       const stationSession = getWorkspaceSession();
       if (
-        !needle ||
         (type && type !== 'all' && type !== 'case') ||
         stationSession?.mode !== 'supabase' ||
         !stationSession.accessToken
       ) return localResults;
 
-      const sharedCases = await searchSharedCases(query, stationSession.accessToken);
+      const sharedCases = await searchSharedCases(needle, stationSession.accessToken);
       const localIds = new Set(localResults.map((item) => item.id));
       const sharedResults: SearchResult[] = sharedCases
         .filter((item) => !localIds.has(item.case_id))

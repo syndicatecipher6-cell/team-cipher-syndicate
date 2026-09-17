@@ -128,6 +128,9 @@ export async function publishSharedCases(
       }),
       body: JSON.stringify(records),
     });
+    if (!response.ok) {
+      console.warn('[Shared Case Sync Error]:', response.status, await response.text());
+    }
     return response.ok;
   } catch {
     return false;
@@ -137,12 +140,14 @@ export async function publishSharedCases(
 export async function searchSharedCases(query: string, accessToken: string): Promise<SharedCaseRecord[]> {
   const { url } = getSupabaseConfig();
   const needle = query.trim();
-  if (!isSupabaseConfigured() || !accessToken || needle.length < 2) return [];
+  if (!isSupabaseConfigured() || !accessToken || (needle.length > 0 && needle.length < 2)) return [];
   const safeNeedle = needle.replace(/[,*()]/g, '');
-  const filter = `(case_id.ilike.*${safeNeedle}*,fir_number.ilike.*${safeNeedle}*)`;
+  const filter = safeNeedle
+    ? `&or=${encodeURIComponent(`(case_id.ilike.*${safeNeedle}*,fir_number.ilike.*${safeNeedle}*)`)}`
+    : '';
   try {
     const response = await fetch(
-      `${url}/rest/v1/shared_cases?select=*&or=${encodeURIComponent(filter)}&order=uploaded_at.desc&limit=20`,
+      `${url}/rest/v1/shared_cases?select=*${filter}&order=uploaded_at.desc&limit=20`,
       { headers: stationHeaders(accessToken) },
     );
     return response.ok ? await response.json() as SharedCaseRecord[] : [];

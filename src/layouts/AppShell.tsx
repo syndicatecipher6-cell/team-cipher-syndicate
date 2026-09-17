@@ -44,12 +44,8 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
-    if (searchOpen && query.trim()) {
+    if (searchOpen) {
       void searchEntities(query).then(setResults);
-    } else if (searchOpen) {
-      // Search results mirror the investigation context when the modal opens.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setResults(dataset.searchResults.slice(0, 8));
     }
   }, [query, searchOpen, searchEntities, dataset.searchResults]);
 
@@ -194,7 +190,9 @@ export function AppShell() {
                 autoFocus
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder={isDataLoaded ? 'Search uploaded investigation records...' : 'No records loaded yet. Upload files to begin.'}
+                placeholder={workspaceSession?.mode === 'supabase' || isDataLoaded
+                  ? 'Search uploaded investigation records...'
+                  : 'No records loaded yet. Upload files to begin.'}
               />
               <kbd>Esc</kbd>
             </div>
@@ -213,7 +211,11 @@ export function AppShell() {
               )}
             </div>
             <footer>
-              {isDataLoaded ? `${dataset.searchResults.length} entities indexed from uploaded records` : 'Clean workspace · No synthetic records loaded'}
+              {workspaceSession?.mode === 'supabase'
+                ? `${results.length} authorised local and shared records shown`
+                : isDataLoaded
+                  ? `${dataset.searchResults.length} entities indexed from uploaded records`
+                  : 'Clean workspace · No synthetic records loaded'}
             </footer>
           </div>
         </div>
