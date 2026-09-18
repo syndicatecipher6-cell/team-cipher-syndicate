@@ -81,6 +81,35 @@ class GroundedInvestigatorTests(unittest.TestCase):
         self.assertIn("Person Alpha", shared.answer)
         self.assertIn("Supporting records", evidence.answer)
 
+    def test_hybrid_retrieval_ranks_active_workspace_records(self) -> None:
+        client = TestClient(app)
+        response = client.post(
+            "/api/retrieval/search",
+            headers={"X-NexusNet-User": "tester", "X-NexusNet-Role": "investigator"},
+            json={
+                "query": "Person Alpha CASE-103",
+                "evidence": [item.model_dump() for item in data_processor.evidence_list],
+                "cases": [
+                    {
+                        "case_id": "CASE-103",
+                        "fir_number": "FIR-103",
+                        "crime_type": "Test",
+                        "district": "Test District",
+                        "state": "Test State",
+                        "date_filed": "2026-09-19",
+                        "status": "Active",
+                        "summary": "Person Alpha appears in a second uploaded FIR.",
+                    }
+                ],
+                "top_k": 5,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["results"])
+        self.assertIn(payload["results"][0]["id"], {"EV-2", "CASE-103"})
+        self.assertIn("BM25", payload["method"])
+
     def test_sandbox_merge_does_not_mutate_production_graph(self) -> None:
         original_node_ids = set(data_processor.graph_nodes)
         session = sandbox_service.create("CASE-103", "test-investigator")

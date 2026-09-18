@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
+    "train:fir": "node backend/train_fir_extractor.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

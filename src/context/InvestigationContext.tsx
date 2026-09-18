@@ -5,6 +5,7 @@ import {
   createEmptyDataset,
   ingestFileContent,
 } from '../services/fileParser';
+import type { TrainedFirExtraction } from '../services/fileParser';
 import {
   sampleCases,
   samplePersons,
@@ -305,6 +306,25 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         const text = await file.text();
+        let trainedExtraction: TrainedFirExtraction | undefined;
+        let backendSynced = false;
+
+        if (ext === 'txt') {
+          try {
+            const formData = new FormData();
+            formData.append('files', file);
+            const response = await fetch('/api/ingest/upload', { method: 'POST', body: formData });
+            if (response.ok) {
+              const payload = await response.json() as {
+                processed?: Array<{ extractedNLP?: TrainedFirExtraction }>;
+              };
+              trainedExtraction = payload.processed?.[0]?.extractedNLP;
+              backendSynced = true;
+            }
+          } catch {
+            // Local parsing remains available when the Python service is offline.
+          }
+        }
 
         // Step 2: Entity extraction & resolution
         await new Promise((r) => setTimeout(r, 400));
@@ -321,7 +341,7 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
         let edgesCreated = 0;
 
         setDataset((prevData) => {
-          const result = ingestFileContent(prevData, file.name, text);
+          const result = ingestFileContent(prevData, file.name, text, trainedExtraction);
           nodesCreated = result.nodesCreated;
           edgesCreated = result.edgesCreated;
           // Synchronize to active backend dataset
@@ -336,12 +356,14 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
           });
 
           // Sync with Python FastAPI backend asynchronously
-          try {
-            const formData = new FormData();
-            formData.append('files', file);
-            fetch('/api/ingest/upload', { method: 'POST', body: formData }).catch(() => {});
-          } catch {
-            // ignore
+          if (!backendSynced) {
+            try {
+              const formData = new FormData();
+              formData.append('files', file);
+              fetch('/api/ingest/upload', { method: 'POST', body: formData }).catch(() => {});
+            } catch {
+              // Local ingestion has already completed.
+            }
           }
 
           // Direct browser-to-Supabase cloud sync

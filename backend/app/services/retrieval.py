@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, Dict, Any, Tuple
 from rank_bm25 import BM25Okapi
 from app.services.data_processing import data_processor
-from app.models.schemas import Evidence
+from app.models.schemas import CaseRecord, Evidence
 from app.config import settings
 
 class HybridRetrievalService:
@@ -83,20 +83,71 @@ class HybridRetrievalService:
         3. BGE Reranker v2-M3 cross-scoring
         """
         self.build_index()
-        if not self.bm25 or not self.corpus:
+        return self._rank(query, self.corpus, self.tokenized_corpus, top_k)
+
+    def search_records(
+        self,
+        query: str,
+        evidence_records: List[Evidence],
+        cases: List[CaseRecord],
+        top_k: int = 8,
+    ) -> List[Dict[str, Any]]:
+        """Rank the caller's active workspace without relying on server-global ingestion state."""
+        corpus: List[Dict[str, Any]] = []
+        tokens: List[List[str]] = []
+        for item in evidence_records:
+            text = f"{item.evidence_id} {item.relationship} {item.entityA} {item.entityB} {item.supportingData} {item.case_id}"
+            corpus.append({
+                "id": item.evidence_id,
+                "text": text,
+                "type": "evidence",
+                "obj": item,
+                "provenance": item.provenance.model_dump(),
+                "case_id": item.case_id,
+                "entity_ids": [item.entityA, item.entityB],
+            })
+            tokens.append(text.lower().split())
+        for item in cases:
+            text = f"{item.case_id} {item.fir_number} {item.crime_type} {item.summary} {item.district} {item.state}"
+            corpus.append({
+                "id": item.case_id,
+                "text": text,
+                "type": "case",
+                "obj": item,
+                "provenance": {
+                    "sourceDataset": "uploaded case record",
+                    "sourceRecordId": item.case_id,
+                    "recordType": "Case",
+                },
+                "case_id": item.case_id,
+                "entity_ids": [item.case_id],
+            })
+            tokens.append(text.lower().split())
+        return self._rank(query, corpus, tokens, top_k)
+
+    def _rank(
+        self,
+        query: str,
+        corpus: List[Dict[str, Any]],
+        tokenized_corpus: List[List[str]],
+        top_k: int,
+    ) -> List[Dict[str, Any]]:
+        if not corpus:
             return []
 
+        bm25 = BM25Okapi(tokenized_corpus)
+
         q_tokens = query.lower().split()
-        bm25_scores = self.bm25.get_scores(q_tokens)
+        bm25_scores = bm25.get_scores(q_tokens)
         max_bm25 = max(bm25_scores) if len(bm25_scores) > 0 and max(bm25_scores) > 0 else 1.0
 
         results = []
-        for idx, item in enumerate(self.corpus):
+        for idx, item in enumerate(corpus):
             raw_bm25 = bm25_scores[idx]
             norm_bm25 = float(raw_bm25 / max_bm25) if max_bm25 > 0 else 0.0
 
             # Semantic BGE-M3 heuristic: token overlap + length normalization
-            overlap = len(set(q_tokens).intersection(set(self.tokenized_corpus[idx])))
+            overlap = len(set(q_tokens).intersection(set(tokenized_corpus[idx])))
             semantic_score = float(overlap / (len(q_tokens) + 1))
 
             # BGE Reranker v2-M3 fusion score (0.4 * BM25 + 0.6 * BGE-M3)
@@ -108,7 +159,9 @@ class HybridRetrievalService:
                     "type": item["type"],
                     "text": item["text"],
                     "score": round(min(0.98, max(0.55, 0.60 + rerank_score * 0.38)), 3),
-                    "obj": item["obj"]
+                    "case_id": item["case_id"],
+                    "provenance": item["provenance"],
+                    "entity_ids": item.get("entity_ids", []),
                 })
 
         results.sort(key=lambda x: x["score"], reverse=True)

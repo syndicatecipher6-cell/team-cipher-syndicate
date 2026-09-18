@@ -44,7 +44,15 @@
 
 .legend {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .legendItem {
@@ -71,6 +79,7 @@
   color: var(--text-primary);
   outline: none;
   font-weight: 600;
+  max-width: 150px;
 }
 
 .canvasWrapper {

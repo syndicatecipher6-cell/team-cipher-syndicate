@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
+  BookOpenCheck,
   Bot,
   ChevronDown,
   FlaskConical,
@@ -104,6 +105,7 @@ export function AppShell() {
           <NavItem to="/entities" icon={Users} label="Entities & Identities" onClick={closeSidebar} />
           <NavItem to="/graph" icon={Network} label="Network Graph" onClick={closeSidebar} />
           <NavItem to="/assistant" icon={Bot} label="Investigation AI" onClick={closeSidebar} />
+          <NavItem to="/evidence" icon={BookOpenCheck} label="Evidence Explorer" onClick={closeSidebar} />
           <NavItem to="/sandbox" icon={FlaskConical} label="Investigation Sandbox" onClick={closeSidebar} />
         </nav>
 

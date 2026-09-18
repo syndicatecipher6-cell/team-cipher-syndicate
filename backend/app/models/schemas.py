@@ -117,6 +117,26 @@ class CrossCaseResponse(BaseModel):
     graph: GraphData
     connections: List[CrossCaseConnection]
 
+class RetrievalSearchRequest(BaseModel):
+    query: str = Field(min_length=2, max_length=1000)
+    evidence: List[Evidence] = Field(default_factory=list)
+    cases: List[CaseRecord] = Field(default_factory=list)
+    top_k: int = Field(default=8, ge=1, le=25)
+
+class RetrievalSearchResult(BaseModel):
+    id: str
+    type: str
+    text: str
+    score: float
+    case_id: str
+    provenance: Dict[str, Any] = Field(default_factory=dict)
+    entity_ids: List[str] = Field(default_factory=list)
+
+class RetrievalSearchResponse(BaseModel):
+    results: List[RetrievalSearchResult] = Field(default_factory=list)
+    method: str
+    cross_encoder_enabled: bool = False
+
 class AssistantResponse(BaseModel):
     answer: str
     recordCount: int

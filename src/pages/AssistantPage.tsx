@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, PageHeader, Panel, SourceBadge } from '../components/ui';
 import { useInvestigation } from '../context/InvestigationContext';
 import type { AssistantResponse } from '../types/domain';
-import { investigationService } from '../services';
+import { answerLocalInvestigation } from '../services/localInvestigator';
 
 export function AssistantPage() {
   const { dataset, isDataLoaded } = useInvestigation();
@@ -42,7 +42,13 @@ export function AssistantPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await investigationService.askInvestigator(text);
+      const response = answerLocalInvestigation(text, {
+        cases: dataset.cases,
+        persons: dataset.persons,
+        evidence: dataset.evidence,
+        graph: dataset.graphData,
+        timeline: dataset.timelineEvents,
+      });
       setAnswer(response);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Investigation AI request failed.');

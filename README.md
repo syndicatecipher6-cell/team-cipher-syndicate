@@ -70,3 +70,14 @@ Added a robust Graph Machine Learning pipeline for **Link Prediction** to detect
 - **Dependencies**: Uses lightweight 
 etworkx and scikit-learn libraries.
 - **Model Output**: The trained model is serialized to `backend/models/investigation_model.pkl`.
+
+### FIR extraction training
+
+The trained FIR model classifies crime types and person roles while the hybrid extractor validates deterministic identifiers such as phones, vehicles, accounts, and transaction amounts.
+
+```bash
+npm run train:fir -- path/to/indian_fir_dataset.csv
+backend/.venv/Scripts/python backend/evaluate_fir_extractor.py path/to/indian_fir_dataset.csv --split test
+```
+
+The generated `backend/models/fir_extractor_model.json` is loaded automatically by the FastAPI ingestion service. Reported metrics are synthetic-dataset results and must not be treated as a production benchmark.

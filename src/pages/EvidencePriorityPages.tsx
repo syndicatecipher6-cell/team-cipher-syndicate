@@ -1,39 +1,31 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ArrowRight, BookOpenCheck, Filter, Search, ShieldCheck } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   EmptyState,
-  ErrorState,
-  LoadingState,
   PageHeader,
   Panel,
   PriorityIndicator,
   SourceBadge,
 } from '../components/ui';
-import { cases, evidence as evidenceData } from '../data/mockData';
-import { useAsync } from '../hooks/useAsync';
-import { investigationService } from '../services';
-import type { Evidence } from '../types/domain';
+import { useInvestigation } from '../context/InvestigationContext';
+import type { Evidence, Priority } from '../types/domain';
 
 export function EvidencePage() {
+  const { dataset } = useInvestigation();
   const [params, setParams] = useSearchParams();
   const caseId = params.get('caseId') ?? '';
   const [selected, setSelected] = useState<Evidence>();
   const [query, setQuery] = useState('');
 
-  const loader = useCallback(
-    () => investigationService.getEvidence(caseId ? { caseId } : undefined),
-    [caseId]
-  );
-  const { data, loading, error, retry } = useAsync(loader, [loader]);
-
-  const visible = data?.filter(
+  const visible = useMemo(() => dataset.evidence.filter(
     (item) =>
-      !query ||
-      `${item.evidence_id} ${item.relationship} ${item.entityA} ${item.entityB} ${item.provenance?.sourceRecordId ?? ''}`
-        .toLowerCase()
-        .includes(query.toLowerCase())
-  );
+      (!caseId || item.case_id === caseId) &&
+      (!query ||
+        `${item.evidence_id} ${item.relationship} ${item.entityA} ${item.entityB} ${item.provenance?.sourceRecordId ?? ''}`
+          .toLowerCase()
+          .includes(query.toLowerCase()))
+  ), [caseId, dataset.evidence, query]);
 
   return (
     <>
@@ -41,6 +33,7 @@ export function EvidencePage() {
         eyebrow="Evidence-first analysis"
         title="Evidence Explorer"
         description="Understand why a relationship is displayed and trace it to the supporting source record."
+        actions={<><Link className="button button--secondary" to="/retrieval">Hybrid Retrieval</Link><Link className="button button--secondary" to="/priority-links">Priority Links</Link></>}
       />
       <Panel className="filter-panel">
         <div className="evidence-search">
@@ -56,7 +49,7 @@ export function EvidencePage() {
             onChange={(e) => setParams(e.target.value ? { caseId: e.target.value } : {})}
           >
             <option value="">All cases</option>
-            {cases.map((c) => (
+            {dataset.cases.map((c) => (
               <option key={c.case_id} value={c.case_id}>
                 {c.case_id}
               </option>
@@ -65,11 +58,7 @@ export function EvidencePage() {
         </div>
       </Panel>
 
-      {loading ? (
-        <LoadingState />
-      ) : error ? (
-        <ErrorState message={error} retry={() => void retry()} />
-      ) : !visible?.length ? (
+      {!visible.length ? (
         <Panel>
           <EmptyState
             title="No evidence records loaded"
@@ -187,13 +176,41 @@ function EvidenceDetail({ item }: { item: Evidence }) {
 }
 
 export function PriorityLinksPage() {
+  const { dataset } = useInvestigation();
   const [priority, setPriority] = useState('All');
-  const records = evidenceData
-    .filter((e) => priority === 'All' || e.priority === priority)
-    .slice(0, 9);
-
-  const highCount = evidenceData.filter((e) => e.priority === 'High').length;
-  const verifiedCount = evidenceData.filter(
+  const scoredRecords = useMemo(() => {
+    const pairCounts = new Map<string, number>();
+    dataset.evidence.forEach(item => {
+      const key = [item.entityA, item.entityB].sort().join('|');
+      pairCounts.set(key, (pairCounts.get(key) ?? 0) + 1);
+    });
+    const caseIds = new Set(dataset.cases.map(item => item.case_id));
+    const casesByEntity = new Map<string, Set<string>>();
+    dataset.graphData.edges.forEach(edge => {
+      const caseId = caseIds.has(edge.source) ? edge.source : caseIds.has(edge.target) ? edge.target : '';
+      const entityId = caseId === edge.source ? edge.target : caseId === edge.target ? edge.source : '';
+      if (!caseId || !entityId) return;
+      const linked = casesByEntity.get(entityId) ?? new Set<string>();
+      linked.add(caseId);
+      casesByEntity.set(entityId, linked);
+    });
+    return dataset.evidence.map(item => {
+      let score = 0;
+      const factors: string[] = [];
+      if (/verified/i.test(item.sourceReliability)) { score += 35; factors.push('verified source'); }
+      else { score += 20; factors.push('source requires verification'); }
+      if (item.provenance.sourceDataset && item.provenance.sourceRecordId) { score += 15; factors.push('complete provenance'); }
+      if (item.supportingData.trim().length >= 40) { score += 10; factors.push('substantive record'); }
+      if ((pairCounts.get([item.entityA, item.entityB].sort().join('|')) ?? 0) > 1) { score += 15; factors.push('corroborated link'); }
+      const linkedCases = new Set([...(casesByEntity.get(item.entityA) ?? []), ...(casesByEntity.get(item.entityB) ?? []), item.case_id]);
+      if (linkedCases.size > 1) { score += 25; factors.push(`cross-case (${linkedCases.size} cases)`); }
+      const calculatedPriority: Priority = score >= 70 ? 'High' : score >= 45 ? 'Medium' : 'Low';
+      return { item, score, factors, calculatedPriority };
+    }).sort((left, right) => right.score - left.score);
+  }, [dataset.cases, dataset.evidence, dataset.graphData.edges]);
+  const records = scoredRecords.filter(record => priority === 'All' || record.calculatedPriority === priority).slice(0, 9);
+  const highCount = scoredRecords.filter(record => record.calculatedPriority === 'High').length;
+  const verifiedCount = dataset.evidence.filter(
     (e) => e.sourceReliability === 'Record verified' || e.sourceReliability === 'Bank verified' || e.sourceReliability === 'Telecom verified'
   ).length;
 
@@ -216,7 +233,7 @@ export function PriorityLinksPage() {
           <small>Directly backed by ingested data</small>
         </article>
         <article>
-          <strong>{cases.length}</strong>
+          <strong>{dataset.cases.length}</strong>
           <span>Active cases</span>
           <small>In current scope</small>
         </article>
@@ -248,15 +265,15 @@ export function PriorityLinksPage() {
               <span>Supporting factors</span>
               <span>Evidence</span>
             </div>
-            {records.map((item) => (
+            {records.map(({ item, score, factors, calculatedPriority }) => (
               <article key={item.evidence_id}>
-                <PriorityIndicator value={item.priority} />
+                <PriorityIndicator value={calculatedPriority} />
                 <strong>{item.relationship}</strong>
                 <span>
                   {item.entityA} → {item.entityB}
                 </span>
                 <span>
-                  {item.sourceReliability} · {item.evidenceType}
+                  {score}/100 · {factors.join(' · ')}
                 </span>
                 <span>{item.evidence_id}</span>
               </article>

@@ -1,37 +1,76 @@
 import { useState } from 'react';
 import { BookOpenCheck, Search, SlidersHorizontal } from 'lucide-react';
 import { Button, EmptyState, PageHeader, Panel, SourceBadge } from '../components/ui';
-import { cases, evidence, persons } from '../data/mockData';
+import { apiConfig } from '../config/api';
+import { useInvestigation } from '../context/InvestigationContext';
+
+interface HybridResult {
+  id: string;
+  type: string;
+  text: string;
+  score: number;
+  case_id: string;
+  provenance: { sourceDataset?: string; sourceRecordId?: string; recordType?: string };
+  entity_ids: string[];
+}
 
 export function RetrievalPage() {
+  const { dataset } = useInvestigation();
   const [query, setQuery] = useState('');
   const [submitted, setSubmitted] = useState('');
+  const [results, setResults] = useState<HybridResult[]>([]);
+  const [method, setMethod] = useState('BM25 + reranking');
+  const [loading, setLoading] = useState(false);
 
-  const q = submitted.toLowerCase().trim();
-  const results = submitted
-    ? evidence
-        .filter(
-          (e) =>
-            !q ||
-            e.evidence_id.toLowerCase().includes(q) ||
-            e.entityA.toLowerCase().includes(q) ||
-            e.entityB.toLowerCase().includes(q) ||
-            e.supportingData.toLowerCase().includes(q) ||
-            e.relationship.toLowerCase().includes(q) ||
-            e.case_id.toLowerCase().includes(q)
-        )
-        .slice(0, 8)
-    : [];
+  const runSearch = async (value: string) => {
+    const normalized = value.trim();
+    if (!normalized) return;
+    setSubmitted(normalized);
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiConfig.baseUrl}/retrieval/search`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-NexusNet-User': 'local-investigator',
+          'X-NexusNet-Role': 'investigator',
+        },
+        body: JSON.stringify({ query: normalized, evidence: dataset.evidence, cases: dataset.cases, top_k: 8 }),
+      });
+      if (!response.ok) throw new Error(`Retrieval service returned ${response.status}.`);
+      const payload = await response.json() as { results: HybridResult[]; method: string };
+      setResults(payload.results);
+      setMethod(payload.method);
+    } catch {
+      const needle = normalized.toLowerCase();
+      setResults(dataset.evidence.filter(item =>
+        `${item.evidence_id} ${item.relationship} ${item.entityA} ${item.entityB} ${item.supportingData} ${item.case_id}`
+          .toLowerCase().includes(needle)
+      ).slice(0, 8).map(item => ({
+        id: item.evidence_id,
+        type: 'evidence',
+        text: item.supportingData,
+        score: 0.5,
+        case_id: item.case_id,
+        provenance: item.provenance,
+        entity_ids: [item.entityA, item.entityB],
+      })));
+      setMethod('Local keyword fallback — backend retrieval unavailable');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dynamicSuggestions = [
-    cases[0] ? `Show evidence for ${cases[0].case_id}` : '',
-    persons[0] ? `Find records mentioning ${persons[0].name}` : '',
+    dataset.cases[0] ? `Show evidence for ${dataset.cases[0].case_id}` : '',
+    dataset.persons[0] ? `Find records mentioning ${dataset.persons[0].name}` : '',
     'Search CDR call communication logs',
     'Find financial account transactions',
   ].filter(Boolean);
 
   const relatedEntityIds = Array.from(
-    new Set(results.flatMap((r) => [r.entityA, r.entityB, r.case_id]))
+    new Set(results.flatMap((r) => [...r.entity_ids, r.case_id]))
   ).slice(0, 6);
 
   return (
@@ -47,7 +86,7 @@ export function RetrievalPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (query.trim()) setSubmitted(query);
+            void runSearch(query);
           }}
         >
           <Search />
@@ -56,7 +95,7 @@ export function RetrievalPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. Search suspect name, phone number, vehicle, or case ID..."
           />
-          <Button>Search evidence</Button>
+          <Button disabled={loading}>{loading ? 'Searching...' : 'Search evidence'}</Button>
         </form>
         {dynamicSuggestions.length > 0 && (
           <div className="prompt-suggestions">
@@ -65,7 +104,7 @@ export function RetrievalPage() {
                 key={prompt}
                 onClick={() => {
                   setQuery(prompt);
-                  setSubmitted(prompt);
+                  void runSearch(prompt);
                 }}
               >
                 {prompt}
@@ -94,20 +133,18 @@ export function RetrievalPage() {
               />
             ) : (
               <div className="retrieval-results">
-                {results.map((item, index) => (
-                  <article key={item.evidence_id}>
+                {results.map((item) => (
+                  <article key={item.id}>
                     <header>
                       <BookOpenCheck />
-                      <strong>{item.evidence_id}</strong>
-                      <span>Relevance {Math.max(65, 96 - index * 6)}%</span>
+                      <strong>{item.id}</strong>
+                      <span>Relevance {Math.round(item.score * 100)}%</span>
                     </header>
-                    <p>{item.supportingData}</p>
+                    <p>{item.text}</p>
                     <div>
-                      {item.provenance && (
-                        <SourceBadge>{item.provenance.sourceDataset}</SourceBadge>
-                      )}
+                      <SourceBadge>{item.provenance.sourceDataset || 'Uploaded records'}</SourceBadge>
                       <span>{item.case_id}</span>
-                      <span>{item.provenance?.sourceRecordId}</span>
+                      <span>{item.provenance.sourceRecordId}</span>
                     </div>
                   </article>
                 ))}
@@ -119,15 +156,15 @@ export function RetrievalPage() {
             <dl className="metadata">
               <div>
                 <dt>Search scope</dt>
-                <dd>{evidence.length} ingested records</dd>
+                <dd>{dataset.evidence.length} ingested records</dd>
               </div>
               <div>
                 <dt>Matching cases</dt>
-                <dd>{cases.length} active</dd>
+                <dd>{dataset.cases.length} active</dd>
               </div>
               <div>
                 <dt>Backend method</dt>
-                <dd>Hybrid keyword & link retrieval</dd>
+                <dd>{method}</dd>
               </div>
             </dl>
             {relatedEntityIds.length > 0 && (

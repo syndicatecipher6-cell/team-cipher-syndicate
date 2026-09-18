@@ -21,7 +21,7 @@ export interface CaseRecord {
 export interface Person {
   person_id: string;
   name: string;
-  role: 'Suspect' | 'Witness' | 'Victim' | 'Person of Interest';
+  role: 'Suspect' | 'Witness' | 'Victim' | 'Complainant' | 'Officer' | 'Person of Interest';
   caseIds: string[];
   phoneIds: string[];
   vehicleIds: string[];

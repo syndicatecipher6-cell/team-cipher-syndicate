@@ -3,7 +3,7 @@ import { FlaskConical, ShieldCheck } from 'lucide-react';
 import { SandboxGraphComparison } from '../components/SandboxGraphComparison';
 import { Button, PageHeader, Panel } from '../components/ui';
 import { useInvestigation } from '../context/InvestigationContext';
-import { investigationService } from '../services';
+import { mockInvestigationService } from '../services/mockInvestigationService';
 import type { GraphData, GraphEdge, SandboxModification, SandboxOperation, SandboxSession } from '../types/domain';
 
 const operations: Array<{ value: SandboxOperation; label: string }> = [
@@ -128,7 +128,7 @@ export function SandboxPage() {
     setLoading(true);
     setError('');
     try {
-      setSession(await investigationService.createSandbox(baseCaseId));
+      setSession(await mockInvestigationService.createSandbox(baseCaseId));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not create sandbox.');
     } finally {
@@ -163,7 +163,7 @@ export function SandboxPage() {
     setLoading(true);
     setError('');
     try {
-      const updated = await investigationService.applySandboxModification(session.sandbox_id, {
+      const updated = await mockInvestigationService.applySandboxModification(session.sandbox_id, {
         operation,
         parameters,
         rationale,

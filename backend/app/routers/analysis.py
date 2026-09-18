@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from app.services.knowledge_graph import kg_service
 from app.services.investigator import investigator_service
+from app.services.retrieval import retrieval_service
 from app.security import READ_ROLES, Principal, get_principal, require_role
 from app.config import settings
 from app.models.schemas import (
     HiddenConnectionResponse, CrossCaseResponse, AssistantResponse,
-    AssistantQueryRequest, CaseIntelligenceBrief
+    AssistantQueryRequest, CaseIntelligenceBrief, RetrievalSearchRequest,
+    RetrievalSearchResponse
 )
 
 router = APIRouter(tags=["Graph Analysis & AI"])
@@ -25,6 +27,25 @@ def get_cross_case_connections(caseIds: str = Query(..., alias="caseIds")):
     """
     c_list = [c.strip() for c in caseIds.split(",") if c.strip()]
     return kg_service.find_cross_case_connections(c_list)
+
+@router.post("/retrieval/search", response_model=RetrievalSearchResponse)
+def search_active_records(
+    payload: RetrievalSearchRequest,
+    principal: Principal = Depends(get_principal),
+):
+    """Run BM25 and configured reranking against the caller's active workspace records."""
+    require_role(principal, READ_ROLES)
+    results = retrieval_service.search_records(
+        payload.query,
+        payload.evidence,
+        payload.cases,
+        payload.top_k,
+    )
+    return RetrievalSearchResponse(
+        results=results,
+        method="BM25 + lexical semantic fusion + BGE cross-encoder when enabled",
+        cross_encoder_enabled=settings.ENABLE_LOCAL_TRANSFORMERS,
+    )
 
 def _authorize(principal: Principal) -> None:
     if not settings.ENABLE_AI_INVESTIGATOR:

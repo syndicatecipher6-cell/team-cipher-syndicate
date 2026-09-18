@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { ArrowRight, BookOpenCheck, Check, GitCompareArrows, Link2, Search } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { EvidenceDrawer } from '../components/Drawers';
@@ -15,7 +15,7 @@ import {
 } from '../components/ui';
 import { cases, searchResults } from '../data/mockData';
 import { useAsync } from '../hooks/useAsync';
-import { investigationService } from '../services';
+import { mockInvestigationService } from '../services/mockInvestigationService';
 import type { GraphEdge } from '../types/domain';
 
 export function HiddenConnectionsPage() {
@@ -32,11 +32,10 @@ export function HiddenConnectionsPage() {
   const [searched, setSearched] = useState(Boolean(from && to && options.length >= 2));
   const [edge, setEdge] = useState<GraphEdge>();
 
-  const loader = useCallback(
-    () => (from && to ? investigationService.findHiddenConnection(from, to) : Promise.resolve(null)),
-    [from, to]
+  const { data, loading, error, retry } = useAsync(
+    () => (from && to ? mockInvestigationService.findHiddenConnection(from, to) : Promise.resolve(null)),
+    [from, to],
   );
-  const { data, loading, error, retry } = useAsync(loader, [loader]);
 
   if (options.length < 2) {
     return (
@@ -187,14 +186,13 @@ export function CrossCasePage() {
   const [selected, setSelected] = useState(initial);
   const [analysedCases, setAnalysedCases] = useState(initial);
 
-  const loader = useCallback(
+  const { data, loading, error, retry } = useAsync(
     () =>
       analysedCases.length >= 2
-        ? investigationService.findCrossCaseConnections(analysedCases)
+        ? mockInvestigationService.findCrossCaseConnections(analysedCases)
         : Promise.resolve({ graph: { nodes: [], edges: [] }, connections: [] }),
-    [analysedCases]
+    [analysedCases],
   );
-  const { data, loading, error, retry } = useAsync(loader, [loader]);
 
   const toggle = (id: string) =>
     setSelected((current) =>

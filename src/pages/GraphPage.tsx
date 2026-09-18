@@ -1,52 +1,103 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
+import type { ForceGraphMethods, LinkObject, NodeObject } from 'react-force-graph-2d';
 import styles from './GraphPage.module.css';
 import { useInvestigation } from '../context/InvestigationContext';
 import { useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
+const entityColors: Record<string, string> = {
+  case: '#f59e0b', person: '#2563eb', phone: '#8b5cf6', vehicle: '#0f766e',
+  location: '#16a34a', account: '#dc2626', transaction: '#db2777', evidence: '#64748b',
+};
+
+interface GraphNodeDatum {
+  id: string;
+  name: string;
+  type: string;
+  x?: number;
+  y?: number;
+  fx?: number;
+  fy?: number;
+}
+
+interface GraphLinkDatum {
+  source: string | GraphNodeDatum;
+  target: string | GraphNodeDatum;
+  type: string;
+  weight: number;
+}
+
+interface ConfigurableForce {
+  strength?: (value: number) => unknown;
+  distance?: (value: number) => unknown;
+}
+
+function endpointId(endpoint: GraphLinkDatum['source'] | undefined): string | undefined {
+  return typeof endpoint === 'string' ? endpoint : endpoint?.id;
+}
 
 export function GraphPage() {
   const { dataset } = useInvestigation();
   const [searchParams] = useSearchParams();
   const scopedCaseId = searchParams.get('caseId');
-  const [selectedNode, setSelectedNode] = useState<any>(null);
-  const fgRef = useRef<any>(null);
+  const [caseFilter, setCaseFilter] = useState(scopedCaseId ?? '');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [selectedNode, setSelectedNode] = useState<GraphNodeDatum | null>(null);
+  const [rankings, setRankings] = useState<Array<{ id: string; name: string; score: number }>>([]);
+  const fgRef = useRef<ForceGraphMethods<GraphNodeDatum, GraphLinkDatum> | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    // Keep direct case links in sync when React Router updates only the query string.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCaseFilter(scopedCaseId ?? '');
+  }, [scopedCaseId]);
+
+  const sourceOptions = useMemo(() => [...new Set([
+    ...dataset.graphData.nodes.map(node => node.provenance?.sourceDataset),
+    ...dataset.graphData.edges.map(edge => edge.provenance?.sourceDataset),
+  ].filter((value): value is string => Boolean(value)))].sort(), [dataset.graphData]);
   
   const graphData = useMemo(() => {
     const datasetNodes = Array.isArray(dataset.graphData?.nodes) ? dataset.graphData.nodes : [];
     const datasetEdges = Array.isArray(dataset.graphData?.edges) ? dataset.graphData.edges : [];
-    const entityById = new Map(datasetNodes.map(node => [node.id, node]));
-    const directCasePersonEdges = datasetEdges.flatMap(edge => {
-      const source = entityById.get(edge.source);
-      const target = entityById.get(edge.target);
-      if (source?.type === 'case' && target?.type === 'person') {
-        return [{ edge, caseId: source.id, personId: target.id }];
+    const nodeById = new Map(datasetNodes.map(node => [node.id, node]));
+    const caseScopedIds = new Set(caseFilter ? [caseFilter] : datasetNodes.map(node => node.id));
+    if (caseFilter) {
+      let changed = true;
+      while (changed) {
+        changed = false;
+        datasetEdges.forEach(edge => {
+          if (!caseScopedIds.has(edge.source) && !caseScopedIds.has(edge.target)) return;
+          if (!caseScopedIds.has(edge.source) || !caseScopedIds.has(edge.target)) changed = true;
+          caseScopedIds.add(edge.source);
+          caseScopedIds.add(edge.target);
+        });
       }
-      if (source?.type === 'person' && target?.type === 'case') {
-        return [{ edge, caseId: target.id, personId: source.id }];
+    }
+    const visibleRelationships = datasetEdges.filter(
+      edge => {
+        if (!caseScopedIds.has(edge.source) || !caseScopedIds.has(edge.target)) return false;
+        if (typeFilter !== 'all' && nodeById.get(edge.source)?.type !== typeFilter && nodeById.get(edge.target)?.type !== typeFilter) return false;
+        const edgeSource = edge.provenance?.sourceDataset;
+        const sourceMatches = sourceFilter === 'all' || edgeSource === sourceFilter ||
+          nodeById.get(edge.source)?.provenance?.sourceDataset === sourceFilter ||
+          nodeById.get(edge.target)?.provenance?.sourceDataset === sourceFilter;
+        if (!sourceMatches) return false;
+        if (dateFrom && (!edge.timestamp || edge.timestamp.slice(0, 10) < dateFrom)) return false;
+        if (dateTo && (!edge.timestamp || edge.timestamp.slice(0, 10) > dateTo)) return false;
+        return true;
       }
-      return [];
-    });
-    const casesByPerson = new Map<string, Set<string>>();
-    directCasePersonEdges.forEach(({ caseId, personId }) => {
-      const caseIds = casesByPerson.get(personId) ?? new Set<string>();
-      caseIds.add(caseId);
-      casesByPerson.set(personId, caseIds);
-    });
-    const commonPersonIds = new Set(
-      [...casesByPerson.entries()]
-        .filter(([, caseIds]) => caseIds.size >= 2)
-        .map(([personId]) => personId)
     );
-    const visibleRelationships = scopedCaseId
-      ? directCasePersonEdges.filter(({ caseId }) => caseId === scopedCaseId)
-      : directCasePersonEdges.filter(({ personId }) => commonPersonIds.has(personId));
-    const visibleNodeIds = new Set<string>();
-    visibleRelationships.forEach(({ caseId, personId }) => {
-      visibleNodeIds.add(caseId);
-      visibleNodeIds.add(personId);
-    });
+    const visibleNodeIds = new Set(visibleRelationships.flatMap(edge => [edge.source, edge.target]));
+    if (typeFilter === 'all' && sourceFilter === 'all' && !dateFrom && !dateTo) {
+      caseScopedIds.forEach(id => visibleNodeIds.add(id));
+    }
 
     const nodes = datasetNodes.filter(node => visibleNodeIds.has(node.id)).map(n => ({
         id: n.id,
@@ -57,62 +108,60 @@ export function GraphPage() {
         fx: undefined as number | undefined,
         fy: undefined as number | undefined,
       }));
-    const links = visibleRelationships.map(({ edge: e }) => ({
+    const links = visibleRelationships.map((e) => ({
         source: e.source,
         target: e.target,
         type: e.relationship,
         weight: 1
       }));
 
-    // Shared case networks read more clearly as stable components: cases above
-    // and their common resolved person below.
-    if (nodes.length <= 30) {
-      const adjacency = new Map(nodes.map(node => [node.id, [] as string[]]));
-      links.forEach(link => {
-        adjacency.get(link.source)?.push(link.target);
-        adjacency.get(link.target)?.push(link.source);
-      });
-      const remaining = new Set(nodes.map(node => node.id));
-      const components: string[][] = [];
-      while (remaining.size) {
-        const start = remaining.values().next().value as string;
-        const component: string[] = [];
-        const queue = [start];
-        remaining.delete(start);
-        while (queue.length) {
-          const current = queue.shift()!;
-          component.push(current);
-          for (const neighbor of adjacency.get(current) ?? []) {
-            if (remaining.delete(neighbor)) queue.push(neighbor);
-          }
-        }
-        components.push(component.sort());
-      }
-      components.sort((left, right) => left[0].localeCompare(right[0]));
-      const nodeById = new Map(nodes.map(node => [node.id, node]));
-      const layoutWidth = Math.max(320, Math.min(1000, dimensions.width * 0.82));
-      const componentWidth = layoutWidth / Math.max(1, components.length);
-      const positionRow = (ids: string[], centerX: number, y: number) => {
-        const spacing = Math.min(180, componentWidth / Math.max(1.6, ids.length));
-        ids.forEach((id, index) => {
-          const node = nodeById.get(id);
-          if (!node) return;
-          const x = centerX + (index - (ids.length - 1) / 2) * spacing;
-          node.x = x;
-          node.y = y;
-          node.fx = x;
-          node.fy = y;
-        });
-      };
-      components.forEach((component, index) => {
-        const centerX = -layoutWidth / 2 + componentWidth * (index + 0.5);
-        positionRow(component.filter(id => nodeById.get(id)?.type === 'case'), centerX, -70);
-        positionRow(component.filter(id => nodeById.get(id)?.type === 'person'), centerX, 95);
-      });
-    }
-
     return { nodes, links };
-  }, [dataset.graphData, dimensions.width, scopedCaseId]);
+  }, [caseFilter, dataset.graphData, dateFrom, dateTo, sourceFilter, typeFilter]);
+
+  const visibleTypes = useMemo(
+    () => [...new Set(graphData.nodes.map(node => node.type))],
+    [graphData.nodes],
+  );
+
+  const exportGraph = useCallback(() => {
+    const blob = new Blob([JSON.stringify(graphData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `nexusnet-graph${caseFilter ? `-${caseFilter}` : ''}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, [caseFilter, graphData]);
+
+  const runPageRank = useCallback(() => {
+    const nodeIds = graphData.nodes.map(node => node.id);
+    if (!nodeIds.length) return;
+    const neighbors = new Map(nodeIds.map(id => [id, [] as string[]]));
+    graphData.links.forEach(link => {
+      const source = typeof link.source === 'string' ? link.source : (link.source as unknown as { id: string }).id;
+      const target = typeof link.target === 'string' ? link.target : (link.target as unknown as { id: string }).id;
+      neighbors.get(source)?.push(target);
+      neighbors.get(target)?.push(source);
+    });
+    let scores = new Map(nodeIds.map(id => [id, 1 / nodeIds.length]));
+    for (let iteration = 0; iteration < 30; iteration += 1) {
+      const next = new Map(nodeIds.map(id => [id, (1 - 0.85) / nodeIds.length]));
+      nodeIds.forEach(id => {
+        const adjacent = neighbors.get(id) ?? [];
+        if (!adjacent.length) return;
+        const share = (0.85 * (scores.get(id) ?? 0)) / adjacent.length;
+        adjacent.forEach(target => next.set(target, (next.get(target) ?? 0) + share));
+      });
+      scores = next;
+    }
+    const ranked = graphData.nodes
+      .map(node => ({ id: node.id, name: node.name, score: scores.get(node.id) ?? 0 }))
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 5);
+    setRankings(ranked);
+    const topNode = graphData.nodes.find(node => node.id === ranked[0]?.id);
+    if (topNode) setSelectedNode(topNode);
+  }, [graphData]);
 
   const [isLoading] = useState(false);
 
@@ -124,7 +173,7 @@ export function GraphPage() {
       });
       
       const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
+        for (const entry of entries) {
           setDimensions({
             width: entry.contentRect.width,
             height: entry.contentRect.height
@@ -141,8 +190,8 @@ export function GraphPage() {
     if (graphData.nodes.length > 0) {
       setTimeout(() => {
         if (fgRef.current) {
-          fgRef.current.d3Force('charge').strength(-800);
-          fgRef.current.d3Force('link').distance(130);
+          (fgRef.current.d3Force('charge') as ConfigurableForce | undefined)?.strength?.(-800);
+          (fgRef.current.d3Force('link') as ConfigurableForce | undefined)?.distance?.(130);
           fgRef.current.d3ReheatSimulation();
           fgRef.current.zoomToFit(0, 110);
           const fittedZoom = fgRef.current.zoom();
@@ -152,14 +201,12 @@ export function GraphPage() {
     }
   }, [graphData]);
 
-  const handleNodeClick = useCallback((node: any) => {
-    setSelectedNode(node);
+  const handleNodeClick = useCallback((node: NodeObject<GraphNodeDatum>) => {
+    setSelectedNode(node as GraphNodeDatum);
     
     // Optional: center view on clicked node
     if (fgRef.current) {
-      // @ts-ignore
       fgRef.current.centerAt(node.x, node.y, 1000);
-      // @ts-ignore
       fgRef.current.zoom(2, 1000);
     }
   }, []);
@@ -172,8 +219,10 @@ export function GraphPage() {
           <p>Hidden Network Discovery & Key Influencer Identification</p>
         </div>
         <div className={styles.actions}>
-          <button className="btn-secondary">Export Graph</button>
-          <button className="btn-primary">Run PageRank Algorithm</button>
+          <Link className="btn-secondary" to="/hidden-connections">Find Connection</Link>
+          <Link className="btn-secondary" to="/cross-case">Compare Cases</Link>
+          <button className="btn-secondary" onClick={exportGraph} disabled={!graphData.nodes.length}>Export Graph</button>
+          <button className="btn-primary" onClick={runPageRank} disabled={!graphData.nodes.length}>Run PageRank Algorithm</button>
         </div>
       </header>
 
@@ -181,13 +230,23 @@ export function GraphPage() {
         <div className={`glass-panel ${styles.graphContainer}`}>
           <div className={styles.graphToolbar}>
             <div className={styles.legend}>
-              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#f59e0b'}}></span> Case</span>
-              <span className={styles.legendItem}><span className={styles.dot} style={{backgroundColor: '#2563eb'}}></span> Common Person</span>
+              {visibleTypes.map(type => <span className={styles.legendItem} key={type}><span className={styles.dot} style={{backgroundColor: entityColors[type] ?? '#64748b'}}></span>{type}</span>)}
             </div>
             <div className={styles.filters}>
-              <select className={styles.filterSelect} disabled aria-label="Graph scope">
-                <option>Shared Case Networks</option>
+              <select className={styles.filterSelect} value={caseFilter} onChange={event => setCaseFilter(event.target.value)} aria-label="Filter graph by case">
+                <option value="">All cases</option>
+                {dataset.cases.map(item => <option value={item.case_id} key={item.case_id}>{item.case_id}</option>)}
               </select>
+              <select className={styles.filterSelect} value={typeFilter} onChange={event => setTypeFilter(event.target.value)} aria-label="Filter graph by entity type">
+                <option value="all">All entity types</option>
+                {[...new Set(dataset.graphData.nodes.map(node => node.type))].map(type => <option value={type} key={type}>{type}</option>)}
+              </select>
+              <select className={styles.filterSelect} value={sourceFilter} onChange={event => setSourceFilter(event.target.value)} aria-label="Filter graph by source">
+                <option value="all">All sources</option>
+                {sourceOptions.map(source => <option value={source} key={source}>{source}</option>)}
+              </select>
+              <input className={styles.filterSelect} type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} aria-label="Graph date from" />
+              <input className={styles.filterSelect} type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} aria-label="Graph date to" />
             </div>
           </div>
           
@@ -196,7 +255,7 @@ export function GraphPage() {
               <div style={{ color: 'var(--text-muted)' }}>Loading network graph...</div>
             ) : graphData.nodes.length === 0 ? (
               <div className={styles.emptyState}>
-                No common person is linked to two or more cases yet.
+                No extracted relationships are available in this scope.
               </div>
             ) : (
               <ForceGraph2D
@@ -205,16 +264,18 @@ export function GraphPage() {
                 nodeLabel="name"
                 nodeRelSize={14}
                 linkColor={() => '#718096'}
-                linkWidth={link => ((link as any).weight || 1) * 2}
+                linkWidth={link => (link.weight || 1) * 2}
                 linkDirectionalArrowLength={6}
                 linkDirectionalArrowRelPos={1}
                 linkCurvature={0.06}
-                linkLabel={(link: any) => link.type || 'Relationship'}
+                linkLabel={(link: LinkObject<GraphNodeDatum, GraphLinkDatum>) => link.type || 'Relationship'}
                 onNodeClick={handleNodeClick}
                 width={dimensions.width}
                 height={dimensions.height}
-                nodeCanvasObject={(node: any, ctx, globalScale) => {
+                nodeCanvasObject={(node: NodeObject<GraphNodeDatum>, ctx, globalScale) => {
                   const label = node.name || 'Unknown';
+                  const nodeX = node.x ?? 0;
+                  const nodeY = node.y ?? 0;
                   const fontSize = 12.5 / globalScale;
                   ctx.font = `600 ${fontSize}px Inter, Sans-Serif`;
                   
@@ -224,15 +285,15 @@ export function GraphPage() {
 
                   if (isSelected) {
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, r + 5 / globalScale, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = isCase ? 'rgba(245, 158, 11, 0.18)' : 'rgba(37, 99, 235, 0.16)';
+                    ctx.arc(nodeX, nodeY, r + 5 / globalScale, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = `${entityColors[node.type] ?? '#64748b'}2e`;
                     ctx.fill();
                   }
                   
                   // Draw circle
                   ctx.beginPath();
-                  ctx.arc(node.x, node.y, r, 0, 2 * Math.PI, false);
-                  ctx.fillStyle = isCase ? '#f59e0b' : '#2563eb';
+                  ctx.arc(nodeX, nodeY, r, 0, 2 * Math.PI, false);
+                  ctx.fillStyle = entityColors[node.type] ?? '#64748b';
                   ctx.fill();
                   
                   // Draw border
@@ -242,8 +303,8 @@ export function GraphPage() {
 
                   // Draw label
                   const labelWidth = ctx.measureText(label).width;
-                  const labelX = node.x;
-                  const labelY = node.y + r + fontSize * 1.45;
+                  const labelX = nodeX;
+                  const labelY = nodeY + r + fontSize * 1.45;
                   const padX = 5 / globalScale;
                   const padY = 3 / globalScale;
                   ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
@@ -296,19 +357,24 @@ export function GraphPage() {
               <div className={styles.detailSection}>
                 <h5>Relationship Summary</h5>
                 <div className={styles.metric}>
-                  <span>{selectedNode.type === 'person' ? 'Connected Cases:' : 'Connected Common People:'}</span>
+                  <span>Direct relationships:</span>
                   <strong>
-                    {graphData.links.filter((l: any) => 
-                      l.source.id === selectedNode.id || l.target.id === selectedNode.id || 
-                      l.source === selectedNode.id || l.target === selectedNode.id
+                    {graphData.links.filter((link) =>
+                      endpointId(link.source) === selectedNode.id || endpointId(link.target) === selectedNode.id
                     ).length}
                   </strong>
                 </div>
               </div>
+              {rankings.length > 0 && (
+                <div className={styles.detailSection}>
+                  <h5>PageRank — key influencers</h5>
+                  {rankings.map((item, index) => <div className={styles.metric} key={item.id}><span>{index + 1}. {item.name}</span><strong>{item.score.toFixed(3)}</strong></div>)}
+                </div>
+              )}
             </div>
           ) : (
             <div className={styles.emptyState}>
-              <p>Select an entity from the graph to view its profile and shared-case connections.</p>
+              <p>Select an entity from the graph to view its profile and direct relationships.</p>
             </div>
           )}
         </div>
