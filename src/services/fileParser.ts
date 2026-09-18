@@ -1033,40 +1033,6 @@ export function ingestFileContent(
       return inSameSentence?.person ?? (resolvedPeople.length === 1 ? resolvedPeople[0].person : undefined);
     };
 
-    const addCaseMention = (
-      entityId: string,
-      type: GraphNode['type'],
-      label: string,
-      description: string,
-      metadata: GraphNode['metadata'] = { description },
-    ) => {
-      addNode({ id: entityId, type, label, metadata, provenance });
-      const evidenceId = `EV-TXT-MENTION-${stableId(`${caseId}:${entityId}`)}`;
-      if (addEdge({
-        id: `E-TXT-MENTION-${caseId}-${entityId}`,
-        source: caseId,
-        target: entityId,
-        relationship: 'MENTIONED_IN_CASE',
-        priority: 'Medium',
-        evidenceIds: [evidenceId],
-        provenance,
-      })) {
-        updated.evidence.push({
-          evidence_id: evidenceId,
-          relationship: 'MENTIONED_IN_CASE',
-          entityA: caseId,
-          entityB: entityId,
-          case_id: caseId,
-          timestamp: new Date().toISOString(),
-          evidenceType: 'Trained TXT extraction',
-          supportingData: sentenceContaining(content, description),
-          priority: 'Medium',
-          sourceReliability: 'Hybrid trained and deterministic extraction; investigator verification required',
-          provenance,
-        });
-      }
-    };
-
     const phoneMatches = [
       ...(trainedExtraction?.phones ?? []),
       ...(content.match(/(?:\+?91[\s-]?)?[6-9](?:[\s-]?\d){9}\b/g) ?? []),
@@ -1078,7 +1044,13 @@ export function ingestFileContent(
       if (!updated.phones.some((phone) => phone.phone_id === phoneId)) {
         updated.phones.push({ phone_id: phoneId, number: digits, owner_person_id: owner?.person_id || '', carrier: 'Unknown' });
       }
-      addCaseMention(phoneId, 'phone', `Phone ${digits.slice(-4)}`, rawPhone, { number: digits, carrier: 'Unknown' });
+      addNode({
+        id: phoneId,
+        type: 'phone',
+        label: `Phone ${digits.slice(-4)}`,
+        metadata: { number: digits, carrier: 'Unknown' },
+        provenance,
+      });
       if (owner) {
         if (!owner.phoneIds.includes(phoneId)) owner.phoneIds.push(phoneId);
         const evidenceId = `EV-TXT-PHONE-${stableId(`${fileName}:${owner.person_id}:${phoneId}`)}`;
@@ -1119,7 +1091,7 @@ export function ingestFileContent(
       if (!updated.vehicles.some((vehicle) => vehicle.vehicle_id === vehicleId)) {
         updated.vehicles.push({ vehicle_id: vehicleId, plate_number: plate, owner_person_id: owner?.person_id || '', vehicle_type: 'Vehicle', color: 'Unknown' });
       }
-      addCaseMention(vehicleId, 'vehicle', plate, rawVehicle, { plate_number: plate });
+      addNode({ id: vehicleId, type: 'vehicle', label: plate, metadata: { plate_number: plate }, provenance });
       if (owner) {
         if (!owner.vehicleIds.includes(vehicleId)) owner.vehicleIds.push(vehicleId);
         const evidenceId = `EV-TXT-VEHICLE-${stableId(`${fileName}:${owner.person_id}:${vehicleId}`)}`;
@@ -1148,6 +1120,34 @@ export function ingestFileContent(
         }
       }
     });
+
+    const addCaseMention = (entityId: string, type: GraphNode['type'], label: string, description: string) => {
+      addNode({ id: entityId, type, label, metadata: { description }, provenance });
+      const evidenceId = `EV-TXT-MENTION-${stableId(`${caseId}:${entityId}`)}`;
+      if (addEdge({
+        id: `E-TXT-MENTION-${caseId}-${entityId}`,
+        source: caseId,
+        target: entityId,
+        relationship: 'MENTIONED_IN_CASE',
+        priority: 'Medium',
+        evidenceIds: [evidenceId],
+        provenance,
+      })) {
+        updated.evidence.push({
+          evidence_id: evidenceId,
+          relationship: 'MENTIONED_IN_CASE',
+          entityA: caseId,
+          entityB: entityId,
+          case_id: caseId,
+          timestamp: new Date().toISOString(),
+          evidenceType: 'Trained TXT extraction',
+          supportingData: sentenceContaining(content, description),
+          priority: 'Medium',
+          sourceReliability: 'Hybrid trained and deterministic extraction; investigator verification required',
+          provenance,
+        });
+      }
+    };
 
     const extractedAccountIds: string[] = [];
     (trainedExtraction?.accounts ?? []).forEach((description) => {
