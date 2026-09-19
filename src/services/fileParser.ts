@@ -208,11 +208,35 @@ const PERSON_NAME_FIELDS = [
   'subject_name',
   'offender_name',
   'criminal_name',
+  'witness_name',
+  'victim_name',
+  'complainant_name',
+  'officer_name',
+  'full_name',
+  'person',
+  'accused',
+  'suspect',
 ];
+
+const PERSON_FIELD_ROLES: Record<string, string> = {
+  suspect_name: 'Suspect', suspect_names: 'Suspect', accused_name: 'Suspect',
+  accused_names: 'Suspect', offender_name: 'Suspect', criminal_name: 'Suspect',
+  accused: 'Suspect', suspect: 'Suspect', witness_name: 'Witness',
+  victim_name: 'Victim', complainant_name: 'Complainant', officer_name: 'Officer',
+};
+
+function roleForPersonField(row: Record<string, string>, name: string): string | undefined {
+  const normalizedName = normalizePersonName(name);
+  for (const [field, role] of Object.entries(PERSON_FIELD_ROLES)) {
+    const values = (row[field] || '').split(/[;|\n]+/).map(normalizePersonName);
+    if (values.includes(normalizedName)) return role;
+  }
+  return row.role || row.person_role;
+}
 
 function getPersonNames(row: Record<string, string>): string[] {
   const values = PERSON_NAME_FIELDS.map((field) => row[field]).filter(Boolean);
-  if (row.person_id && row.name) values.push(row.name);
+  if ((row.person_id || row.role || row.person_role) && row.name) values.push(row.name);
 
   const seen = new Set<string>();
   return values
@@ -253,7 +277,7 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
   const name = String.raw`[\p{L}][\p{L}'-]*(?:\s+[\p{L}][\p{L}'-]*){1,3}`;
   const properName = String.raw`[\p{Lu}][\p{L}'-]*(?:\s+[\p{Lu}][\p{L}'-]*){1,3}`;
   const title = String.raw`(?:(?:mr|mrs|ms|miss|dr|shri|smt)\.?\s+)?`;
-  const role = String.raw`(suspect|accused|witness|victim|person\s+of\s+interest)`;
+  const role = String.raw`(suspect|accused|ringleader|offender|perpetrator|witness|eyewitness|informant|victim|complainant|officer|inspector|constable|person\s+of\s+interest)`;
   const matches: Array<{ name: string; role: string }> = [];
   const nonPersonTerms = new Set([
     'case narrative',
@@ -295,6 +319,16 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
   for (const match of text.matchAll(new RegExp(String.raw`\b(?:apprehended|arrested|detained)\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|at|in|from|near|during|after|before|with)\b|$)`, 'giu'))) {
     if (match[1]) addMatch(match[1], 'suspect');
   }
+  for (const [matchedRole, pattern] of [
+    ['officer', new RegExp(String.raw`\b(?:inspector|sub-inspector|officer|constable|ranger)\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|recorded|secured|prepared|conducted|led)\b|$)`, 'giu')],
+    ['complainant', new RegExp(String.raw`\b(?:complainant\s+${title}(${name})|(?:complaint|report)\s+(?:was\s+)?(?:lodged|filed|submitted)\s+by\s+${title}(${name}))(?=[,.;\n]|\s+(?:who|was|is|has|had|reported|filed|lodged|submitted)\b|$)`, 'giu')],
+    ['witness', new RegExp(String.raw`\b(?:witness|eyewitness|informant)\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|saw|observed|witnessed|reported)\b|$)`, 'giu')],
+  ] as const) {
+    for (const match of text.matchAll(pattern)) {
+      const candidate = match[1] || match[2];
+      if (candidate) addMatch(candidate, matchedRole);
+    }
+  }
 
   collect(new RegExp(String.raw`\b(?:identifies|identified|names|named|mentions|records)\s+${title}(${name})\s+as\s+(?:the\s+)?(?:primary\s+|main\s+)?${role}\b`, 'giu'), 1, 2);
   collect(new RegExp(String.raw`\b${title}(${name})\s+(?:is|was)\s+(?:the\s+)?(?:primary\s+|main\s+)?${role}\b`, 'giu'), 1, 2);
@@ -327,6 +361,9 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
       new RegExp(String.raw`\b(?:[Tt]racking|[Ss]eeking|[Mm]onitoring|[Ss]earching\s+for|[Ll]ooking\s+for)\s+(${properName})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|with|and)\b|$)`, 'gu'),
       new RegExp(String.raw`\b(${properName})\s+(?:used|uses|owned|owns|drove|drives|operated|operates|contacted|called|transferred|received|paid|resides|lives)\b`, 'gu'),
       new RegExp(String.raw`\b(${properName})\s+(?:was|is)\s+(?:actively\s+|currently\s+)?(?:using|operating|driving|contacting|calling|transferring|receiving|residing|living)\b`, 'gu'),
+      new RegExp(String.raw`\b(?:[Cc]omplaint|[Rr]eport|[Ss]tatement)\s+(?:was\s+)?(?:lodged|filed|submitted|provided|given)\s+by\s+(${properName})(?=[,.;]|$)`, 'gu'),
+      new RegExp(String.raw`\b(?:[Rr]eport|[Ss]tatement|[Cc]omplaint)\s+from\s+(${properName})(?=[,.;]|$)`, 'gu'),
+      new RegExp(String.raw`\b(${properName})\s*,\s+(?:an?\s+)?(?:eyewitness|witness|complainant|police officer|investigating officer|suspect|accused)\b`, 'gu'),
     ];
 
     patterns.forEach((pattern) => {
@@ -616,7 +653,7 @@ export function ingestFileContent(
       }
       const personEntries = structuredPeople.length
         ? structuredPeople
-        : getPersonNames(r).map((name) => ({ name, role: r.role || r.person_role }));
+        : getPersonNames(r).map((name) => ({ name, role: roleForPersonField(r, name) }));
       const personNames = personEntries.map((entry) => entry.name);
       if (personNames.length === 0 && caseId && r.person_id) {
         const linkedPerson = updated.persons.find((person) => person.person_id === r.person_id);

@@ -80,6 +80,16 @@ class NLPEntityExtractor:
         context = tokens[max(0, marker - 16):min(len(tokens), marker + 17)]
         features.extend(f"context:{token}" for token in context if token != "person_marker")
         features.extend(f"context_bigram:{left}_{right}" for left, right in zip(context, context[1:]))
+        context_text = " ".join(context)
+        role_cues = {
+            "suspect": r"\b(?:suspect|accused|ringleader|offender|perpetrator|apprehended|arrested|detained|tracking)\b",
+            "witness": r"\b(?:witness|eyewitness|observed|witnessed|saw|corroborated)\b",
+            "complainant": r"\b(?:complainant|complaint|lodged|personally reported|submitted a written complaint)\b",
+            "officer": r"\b(?:inspector|sub inspector|officer|constable|official capacity|assigned to)\b",
+        }
+        for role, pattern in role_cues.items():
+            if re.search(pattern, context_text):
+                features.extend([f"role_cue:{role}"] * 12)
         return features
 
     @staticmethod
@@ -192,7 +202,11 @@ class NLPEntityExtractor:
             rf"\b(?:tracking|seeking|monitoring|searching for|looking for)\s+({name})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|with|and)\b|$)",
             rf"\b({name})\s+(?:personally reported|reported|filed|was identified|was apprehended|was arrested|was detained|was interviewed|used|uses|owned|owns|drove|drives|operated|operates|contacted|called|transferred|received|paid|resides|lives)",
             rf"\b({name})\s+(?:was|is)\s+(?:actively\s+|currently\s+)?(?:using|operating|driving|contacting|calling|transferring|receiving|residing|living)",
-            rf"\b(?:Inspector|Officer|Constable|Ranger|Witness|Suspect|Accused|Complainant|Victim)\s+({name})",
+            rf"\b(?:Inspector|Sub-Inspector|Officer|Constable|Ranger|Witness|Eyewitness|Informant|Suspect|Accused|Complainant|Victim)\s+({name})",
+            rf"\b(?:complaint|report|statement)\s+(?:was\s+)?(?:lodged|filed|submitted|provided|given)\s+by\s+({name})",
+            rf"\b(?:report|statement|complaint)\s+from\s+({name})",
+            rf"\b(?:Witness|Complainant|Officer|Suspect|Victim)\s+(?:name\s*)?[:\-]\s*({name})",
+            rf"\b({name})\s*,\s+(?:an?\s+)?(?:eyewitness|witness|complainant|police officer|investigating officer|suspect|accused)\b",
         ]
         candidates: List[str] = []
         for pattern in patterns:

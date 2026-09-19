@@ -89,6 +89,16 @@ function roleFeatures(text, personName) {
   for (let index = 0; index + 1 < context.length; index += 1) {
     features.push(`context_bigram:${context[index]}_${context[index + 1]}`);
   }
+  const contextText = context.join(' ');
+  const roleCues = {
+    suspect: /\b(?:suspect|accused|ringleader|offender|perpetrator|apprehended|arrested|detained|tracking)\b/,
+    witness: /\b(?:witness|eyewitness|observed|witnessed|saw|corroborated)\b/,
+    complainant: /\b(?:complainant|complaint|lodged|personally reported|submitted a written complaint)\b/,
+    officer: /\b(?:inspector|sub inspector|officer|constable|official capacity|assigned to)\b/,
+  };
+  for (const [role, pattern] of Object.entries(roleCues)) {
+    if (pattern.test(contextText)) features.push(...Array(12).fill(`role_cue:${role}`));
+  }
   return features;
 }
 
@@ -199,6 +209,86 @@ function parsePeople(row) {
   return value;
 }
 
+function narrativeAugmentations() {
+  const crimes = [
+    'Abduction', 'Bootlegging', 'Cattle Smuggling', 'Contraband Smuggling',
+    'Counterfeit Currency', 'Cyber Fraud', 'Hawala Transactions',
+    'Illegal Wildlife Trade', 'Organized Robbery', 'Ransomware Extortion',
+  ];
+  const names = [
+    'Aarav Mehta', 'Aditi Rao', 'Akash Verma', 'Ananya Sen', 'Arjun Nair',
+    'Deepa Iyer', 'Dev Malhotra', 'Farhan Ali', 'Ishita Das', 'Kabir Singh',
+    'Kavya Reddy', 'Meera Nair', 'Neha Yadav', 'Nikhil Joshi', 'Priya Sen',
+    'Rahul Kapoor', 'Ravi Banerjee', 'Riya Sharma', 'Sanjay Patel', 'Vijay Kumar',
+  ];
+  const templates = {
+    suspect: [
+      'Security footage identified the ringleader as {name}.',
+      'Authorities apprehended {name} at the scene.',
+      'Investigators named {name} as the primary accused.',
+      'Police are currently tracking {name} and known associates.',
+      'The suspect, {name}, was seen leaving the premises.',
+      '{name} was actively using the facility during the offence.',
+      'Officers detained {name} after reviewing the evidence.',
+      'Records identify {name} as a person of interest in the offence.',
+    ],
+    witness: [
+      'Eyewitness {name} observed the incident.',
+      '{name} witnessed the exchange and gave a statement.',
+      'Investigators interviewed witness {name}.',
+      'The account supplied by {name} corroborated the timeline.',
+      '{name} saw the accused leave the location.',
+      'A sworn statement was recorded from informant {name}.',
+      'Witness name: {name}.',
+      '{name}, an eyewitness, identified the vehicle.',
+    ],
+    complainant: [
+      'Complainant {name} filed the report.',
+      '{name} personally reported the incident to police.',
+      'The complaint was lodged by {name}.',
+      '{name} submitted a written complaint at the station.',
+      'Police registered the FIR following a report from {name}.',
+      'The informant named in the complaint is {name}.',
+      'Complainant name: {name}.',
+      '{name}, the complainant, described the loss.',
+    ],
+    officer: [
+      'Inspector {name} recorded the complaint.',
+      'Investigating officer {name} secured the evidence.',
+      '{name}, a police officer, led the inquiry.',
+      'Constable {name} prepared the seizure memo.',
+      'The investigation was assigned to Officer {name}.',
+      '{name} recorded the statement in an official capacity.',
+      'Officer name: {name}.',
+      'Sub-inspector {name} conducted the search.',
+    ],
+  };
+  const roles = Object.keys(templates);
+  const rows = [];
+  let sequence = 0;
+  for (const [crimeIndex, crime] of crimes.entries()) {
+    for (const [roleIndex, role] of roles.entries()) {
+      for (let variant = 0; variant < templates[role].length; variant += 1) {
+        const name = names[(crimeIndex * 7 + roleIndex * 3 + variant) % names.length];
+        const wording = templates[role][variant].replace('{name}', name);
+        const split = variant === 0 ? 'val' : variant === 1 ? 'test' : 'train';
+        sequence += 1;
+        rows.push({
+          case_id: `AUG-${String(sequence).padStart(4, '0')}`,
+          fir_number: `FIR-AUG-${String(sequence).padStart(4, '0')}`,
+          fir_text: `This FIR concerns ${crime}. ${wording} The record was preserved for investigation.`,
+          crime_type: crime,
+          persons: JSON.stringify([{ name, role }]),
+          phones: '[]',
+          vehicles: '[]',
+          split,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
 const inputPath = process.argv[2];
 const outputPath = process.argv[3] ?? path.resolve('backend/models/fir_extractor_model.json');
 if (!inputPath) {
@@ -206,11 +296,13 @@ if (!inputPath) {
   process.exit(2);
 }
 
-const rows = parseCsv(fs.readFileSync(inputPath, 'utf8'));
+const sourceRows = parseCsv(fs.readFileSync(inputPath, 'utf8'));
 const required = ['case_id', 'fir_number', 'fir_text', 'crime_type', 'persons', 'split'];
 for (const column of required) {
-  if (!(column in rows[0])) throw new Error(`Missing required column: ${column}`);
+  if (!(column in sourceRows[0])) throw new Error(`Missing required column: ${column}`);
 }
+const augmentations = narrativeAugmentations();
+const rows = [...sourceRows, ...augmentations];
 const allowedSplits = new Set(['train', 'val', 'test']);
 for (const row of rows) {
   if (!allowedSplits.has(row.split)) throw new Error(`Invalid split '${row.split}' for ${row.case_id}`);
@@ -239,7 +331,13 @@ const roleModel = trainNaiveBayes(
 const artifact = {
   schemaVersion: 1,
   createdAt: new Date().toISOString(),
-  source: { filename: path.basename(inputPath), rows: rows.length, synthetic: true },
+  source: {
+    filename: path.basename(inputPath),
+    rows: rows.length,
+    baseRows: sourceRows.length,
+    narrativeAugmentationRows: augmentations.length,
+    synthetic: true,
+  },
   preprocessing: { unicode: 'NFKC', features: ['word unigrams', 'word bigrams', 'normalized identifiers'] },
   crimeClassifier: crimeModel,
   personRoleClassifier: roleModel,

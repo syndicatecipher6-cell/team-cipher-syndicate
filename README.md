@@ -73,7 +73,7 @@ etworkx and scikit-learn libraries.
 
 ### FIR extraction training
 
-The trained FIR model classifies crime types and person roles while the hybrid extractor validates deterministic identifiers such as phones, vehicles, accounts, and transaction amounts.
+The trained FIR model classifies crime types and person roles while the hybrid extractor validates deterministic identifiers such as phones, vehicles, accounts, and transaction amounts. Training automatically adds a balanced 320-row narrative corpus covering varied suspect, witness, complainant, and officer wording; validation and test templates are kept separate from its training templates.
 
 ```bash
 npm run train:fir -- path/to/indian_fir_dataset.csv

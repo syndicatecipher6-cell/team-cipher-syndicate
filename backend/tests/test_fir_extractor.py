@@ -27,7 +27,8 @@ class TrainedFirExtractorTests(unittest.TestCase):
 
     def test_model_artifact_is_loaded(self):
         self.assertIsNotNone(nlp_extractor.trained_model)
-        self.assertEqual(1000, nlp_extractor.trained_model["source"]["rows"])
+        self.assertEqual(1000, nlp_extractor.trained_model["source"]["baseRows"])
+        self.assertEqual(320, nlp_extractor.trained_model["source"]["narrativeAugmentationRows"])
 
     def test_linked_cases_extract_the_same_suspect_from_narrative_wording(self):
         first = (
