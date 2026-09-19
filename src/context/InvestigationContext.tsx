@@ -78,6 +78,7 @@ function restoreStoredDataset(value: unknown): ParsedDataset | null {
     evidence: arrayOrEmpty(stored.evidence),
     searchResults: arrayOrEmpty(stored.searchResults),
     alerts: arrayOrEmpty(stored.alerts),
+    nameCandidates: arrayOrEmpty(stored.nameCandidates),
     stats: { ...empty.stats, ...(stored.stats ?? {}) },
   };
 }
@@ -101,6 +102,10 @@ function mergeDataset(current: ParsedDataset, incoming: ParsedDataset): ParsedDa
   const edges = uniqueBy([...current.graphData.edges, ...incoming.graphData.edges], (item) => item.id);
   const searchResults = uniqueBy([...current.searchResults, ...incoming.searchResults], (item) => item.id);
   const alerts = uniqueBy([...current.alerts, ...incoming.alerts], (item) => item.id);
+  const nameCandidates = uniqueBy(
+    [...(current.nameCandidates ?? []), ...(incoming.nameCandidates ?? [])],
+    (item) => `${item.caseId}:${item.normalizedName}`,
+  );
   return {
     cases,
     persons,
@@ -113,6 +118,7 @@ function mergeDataset(current: ParsedDataset, incoming: ParsedDataset): ParsedDa
     evidence,
     searchResults,
     alerts,
+    nameCandidates,
     stats: {
       cases: cases.length,
       persons: persons.length,
@@ -158,6 +164,7 @@ function buildCasePayload(source: ParsedDataset, caseId: string): ParsedDataset 
   const evidence = source.evidence.filter((item) => caseIds.has(item.case_id) || evidenceIds.has(item.evidence_id));
   const searchResults = source.searchResults.filter((item) => nodeIds.has(item.id) || caseIds.has(item.id));
   const alerts = source.alerts.filter((item) => item.caseIds.some((id) => caseIds.has(id)));
+  const nameCandidates = (source.nameCandidates ?? []).filter((item) => caseIds.has(item.caseId));
   return {
     cases,
     persons,
@@ -170,6 +177,7 @@ function buildCasePayload(source: ParsedDataset, caseId: string): ParsedDataset 
     evidence,
     searchResults,
     alerts,
+    nameCandidates,
     stats: {
       cases: cases.length,
       persons: persons.length,

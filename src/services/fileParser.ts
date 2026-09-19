@@ -21,6 +21,13 @@ export interface ParsedDataset {
   evidence: Evidence[];
   searchResults: SearchResult[];
   alerts: Array<{ id: string; title: string; description: string; priority: 'High' | 'Medium' | 'Low'; caseIds: string[]; entityIds: string[] }>;
+  nameCandidates?: Array<{
+    normalizedName: string;
+    name: string;
+    caseId: string;
+    sourceDataset: string;
+    excerpt: string;
+  }>;
   stats: {
     cases: number;
     persons: number;
@@ -56,6 +63,7 @@ export function createEmptyDataset(): ParsedDataset {
     evidence: [],
     searchResults: [],
     alerts: [],
+    nameCandidates: [],
     stats: {
       cases: 0,
       persons: 0,
@@ -273,6 +281,37 @@ function sentenceContaining(text: string, value: string): string {
     ?.trim() || value;
 }
 
+function extractPotentialPersonNames(text: string): string[] {
+  const blockedWords = new Set([
+    'account', 'act', 'authorities', 'bank', 'branch', 'case', 'code', 'complaint',
+    'court', 'crime', 'department', 'district', 'evidence', 'fir', 'footage',
+    'fraud', 'government', 'hospital', 'hotel', 'india', 'inspector', 'jewelry',
+    'mobile', 'network', 'number', 'officer', 'police', 'record', 'report',
+    'security', 'station', 'store', 'suspect', 'transaction', 'transfer', 'vehicle',
+    'warehouse', 'witness',
+  ]);
+  const blockedPhrases = new Set([
+    'financial fraud', 'organized robbery', 'cyber crime', 'cyber fraud',
+    'hawala network', 'indian penal code', 'person of interest',
+  ]);
+  const sequencePattern = /\b[\p{Lu}][\p{L}'-]*(?:\s+[\p{Lu}][\p{L}'-]*){1,5}\b/gu;
+  const candidates = new Map<string, string>();
+
+  for (const match of text.matchAll(sequencePattern)) {
+    const words = match[0].trim().split(/\s+/);
+    while (words.length && blockedWords.has(words[0].toLowerCase())) words.shift();
+    while (words.length && blockedWords.has(words[words.length - 1].toLowerCase())) words.pop();
+    if (words.length < 2 || words.length > 4) continue;
+    if (words.some((word) => blockedWords.has(word.toLowerCase()))) continue;
+    const candidate = words.join(' ');
+    const normalized = normalizePersonName(candidate);
+    if (!normalized || blockedPhrases.has(normalized)) continue;
+    candidates.set(normalized, candidate);
+  }
+
+  return [...candidates.values()];
+}
+
 function extractPeopleFromText(text: string): ExtractedTextPerson[] {
   const name = String.raw`[\p{L}][\p{L}'-]*(?:\s+[\p{L}][\p{L}'-]*){1,3}`;
   const properName = String.raw`[\p{Lu}][\p{L}'-]*(?:\s+[\p{Lu}][\p{L}'-]*){1,3}`;
@@ -464,6 +503,7 @@ export function ingestFileContent(
     evidence: [...current.evidence],
     searchResults: [...current.searchResults],
     alerts: [...current.alerts],
+    nameCandidates: [...(current.nameCandidates ?? [])],
     stats: { ...current.stats },
   };
 
@@ -1080,6 +1120,117 @@ export function ingestFileContent(
           provenance,
         });
       }
+    });
+
+    // Hard fallback for unfamiliar FIR wording: retain plausible proper names
+    // privately per case, and promote them only after the exact normalized full
+    // name occurs in at least two distinct uploaded cases. This makes cross-case
+    // linking independent of sentence templates without turning every capitalized
+    // phrase in a single FIR into a person node.
+    extractPotentialPersonNames(content).forEach((name) => {
+      const normalizedName = normalizePersonName(name);
+      const alreadyStored = updated.nameCandidates?.some(
+        (candidate) => candidate.caseId === caseId && candidate.normalizedName === normalizedName,
+      );
+      if (!alreadyStored) {
+        updated.nameCandidates?.push({
+          normalizedName,
+          name,
+          caseId,
+          sourceDataset: fileName,
+          excerpt: sentenceContaining(content, name),
+        });
+      }
+    });
+
+    const candidateCases = new Map<string, Set<string>>();
+    (updated.nameCandidates ?? []).forEach((candidate) => {
+      const cases = candidateCases.get(candidate.normalizedName) ?? new Set<string>();
+      cases.add(candidate.caseId);
+      candidateCases.set(candidate.normalizedName, cases);
+    });
+
+    candidateCases.forEach((linkedCaseIds, normalizedName) => {
+      if (linkedCaseIds.size < 2) return;
+      const candidates = (updated.nameCandidates ?? []).filter(
+        (candidate) => candidate.normalizedName === normalizedName,
+      );
+      const representative = candidates[0];
+      if (!representative) return;
+
+      let person = updated.persons.find((item) => normalizePersonName(item.name) === normalizedName);
+      if (!person) {
+        person = {
+          person_id: `P-NAME-${stableId(normalizedName)}`,
+          name: representative.name,
+          role: 'Person of Interest',
+          caseIds: [],
+          phoneIds: [],
+          vehicleIds: [],
+          accountIds: [],
+          locationIds: [],
+        };
+        updated.persons.push(person);
+        addNode({
+          id: person.person_id,
+          type: 'person',
+          label: person.name,
+          metadata: {
+            role: person.role,
+            normalizedName,
+            caseIds: [],
+            identityResolution: 'Exact full-name match across multiple uploaded cases; investigator verification required',
+          },
+          provenance: {
+            sourceDataset: representative.sourceDataset,
+            sourceRecordId: `${representative.caseId}-REPEATED-NAME`,
+            recordType: 'Cross-case exact-name resolution',
+          },
+        });
+      }
+
+      candidates.forEach((candidate) => {
+        if (!person!.caseIds.includes(candidate.caseId)) person!.caseIds.push(candidate.caseId);
+        const alreadyLinked = updated.graphData.edges.some((edge) =>
+          (edge.source === candidate.caseId && edge.target === person!.person_id) ||
+          (edge.target === candidate.caseId && edge.source === person!.person_id),
+        );
+        if (alreadyLinked) return;
+
+        const relationship = 'SHARED_PERSON_NAME';
+        const evidenceId = `EV-NAME-${stableId(`${candidate.caseId}:${person!.person_id}`)}`;
+        const candidateProvenance = {
+          sourceDataset: candidate.sourceDataset,
+          sourceRecordId: `${candidate.caseId}-REPEATED-NAME`,
+          recordType: 'Cross-case exact-name resolution',
+        };
+        if (addEdge({
+          id: `E-NAME-${candidate.caseId}-${person!.person_id}`,
+          source: candidate.caseId,
+          target: person!.person_id,
+          relationship,
+          priority: 'Medium',
+          evidenceIds: [evidenceId],
+          provenance: candidateProvenance,
+        })) {
+          updated.evidence.push({
+            evidence_id: evidenceId,
+            relationship,
+            entityA: candidate.caseId,
+            entityB: person!.person_id,
+            case_id: candidate.caseId,
+            timestamp: new Date().toISOString(),
+            evidenceType: 'Repeated full name across FIR text',
+            supportingData: candidate.excerpt,
+            priority: 'Medium',
+            sourceReliability: 'Exact normalized full-name match; investigator verification required',
+            provenance: candidateProvenance,
+          });
+        }
+      });
+
+      const personNode = nodeMap.get(person.person_id);
+      if (personNode) personNode.metadata = { ...personNode.metadata, caseIds: [...person.caseIds] };
     });
 
     const findOwner = (rawValue: string): Person | undefined => {
