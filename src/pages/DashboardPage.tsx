@@ -16,7 +16,6 @@ import { useInvestigation } from '../context/InvestigationContext';
 import type { GraphEdge, GraphNode } from '../types/domain';
 import { getWorkspaceSession } from '../security/demoSession';
 import { downloadInvestigationReport } from '../utils/reportPdf';
-import { casePersonGraph } from '../utils/casePersonGraph';
 
 export function DashboardPage() {
   const { dataset, isDataLoaded } = useInvestigation();
@@ -37,23 +36,22 @@ export function DashboardPage() {
     });
   };
 
-  const relationshipGraph = casePersonGraph(dataset.graphData);
   const filteredGraph = selectedCase
     ? {
-        nodes: relationshipGraph.nodes.filter(
+        nodes: dataset.graphData.nodes.filter(
           (item) =>
             item.id === selectedCase ||
-            relationshipGraph.edges.some(
+            dataset.graphData.edges.some(
               (relationship) =>
                 (relationship.source === selectedCase && relationship.target === item.id) ||
                 (relationship.target === selectedCase && relationship.source === item.id)
             )
         ),
-        edges: relationshipGraph.edges.filter(
+        edges: dataset.graphData.edges.filter(
           (relationship) => relationship.source === selectedCase || relationship.target === selectedCase
         ),
       }
-    : relationshipGraph;
+    : dataset.graphData;
 
   const totalEntities =
     dataset.persons.length +
