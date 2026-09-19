@@ -90,6 +90,28 @@ class TrainedFirExtractorTests(unittest.TestCase):
         self.assertIn("Priya Sen", result["persons"])
         self.assertNotIn("South District", result["persons"])
 
+    def test_vehicle_model_is_not_promoted_as_a_person(self):
+        text = (
+            "A black Toyota Innova bearing registration KA-01-AB-1234 was intercepted. "
+            "The driver, identified as Suraj Verma, was arrested immediately."
+        )
+
+        loaded_nlp = nlp_extractor.nlp
+        try:
+            # Vercel's lightweight function does not install the optional
+            # spaCy model, so the deterministic path must stand on its own.
+            nlp_extractor.nlp = None
+            result = nlp_extractor.extract_entities(text)
+        finally:
+            nlp_extractor.nlp = loaded_nlp
+
+        self.assertNotIn("Toyota Innova", result["persons"])
+        self.assertIn("Suraj Verma", result["persons"])
+        self.assertTrue(any(
+            item["name"] == "Suraj Verma" and item["role"] == "suspect"
+            for item in result["person_roles"]
+        ))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -144,13 +144,14 @@ class NLPEntityExtractor:
                 rf"(?:ringleader|suspect|accused|offender|perpetrator)\s+as\s+{name}\b|"
                 rf"\b(?:primary|prime)\s+accused\s+(?:is|was)\s+{name}\b|"
                 rf"\bnamed\s+{name}\s+as\s+(?:the\s+)?(?:prime\s+|primary\s+)?suspect\b|"
+                rf"\bdriver\s*,?\s*identified\s+as\s+{name}\s*,?\s*was\s+arrested\b|"
                 rf"\bcctv\s+showed\s+{name}\s+leaving\b|"
                 rf"\b{name}\s+(?:was\s+(?:formally\s+)?charged|faces?\s+accusations?)\b",
             ),
             (
                 "complainant",
                 rf"\bcomplainant\s*,?\s*{name}\b|\b{name}\s+(?:personally\s+)?(?:reported|filed|lodged|registered\s+the\s+fir|approached\s+the\s+station\s+to\s+file\s+a\s+complaint)\b|"
-                rf"\b(?:written\s+)?(?:complaint|grievance|report)\s+(?:was\s+)?(?:filed|lodged|submitted)?\s*by\s+{name}\b|"
+                rf"\b(?:written\s+)?(?:complaint|grievance|report)\s+(?:was\s+)?(?:filed|lodged|submitted|registered)?\s*by\s+{name}\b|"
                 rf"\bvictimized\s+party(?:'s)?\s+representative\s*,\s*{name}\s*,\s*filed\s+the\s+formal\s+complaint\b",
             ),
             (
@@ -206,11 +207,16 @@ class NLPEntityExtractor:
             "illegal wildlife trade", "organized robbery", "ransomware extortion",
         }
         blocked_words = {
-            "account", "bank", "branch", "company", "corporation", "department",
-            "complainant", "creta", "district", "enfield", "fraud", "inspector",
-            "honda", "hyundai", "limited", "mall", "market", "nagar", "nexon",
-            "officer", "police", "private", "pulsar", "road", "scorpio", "street",
-            "suspect", "swift", "tata", "transactions", "victim", "witness",
+            "account", "activa", "alto", "amaze", "baleno", "bajaj", "bank", "bolero",
+            "branch", "brezza", "bullet", "city", "company", "complainant", "corporation",
+            "creta", "department", "district", "duster", "dzire", "ecosport", "endeavour",
+            "enfield", "ford", "fortuner", "fraud", "harrier", "hero", "honda", "hycross",
+            "hyundai", "innova", "inspector", "jupiter", "kia", "kwid", "limited", "mahindra",
+            "mall", "market", "maruti", "nagar", "nexon", "officer", "police", "private",
+            "pulsar", "punch", "renault", "road", "royal", "safari", "scorpio", "seltos",
+            "skoda", "slavia", "sonet", "splendor", "street", "suspect", "suzuki", "swift",
+            "tata", "thar", "toyota", "transactions", "venue", "verna", "vento", "vehicle",
+            "victim", "virtus", "volkswagen", "wagonr", "witness", "xuv",
         }
         if not (
             2 <= len(words) <= 4
@@ -263,6 +269,7 @@ class NLPEntityExtractor:
             rf"(?i:\braid\s+was\s+led\s+by\s+)({name})(?=[,.;]|$)",
             rf"\b({name})(?i:\s+(?:recorded\s+the\s+statements|arrested\s+the\s+suspects?)\b)",
             rf"(?i:\bcctv\s+showed\s+)({name})(?i:\s+leaving\s+the\s+premises\b)",
+            rf"(?i:\bdriver\s*,?\s*identified\s+as\s+)({name})(?i:\s*,?\s*was\s+arrested\b)",
             rf"\b({name})(?i:\s*,\s*identified\s+as\s+a\s+suspect\s*,\s*was\s+apprehended\b)",
             rf"(?i:\bsuspect\s+)({name})(?i:\s+was\s+(?:formally\s+)?charged\b)",
             rf"\b({name})(?i:\s+faces?\s+accusations?\s+of\b)",
@@ -279,6 +286,7 @@ class NLPEntityExtractor:
             rf"(?i:\bwritten\s+grievance\s+by\s+)({name})(?i:\s*,\s*the\s+case\s+was\s+opened\b)",
             rf"(?i:\battention\s+by\s+complainant\s+)({name})(?=[,.;]|$)",
             rf"(?i:\breport\s+submitted\s+by\s+)({name})(?i:\s*,\s*an\s+inquiry\s+began\b)",
+            rf"(?i:\bcomplaint\s+(?:was\s+)?registered\s+by\s+)({name})(?=[,.;]|\s+(?:at|in|from|who)\b|$)",
             rf"\b({name})(?i:\s+initiated\s+the\s+legal\s+proceedings\b)",
             rf"(?i:\bvictimized\s+party(?:'s)?\s+representative\s*,\s*)({name})(?i:\s*,\s*filed\s+the\s+formal\s+complaint\b)",
             rf"\b(?:apprehended|arrested|detained|identified|involving|involvement of|led by|against)\s+({name})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|near|during|after|before|with)\b|$)",

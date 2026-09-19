@@ -146,6 +146,28 @@ function normalizePersonName(value: string): string {
     .trim();
 }
 
+const VEHICLE_NAME_WORDS = new Set([
+  'activa', 'alto', 'amaze', 'baleno', 'bajaj', 'bolero', 'brezza', 'bullet',
+  'city', 'creta', 'duster', 'dzire', 'ecosport', 'endeavour', 'enfield', 'ford',
+  'fortuner', 'harrier', 'hero', 'honda', 'hycross', 'hyundai', 'innova', 'jupiter',
+  'kia', 'kwid', 'mahindra', 'maruti', 'nexon', 'pulsar', 'punch', 'renault',
+  'royal', 'safari', 'scorpio', 'seltos', 'skoda', 'slavia', 'sonet', 'splendor',
+  'suzuki', 'swift', 'tata', 'thar', 'toyota', 'venue', 'verna', 'vento',
+  'virtus', 'volkswagen', 'wagonr', 'xuv',
+]);
+
+export function isLikelyVehicleName(value: string): boolean {
+  const words = normalizePersonName(value).split(' ').filter(Boolean);
+  return words.length > 0 && words.some((word) => VEHICLE_NAME_WORDS.has(word));
+}
+
+function hasVehicleMentionContext(text: string, start: number, end: number): boolean {
+  const before = text.slice(Math.max(0, start - 70), start);
+  const after = text.slice(end, Math.min(text.length, end + 70));
+  return /\b(?:car|jeep|motorcycle|scooter|suv|truck|van|vehicle)\s+(?:make|model|named|was|is|a|an|the|black|blue|brown|grey|gray|red|silver|white|yellow|green|orange)*\s*$/i.test(before)
+    || /^\s*(?:bearing\s+(?:registration|number)|registration|plate\s+(?:number|no\.?))/i.test(after);
+}
+
 function stableId(value: string): string {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index++) {
@@ -321,7 +343,13 @@ function extractPotentialPersonNames(text: string): string[] {
     if (words.some((word) => blockedWords.has(word.toLowerCase()))) continue;
     const candidate = words.join(' ');
     const normalized = normalizePersonName(candidate);
-    if (!normalized || blockedPhrases.has(normalized)) continue;
+    const start = match.index ?? 0;
+    if (
+      !normalized ||
+      blockedPhrases.has(normalized) ||
+      isLikelyVehicleName(candidate) ||
+      hasVehicleMentionContext(text, start, start + match[0].length)
+    ) continue;
     candidates.set(normalized, candidate);
   }
 
@@ -357,7 +385,8 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
     const words = cleaned.split(' ');
     if (words.length < 2 || words.length > 4) return false;
     if (!words.every((word) => /^\p{Lu}[\p{L}'-]*$/u.test(word))) return false;
-    return !nonPersonTerms.has(normalizePersonName(cleaned)) &&
+    return !isLikelyVehicleName(cleaned) &&
+      !nonPersonTerms.has(normalizePersonName(cleaned)) &&
       !words.some((word) => blockedNameWords.has(word.toLowerCase()));
   };
   const addMatch = (candidate: string, matchedRole = 'person of interest') => {
@@ -377,7 +406,7 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
   }
   for (const [matchedRole, pattern] of [
     ['officer', new RegExp(String.raw`\b(?:inspector|sub-inspector|officer|constable|ranger)\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|recorded|secured|prepared|conducted|led)\b|$)`, 'giu')],
-    ['complainant', new RegExp(String.raw`\b(?:complainant\s+${title}(${name})|(?:complaint|report)\s+(?:was\s+)?(?:lodged|filed|submitted)\s+by\s+${title}(${name}))(?=[,.;\n]|\s+(?:who|was|is|has|had|reported|filed|lodged|submitted)\b|$)`, 'giu')],
+    ['complainant', new RegExp(String.raw`\b(?:complainant\s+${title}(${name})|(?:complaint|report)\s+(?:was\s+)?(?:lodged|filed|submitted|registered)\s+by\s+${title}(${name}))(?=[,.;\n]|\s+(?:at|in|from|who|was|is|has|had|reported|filed|lodged|submitted)\b|$)`, 'giu')],
     ['witness', new RegExp(String.raw`\b(?:witness|eyewitness|informant)\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|saw|observed|witnessed|reported)\b|$)`, 'giu')],
   ] as const) {
     for (const match of text.matchAll(pattern)) {
@@ -393,6 +422,9 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
   collect(new RegExp(String.raw`\b${role}\s*(?:name\s*)?(?:(?:is|was|named|identified\s+as)\s*)?[,;]\s*${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|used|uses|owns|owned|resides|residing|with)\b|$)`, 'giu'), 2, 1);
   collect(new RegExp(String.raw`\b${title}(${name})\s*[,;(\-]\s*${role}\b`, 'giu'), 1, 2);
   collect(new RegExp(String.raw`\b(?:identified|recognized|recognised|named)\s+(?:the\s+)?(ringleader|suspect|accused|offender|perpetrator)\s+as\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|at|in|from|with)\b|$)`, 'giu'), 2, 1);
+  for (const match of text.matchAll(new RegExp(String.raw`\bdriver\s*,?\s*identified\s+as\s+${title}(${name})\s*,?\s*was\s+arrested\b`, 'giu'))) {
+    if (match[1]) addMatch(match[1], 'suspect');
+  }
 
   // Narrative FIRs often identify people without an explicit role label. Only
   // use affirmative sentences and strong person-introduction contexts so a
@@ -1244,7 +1276,7 @@ export function ingestFileContent(
     }
 
     const trainedPeople = (trainedExtraction?.person_roles ?? [])
-      .filter((item) => item.name?.trim())
+      .filter((item) => item.name?.trim() && !isLikelyVehicleName(item.name))
       .map((item) => ({
         name: item.name!.trim(),
         role: roleFromText(item.role ?? ''),

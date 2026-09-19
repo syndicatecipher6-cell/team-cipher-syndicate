@@ -1,4 +1,5 @@
 import type { GraphData } from '../types/domain';
+import { isLikelyVehicleName } from '../services/fileParser';
 
 /**
  * Build the Network Graph view: every case remains visible, including isolated
@@ -7,7 +8,13 @@ import type { GraphData } from '../types/domain';
  */
 export function casePersonGraph(graph: GraphData): GraphData {
   const nodeType = new Map(graph.nodes.map((node) => [node.id, node.type]));
+  const invalidPersonIds = new Set(
+    graph.nodes
+      .filter((node) => node.type === 'person' && isLikelyVehicleName(node.label))
+      .map((node) => node.id),
+  );
   const edges = graph.edges.filter((edge) => {
+    if (invalidPersonIds.has(edge.source) || invalidPersonIds.has(edge.target)) return false;
     const sourceType = nodeType.get(edge.source);
     const targetType = nodeType.get(edge.target);
     return (sourceType === 'case' && targetType === 'person') ||
