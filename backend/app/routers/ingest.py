@@ -1,5 +1,7 @@
-from fastapi import APIRouter, UploadFile, File, Form
-from typing import List, Optional
+from fastapi import APIRouter, UploadFile, File
+from typing import List
+from app.config import settings
+from app.hardening import read_validated_uploads
 from app.services.data_processing import data_processor
 from app.services.nlp_extractor import nlp_extractor
 from app.services.supabase_client import supabase_service
@@ -17,12 +19,16 @@ async def upload_files(files: List[UploadFile] = File(...)):
     total_edges = 0
     processed_files = []
 
-    for file in files:
-        content_bytes = await file.read()
-        content_text = content_bytes.decode("utf-8", errors="ignore")
+    validated_files = await read_validated_uploads(
+        files,
+        max_files=settings.MAX_UPLOAD_FILES,
+        max_total_bytes=settings.MAX_UPLOAD_BYTES,
+    )
+
+    for filename, extension, _content_bytes, content_text in validated_files:
         
         # 1. Pandas & NumPy dataframe ingestion
-        nodes, edges = data_processor.ingest_file_dataframe(file.filename, content_text)
+        nodes, edges = data_processor.ingest_file_dataframe(filename, content_text)
         
         # 2. spaCy & NLP extraction for text/FIR content
         extracted_nlp = nlp_extractor.extract_entities(content_text)
@@ -31,9 +37,9 @@ async def upload_files(files: List[UploadFile] = File(...)):
         total_edges += edges
 
         # 3. Synchronize to Supabase if connected
-        file_ext = file.filename.split(".")[-1].upper() if "." in file.filename else "DOC"
+        file_ext = extension.removeprefix(".").upper()
         supabase_service.save_processing_job(
-            filename=file.filename,
+            filename=filename,
             file_type=file_ext,
             nodes=nodes,
             edges=edges,
@@ -42,17 +48,17 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
         entity_rows = []
         for p in extracted_nlp.get("persons", []):
-            entity_rows.append({"name": p, "type": "person", "source": file.filename})
+            entity_rows.append({"name": p, "type": "person", "source": filename})
         for ph in extracted_nlp.get("phones", []):
-            entity_rows.append({"name": ph, "type": "phone", "source": file.filename})
+            entity_rows.append({"name": ph, "type": "phone", "source": filename})
         for v in extracted_nlp.get("vehicles", []):
-            entity_rows.append({"name": v, "type": "vehicle", "source": file.filename})
+            entity_rows.append({"name": v, "type": "vehicle", "source": filename})
 
         if entity_rows:
             supabase_service.save_extracted_entities(entity_rows)
 
         processed_files.append({
-            "filename": file.filename,
+            "filename": filename,
             "nodesCreated": nodes,
             "edgesCreated": edges,
             "extractedNLP": extracted_nlp

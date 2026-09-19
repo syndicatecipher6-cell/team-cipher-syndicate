@@ -54,6 +54,12 @@ class Settings(BaseModel):
         "ALLOWED_ORIGINS",
         "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
     )
+    ALLOWED_HOSTS: str = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,testserver,*.vercel.app")
+    EXPOSE_API_DOCS: bool = os.getenv("EXPOSE_API_DOCS", "false").lower() == "true"
+    MAX_UPLOAD_BYTES: int = int(os.getenv("MAX_UPLOAD_BYTES", str(25 * 1024 * 1024)))
+    MAX_UPLOAD_FILES: int = int(os.getenv("MAX_UPLOAD_FILES", "5"))
+    RATE_LIMIT_REQUESTS: int = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))
+    RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
     ENABLE_AI_INVESTIGATOR: bool = os.getenv("ENABLE_AI_INVESTIGATOR", "true").lower() == "true"
     ENABLE_INVESTIGATION_SANDBOX: bool = os.getenv("ENABLE_INVESTIGATION_SANDBOX", "true").lower() == "true"
 

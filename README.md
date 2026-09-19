@@ -81,3 +81,7 @@ backend/.venv/Scripts/python backend/evaluate_fir_extractor.py path/to/indian_fi
 ```
 
 The generated `backend/models/fir_extractor_model.json` is loaded automatically by the FastAPI ingestion service. Reported metrics are synthetic-dataset results and must not be treated as a production benchmark.
+
+### OWASP-aligned API hardening
+
+Both the full FastAPI service and the deployed Vercel function enforce allow-listed upload extensions and media types, safe filenames, UTF-8 text validation, PDF signatures, configurable file/count limits, per-client abuse throttling, trusted hosts, restricted CORS, disabled production API documentation, no-store caching, and security response headers. Configure the limits and deployment hosts with the variables documented in `.env.example`. These controls are a security baseline and do not replace production identity enforcement, edge rate limiting, dependency scanning, or a formal security assessment.
