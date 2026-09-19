@@ -1521,3 +1521,37 @@
   object-fit: cover;
   border-radius: inherit;
 }
+
+.security-baseline-badge {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 11px;
+  padding: 8px 9px;
+  border: 1px solid #b9d5cc;
+  border-radius: 6px;
+  background: rgba(237, 247, 243, 0.78);
+  color: #2e6d59;
+}
+
+.security-baseline-badge > svg {
+  flex: none;
+}
+
+.security-baseline-badge > span {
+  display: grid;
+  gap: 1px;
+}
+
+.security-baseline-badge b {
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 0.025em;
+}
+
+.security-baseline-badge small {
+  font-size: 7px;
+  line-height: 1.2;
+  color: #628174;
+}

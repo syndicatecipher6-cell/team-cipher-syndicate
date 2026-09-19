@@ -13,6 +13,7 @@ import {
   PanelLeftClose,
   RotateCcw,
   Search,
+  ShieldCheck,
   Upload,
   User,
   Users,
@@ -110,6 +111,14 @@ export function AppShell() {
         </nav>
 
         <div className="sidebar-footer">
+          <div
+            className="security-baseline-badge"
+            title="Upload validation, request limits, restricted CORS, trusted hosts, and security headers"
+            aria-label="OWASP-aligned backend security controls"
+          >
+            <ShieldCheck size={14} />
+            <span><b>OWASP-aligned API</b><small>Backend security baseline</small></span>
+          </div>
           <span className="status-dot" />
           {isDataLoaded ? 'Investigation data loaded' : 'Workspace ready'}
           <strong>{isDataLoaded ? `${dataset.cases.length} case files indexed` : 'Awaiting uploaded records'}</strong>
