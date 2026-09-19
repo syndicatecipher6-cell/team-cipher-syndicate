@@ -1,6 +1,9 @@
+import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 class SupabaseService:
     """
@@ -33,8 +36,8 @@ class SupabaseService:
             }
             self.client.table("processing_jobs").insert(row).execute()
             return True
-        except Exception as e:
-            print(f"[Supabase] Error saving processing job: {e}")
+        except Exception as exc:
+            logger.warning("Supabase processing job write failed (%s)", type(exc).__name__)
             return False
 
     def save_extracted_entities(self, entities: List[Dict[str, Any]]) -> bool:
@@ -44,8 +47,8 @@ class SupabaseService:
         try:
             self.client.table("extracted_entities").insert(entities).execute()
             return True
-        except Exception as e:
-            print(f"[Supabase] Error saving extracted entities: {e}")
+        except Exception as exc:
+            logger.warning("Supabase entity write failed (%s)", type(exc).__name__)
             return False
 
     def save_case(self, case_data: Dict[str, Any]) -> bool:
@@ -55,8 +58,8 @@ class SupabaseService:
         try:
             self.client.table("cases").upsert(case_data).execute()
             return True
-        except Exception as e:
-            print(f"[Supabase] Error saving case: {e}")
+        except Exception as exc:
+            logger.warning("Supabase case write failed (%s)", type(exc).__name__)
             return False
 
 supabase_service = SupabaseService()

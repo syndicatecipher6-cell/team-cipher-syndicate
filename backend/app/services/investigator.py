@@ -346,7 +346,7 @@ class InvestigationReasoningService:
         sandbox_graph = None
         if sandbox_id:
             from app.services.sandbox import sandbox_service
-            sandbox_graph = sandbox_service.graph(sandbox_id)
+            sandbox_graph = sandbox_service.graph(sandbox_id, actor)
         graph_context = self._graph_context(entities, cases, sandbox_graph)
         scoped_evidence = list(evidence_lookup.values())
         contradictions = self._find_contradictions(scoped_evidence)

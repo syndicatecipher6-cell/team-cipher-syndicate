@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from typing import List, Optional
 from app.services.data_processing import data_processor
 from app.services.knowledge_graph import kg_service
@@ -6,8 +6,13 @@ from app.models.schemas import (
     DashboardStats, CaseRecord, Person, GraphData, Evidence, TimelineEvent,
     SearchResult, DataSource
 )
+from app.security import READ_ROLES, Principal, get_principal, require_role
 
-router = APIRouter(tags=["Investigations"])
+def _authorize_read(principal: Principal = Depends(get_principal)) -> None:
+    require_role(principal, READ_ROLES)
+
+
+router = APIRouter(tags=["Investigations"], dependencies=[Depends(_authorize_read)])
 
 @router.get("/dashboard/stats", response_model=DashboardStats)
 def get_dashboard_stats():

@@ -1,5 +1,6 @@
 import { apiConfig } from '../config/api';
 import type { InvestigationService } from './contracts';
+import { getBackendAuthHeaders } from '../security/demoSession';
 
 type RequestOptions = { signal?: AbortSignal; method?: 'GET' | 'POST'; body?: unknown };
 
@@ -10,8 +11,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      'X-NexusNet-User': 'local-investigator',
-      'X-NexusNet-Role': 'investigator',
+      ...getBackendAuthHeaders(),
     },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: options.signal,

@@ -58,6 +58,14 @@ export function hasValidDemoSession(): boolean {
   return Boolean(getWorkspaceSession());
 }
 
+export function getBackendAuthHeaders(): Record<string, string> {
+  const session = getWorkspaceSession();
+  if (session?.mode === 'supabase' && session.accessToken) {
+    return { Authorization: `Bearer ${session.accessToken}` };
+  }
+  return {};
+}
+
 export function clearDemoSession(): void {
   sessionStorage.removeItem(SESSION_KEY);
 }

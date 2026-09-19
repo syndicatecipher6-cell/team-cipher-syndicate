@@ -32,6 +32,17 @@ class Settings(BaseModel):
         os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY") or
         "placeholder"
     )
+    # Used only to validate caller-issued Supabase access tokens. Service-role
+    # credentials are deliberately excluded from this public authentication path.
+    SUPABASE_ANON_KEY: str = (
+        os.getenv("SUPABASE_ANON_KEY") or
+        os.getenv("SUPABASE_PUBLISHABLE_KEY") or
+        os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY") or
+        ""
+    )
+    SUPABASE_AUTH_TIMEOUT_SECONDS: int = int(os.getenv("SUPABASE_AUTH_TIMEOUT_SECONDS", "5"))
+    ADMIN_USER_IDS: str = os.getenv("ADMIN_USER_IDS", "")
+    SUPERVISOR_USER_IDS: str = os.getenv("SUPERVISOR_USER_IDS", "")
     
     # The provider is isolated behind an adapter so retrieval, graph analysis,
     # citations, and sandbox logic remain provider-independent.
@@ -60,6 +71,7 @@ class Settings(BaseModel):
     MAX_UPLOAD_FILES: int = int(os.getenv("MAX_UPLOAD_FILES", "5"))
     RATE_LIMIT_REQUESTS: int = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))
     RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+    SENSITIVE_RATE_LIMIT_REQUESTS: int = int(os.getenv("SENSITIVE_RATE_LIMIT_REQUESTS", "10"))
     ENABLE_AI_INVESTIGATOR: bool = os.getenv("ENABLE_AI_INVESTIGATOR", "true").lower() == "true"
     ENABLE_INVESTIGATION_SANDBOX: bool = os.getenv("ENABLE_INVESTIGATION_SANDBOX", "true").lower() == "true"
 

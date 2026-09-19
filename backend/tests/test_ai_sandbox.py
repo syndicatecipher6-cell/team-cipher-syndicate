@@ -129,6 +129,15 @@ class GroundedInvestigatorTests(unittest.TestCase):
             updated.comparison.before.node_count - 1,
         )
 
+    def test_sandbox_is_visible_only_to_its_creator(self) -> None:
+        session = sandbox_service.create("CASE-101", "owner-a")
+        with self.assertRaises(KeyError):
+            sandbox_service.get(session.sandbox_id, "owner-b")
+        with self.assertRaises(KeyError):
+            sandbox_service.graph(session.sandbox_id, "owner-b")
+        with self.assertRaises(KeyError):
+            sandbox_service.close(session.sandbox_id, "owner-b")
+
     def test_all_sandbox_operations_remain_isolated(self) -> None:
         original_nodes = data_processor.graph_nodes.copy()
         original_edges = [edge.model_copy(deep=True) for edge in data_processor.graph_edges]

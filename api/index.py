@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from typing import List
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import Depends, FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
@@ -20,6 +20,7 @@ from app.hardening import (  # noqa: E402
     SecurityHeadersMiddleware,
     read_validated_uploads,
 )
+from app.security import Principal, WRITE_ROLES, get_principal, require_role  # noqa: E402
 
 
 app = FastAPI(
@@ -34,6 +35,7 @@ app.add_middleware(
     RateLimitMiddleware,
     requests_per_window=settings.RATE_LIMIT_REQUESTS,
     window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS,
+    sensitive_requests_per_window=settings.SENSITIVE_RATE_LIMIT_REQUESTS,
 )
 app.add_middleware(
     CORSMiddleware,
@@ -54,7 +56,11 @@ def health():
 
 
 @app.post("/api/ingest/upload")
-async def extract_uploaded_firs(files: List[UploadFile] = File(...)):
+async def extract_uploaded_firs(
+    files: List[UploadFile] = File(...),
+    principal: Principal = Depends(get_principal),
+):
+    require_role(principal, WRITE_ROLES)
     processed = []
     validated_files = await read_validated_uploads(
         files,

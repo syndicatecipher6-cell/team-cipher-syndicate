@@ -1,5 +1,9 @@
 from typing import List, Optional, Dict, Any, Union, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class StrictRequestModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
 class Provenance(BaseModel):
     sourceDataset: str = ""
@@ -117,7 +121,7 @@ class CrossCaseResponse(BaseModel):
     graph: GraphData
     connections: List[CrossCaseConnection]
 
-class RetrievalSearchRequest(BaseModel):
+class RetrievalSearchRequest(StrictRequestModel):
     query: str = Field(min_length=2, max_length=1000)
     evidence: List[Evidence] = Field(default_factory=list)
     cases: List[CaseRecord] = Field(default_factory=list)
@@ -165,7 +169,7 @@ class InvestigationFinding(BaseModel):
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     citations: List[EvidenceCitation] = Field(default_factory=list)
 
-class AssistantQueryRequest(BaseModel):
+class AssistantQueryRequest(StrictRequestModel):
     question: str = Field(min_length=2, max_length=2000)
     case_id: Optional[str] = None
     sandbox_id: Optional[str] = None
@@ -194,7 +198,7 @@ SandboxOperation = Literal[
     "TIMELINE_CHANGE",
 ]
 
-class SandboxModificationInput(BaseModel):
+class SandboxModificationInput(StrictRequestModel):
     operation: SandboxOperation
     parameters: Dict[str, Any] = Field(default_factory=dict)
     rationale: str = Field(default="", max_length=1000)
@@ -205,7 +209,7 @@ class SandboxModification(SandboxModificationInput):
     created_at: str
     created_by: str
 
-class SandboxCreateRequest(BaseModel):
+class SandboxCreateRequest(StrictRequestModel):
     base_case_id: str
 
 class SandboxMetrics(BaseModel):

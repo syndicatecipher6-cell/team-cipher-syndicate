@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File
 from typing import List
 from app.config import settings
 from app.hardening import read_validated_uploads
@@ -6,15 +6,18 @@ from app.services.data_processing import data_processor
 from app.services.nlp_extractor import nlp_extractor
 from app.services.supabase_client import supabase_service
 from app.models.schemas import DashboardStats
+from app.security import Principal, WRITE_ROLES, get_principal, require_role
+from app.services.audit import audit_service
 
 router = APIRouter(prefix="/ingest", tags=["Data Ingestion Pipeline"])
 
 @router.post("/upload")
-async def upload_files(files: List[UploadFile] = File(...)):
+async def upload_files(files: List[UploadFile] = File(...), principal: Principal = Depends(get_principal)):
     """
     Ingests raw files (CSV, JSON, PDF/text FIRs) using Pandas, NumPy, and spaCy.
     Persists jobs and extracted entities into Supabase if configured.
     """
+    require_role(principal, WRITE_ROLES)
     total_nodes = 0
     total_edges = 0
     processed_files = []
@@ -64,6 +67,12 @@ async def upload_files(files: List[UploadFile] = File(...)):
             "extractedNLP": extracted_nlp
         })
 
+    audit_service.record(
+        principal.user_id,
+        "FILES_INGESTED",
+        principal.station_id,
+        {"file_count": len(processed_files), "filenames": [item["filename"] for item in processed_files]},
+    )
     return {
         "status": "success",
         "processed": processed_files,
@@ -73,10 +82,11 @@ async def upload_files(files: List[UploadFile] = File(...)):
     }
 
 @router.post("/sample")
-def load_sample_dataset():
+def load_sample_dataset(principal: Principal = Depends(get_principal)):
     """
     Loads verified SIH benchmark dataset (CDRs, FIRs, bank statements) via Pandas.
     """
+    require_role(principal, WRITE_ROLES)
     nodes, edges = data_processor.load_sih_training_dataset("training dataset")
     supabase_service.save_processing_job("CDR_Export_Q3.csv", "CDR", 1432, 4502)
     supabase_service.save_processing_job("Delhi_FIRs_Batch_04.pdf", "FIR", 318, 624)
@@ -89,11 +99,13 @@ def load_sample_dataset():
     }
 
 @router.post("/clear")
-def clear_dataset():
+def clear_dataset(principal: Principal = Depends(get_principal)):
     """
     Wipes all active datasets back to completely clean zero-data state.
     """
+    require_role(principal, WRITE_ROLES)
     data_processor.clear()
+    audit_service.record(principal.user_id, "DATASET_CLEARED", principal.station_id, {})
     return {
         "status": "success",
         "message": "Workspace wiped clean",

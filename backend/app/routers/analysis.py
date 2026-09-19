@@ -11,7 +11,11 @@ from app.models.schemas import (
     RetrievalSearchResponse
 )
 
-router = APIRouter(tags=["Graph Analysis & AI"])
+def _authorize_read(principal: Principal = Depends(get_principal)) -> None:
+    require_role(principal, READ_ROLES)
+
+
+router = APIRouter(tags=["Graph Analysis & AI"], dependencies=[Depends(_authorize_read)])
 
 @router.get("/connections/hidden", response_model=HiddenConnectionResponse)
 def get_hidden_connection(start: str = Query(..., alias="start"), end: str = Query(..., alias="end")):

@@ -15,7 +15,7 @@ import {
 } from '../data/mockData';
 import { fetchSharedCase, insertSupabaseJob, publishSharedCases, searchSharedCases } from '../services/supabaseService';
 import type { SharedCaseRecord } from '../services/supabaseService';
-import { getWorkspaceSession } from '../security/demoSession';
+import { getBackendAuthHeaders, getWorkspaceSession } from '../security/demoSession';
 import { apiConfig } from '../config/api';
 
 interface InvestigationContextType {
@@ -271,7 +271,7 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
     setPipelineJobs([]);
     clearActiveDataset();
     try {
-      fetch('/api/ingest/clear', { method: 'POST' }).catch(() => {});
+      fetch('/api/ingest/clear', { method: 'POST', headers: getBackendAuthHeaders() }).catch(() => {});
     } catch {
       // ignore
     }
@@ -322,7 +322,11 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             const formData = new FormData();
             formData.append('files', file);
-            const response = await fetch(`${apiConfig.baseUrl}/ingest/upload`, { method: 'POST', body: formData });
+            const response = await fetch(`${apiConfig.baseUrl}/ingest/upload`, {
+              method: 'POST',
+              headers: getBackendAuthHeaders(),
+              body: formData,
+            });
             if (response.ok) {
               const payload = await response.json() as {
                 processed?: Array<{ extractedNLP?: TrainedFirExtraction }>;
@@ -369,7 +373,11 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
             try {
               const formData = new FormData();
               formData.append('files', file);
-              fetch(`${apiConfig.baseUrl}/ingest/upload`, { method: 'POST', body: formData }).catch(() => {});
+              fetch(`${apiConfig.baseUrl}/ingest/upload`, {
+                method: 'POST',
+                headers: getBackendAuthHeaders(),
+                body: formData,
+              }).catch(() => {});
             } catch {
               // Local ingestion has already completed.
             }
@@ -589,7 +597,7 @@ export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({
     setDataset(sampleDataset);
 
     try {
-      fetch('/api/ingest/sample', { method: 'POST' }).catch(() => {});
+      fetch('/api/ingest/sample', { method: 'POST', headers: getBackendAuthHeaders() }).catch(() => {});
     } catch {
       // ignore
     }

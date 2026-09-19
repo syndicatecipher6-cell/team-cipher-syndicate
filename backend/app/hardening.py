@@ -111,6 +111,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
+        response.headers.setdefault("X-API-Version", "1.0.0")
         return response
 
 
@@ -132,10 +133,11 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Per-instance abuse protection; edge/platform rate limits should supplement it."""
 
-    def __init__(self, app, requests_per_window: int, window_seconds: int):
+    def __init__(self, app, requests_per_window: int, window_seconds: int, sensitive_requests_per_window: int | None = None):
         super().__init__(app)
         self.requests_per_window = requests_per_window
         self.window_seconds = window_seconds
+        self.sensitive_requests_per_window = sensitive_requests_per_window or requests_per_window
         self.requests: dict[str, deque[float]] = defaultdict(deque)
 
     async def dispatch(self, request: Request, call_next) -> Response:
@@ -145,10 +147,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         vercel_client = request.headers.get("x-vercel-forwarded-for") if request.headers.get("x-vercel-id") else None
         client = (vercel_client or (request.client.host if request.client else "unknown")).split(",", 1)[0].strip()
         now = time.monotonic()
-        entries = self.requests[client]
+        sensitive = request.url.path.endswith(("/federated/train", "/ingest/clear", "/assistant/query"))
+        bucket = f"{client}:sensitive" if sensitive else client
+        limit = self.sensitive_requests_per_window if sensitive else self.requests_per_window
+        entries = self.requests[bucket]
         while entries and now - entries[0] >= self.window_seconds:
             entries.popleft()
-        if len(entries) >= self.requests_per_window:
+        if len(entries) >= limit:
             retry_after = max(1, int(self.window_seconds - (now - entries[0])))
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,

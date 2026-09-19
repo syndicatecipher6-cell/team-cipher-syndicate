@@ -53,17 +53,17 @@ class InvestigationSandboxService:
         audit_service.record(actor, "SANDBOX_CREATE", session.sandbox_id, {"base_case_id": base_case_id})
         return session.model_copy(deep=True)
 
-    def get(self, sandbox_id: str) -> SandboxSession:
+    def get(self, sandbox_id: str, actor: str) -> SandboxSession:
         with self._lock:
             session = self._sessions.get(sandbox_id)
-        if not session:
+        if not session or session.created_by != actor:
             raise KeyError(sandbox_id)
         return session.model_copy(deep=True)
 
     def apply(self, sandbox_id: str, change: SandboxModificationInput, actor: str) -> SandboxSession:
         with self._lock:
             session = self._sessions.get(sandbox_id)
-            if not session:
+            if not session or session.created_by != actor:
                 raise KeyError(sandbox_id)
             if session.status != "active":
                 raise ValueError("Sandbox session is closed")
@@ -89,7 +89,7 @@ class InvestigationSandboxService:
     def close(self, sandbox_id: str, actor: str) -> SandboxSession:
         with self._lock:
             session = self._sessions.get(sandbox_id)
-            if not session:
+            if not session or session.created_by != actor:
                 raise KeyError(sandbox_id)
             session.status = "closed"
             session.updated_at = _utc_now()
@@ -97,8 +97,8 @@ class InvestigationSandboxService:
         audit_service.record(actor, "SANDBOX_CLOSE", sandbox_id, {})
         return result
 
-    def graph(self, sandbox_id: str) -> GraphData:
-        session = self.get(sandbox_id)
+    def graph(self, sandbox_id: str, actor: str) -> GraphData:
+        session = self.get(sandbox_id, actor)
         _, after = self._graphs(session)
         return after
 

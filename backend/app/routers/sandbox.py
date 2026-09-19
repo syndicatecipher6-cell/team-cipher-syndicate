@@ -28,7 +28,7 @@ def create_session(payload: SandboxCreateRequest, principal: Principal = Depends
 def get_session(sandbox_id: str, principal: Principal = Depends(get_principal)):
     _authorize(principal)
     try:
-        return sandbox_service.get(sandbox_id)
+        return sandbox_service.get(sandbox_id, principal.user_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Sandbox session not found.") from exc
 
@@ -52,7 +52,7 @@ def apply_modification(
 def get_sandbox_graph(sandbox_id: str, principal: Principal = Depends(get_principal)):
     _authorize(principal)
     try:
-        return sandbox_service.graph(sandbox_id)
+        return sandbox_service.graph(sandbox_id, principal.user_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Sandbox session not found.") from exc
 

@@ -20,6 +20,7 @@ app.add_middleware(
     RateLimitMiddleware,
     requests_per_window=settings.RATE_LIMIT_REQUESTS,
     window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS,
+    sensitive_requests_per_window=settings.SENSITIVE_RATE_LIMIT_REQUESTS,
 )
 
 # CORS middleware for explicitly configured frontend origins. Wildcard CORS
@@ -29,7 +30,7 @@ app.add_middleware(
     allow_origins=[origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-NexusNet-Role", "X-NexusNet-User"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -48,19 +49,6 @@ def root():
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "docs": "/docs" if settings.EXPOSE_API_DOCS else None,
-        "stack": {
-            "core": "Python 3.11",
-            "api": "FastAPI",
-            "data": "Pandas + NumPy",
-            "nlp": "spaCy",
-            "graph": "Neo4j + Cypher",
-            "retrieval": "BM25 + BGE-M3 + BGE Reranker v2-M3",
-            "qa": "GraphRAG + LLM",
-            "federated": "Flower + FedProx + PyTorch",
-            "database": "Supabase",
-            "analytics": "Plotly",
-            "visualization": "Cytoscape.js"
-        }
     }
 
 @app.get("/health")

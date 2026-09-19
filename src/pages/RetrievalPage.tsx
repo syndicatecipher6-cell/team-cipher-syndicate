@@ -3,6 +3,7 @@ import { BookOpenCheck, Search, SlidersHorizontal } from 'lucide-react';
 import { Button, EmptyState, PageHeader, Panel, SourceBadge } from '../components/ui';
 import { apiConfig } from '../config/api';
 import { useInvestigation } from '../context/InvestigationContext';
+import { getBackendAuthHeaders } from '../security/demoSession';
 
 interface HybridResult {
   id: string;
@@ -33,8 +34,7 @@ export function RetrievalPage() {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          'X-NexusNet-User': 'local-investigator',
-          'X-NexusNet-Role': 'investigator',
+          ...getBackendAuthHeaders(),
         },
         body: JSON.stringify({ query: normalized, evidence: dataset.evidence, cases: dataset.cases, top_k: 8 }),
       });

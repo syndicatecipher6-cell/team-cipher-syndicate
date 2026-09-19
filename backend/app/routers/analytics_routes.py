@@ -1,7 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.services.analytics import plotly_service
+from app.security import READ_ROLES, Principal, get_principal, require_role
 
-router = APIRouter(prefix="/analytics", tags=["Plotly Analytics"])
+def _authorize_read(principal: Principal = Depends(get_principal)) -> None:
+    require_role(principal, READ_ROLES)
+
+
+router = APIRouter(prefix="/analytics", tags=["Plotly Analytics"], dependencies=[Depends(_authorize_read)])
 
 @router.get("/charts")
 def get_analytics_charts():
