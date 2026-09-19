@@ -3,6 +3,12 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "outputDirectory": "dist",
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "backend/models/fir_extractor_model.json",
+      "excludeFiles": "{backend/tests/**,backend/.venv/**,.python/**,node_modules/**,training dataset/**,newtrainingdata1/**}"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
