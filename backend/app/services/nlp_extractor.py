@@ -113,7 +113,13 @@ class NLPEntityExtractor:
         direct_patterns = (
             ("officer", rf"\b(?:inspector|sub-inspector|officer|constable|ranger)\s+{name}\b"),
             ("witness", rf"\b(?:witness|eyewitness|informant)\s+{name}\b|\b{name}\s+(?:saw|witnessed|observed)\b"),
-            ("suspect", rf"\b(?:suspect|accused)\s+{name}\b|\b(?:apprehended|arrested|detained|identified)\s+{name}\b"),
+            (
+                "suspect",
+                rf"\b(?:suspect|accused|ringleader|offender|perpetrator)\s+{name}\b|"
+                rf"\b(?:apprehended|arrested|detained|identified)\s+{name}\b|"
+                rf"\b(?:identified|recognized|recognised|named)\s+(?:the\s+)?"
+                rf"(?:ringleader|suspect|accused|offender|perpetrator)\s+as\s+{name}\b",
+            ),
             ("complainant", rf"\bcomplainant\s+{name}\b|\b{name}\s+(?:personally\s+)?(?:reported|filed|lodged)\b"),
         )
         for role, pattern in direct_patterns:
@@ -179,10 +185,13 @@ class NLPEntityExtractor:
     def _rule_person_candidates(cls, text: str) -> List[str]:
         name = r"[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){1,3}"
         patterns = [
-            rf"\b(?:apprehended|arrested|detained|identified|involving|involvement of|led by|against)\s+({name})",
+            rf"\b(?:apprehended|arrested|detained|identified|involving|involvement of|led by|against)\s+({name})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|near|during|after|before|with)\b|$)",
+            rf"\b(?:identified|recognized|recognised|named)\s+(?:the\s+)?(?:ringleader|suspect|accused|offender|perpetrator)\s+as\s+({name})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|with)\b|$)",
             rf"\b(?:debriefing of|interview of)\s+({name})",
             rf"\b(?:protections?|assistance) (?:was|were) offered to\s+({name})",
-            rf"\b({name})\s+(?:personally reported|reported|filed|was identified|was apprehended|was arrested|was detained|was interviewed)",
+            rf"\b(?:tracking|seeking|monitoring|searching for|looking for)\s+({name})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|with|and)\b|$)",
+            rf"\b({name})\s+(?:personally reported|reported|filed|was identified|was apprehended|was arrested|was detained|was interviewed|used|uses|owned|owns|drove|drives|operated|operates|contacted|called|transferred|received|paid|resides|lives)",
+            rf"\b({name})\s+(?:was|is)\s+(?:actively\s+|currently\s+)?(?:using|operating|driving|contacting|calling|transferring|receiving|residing|living)",
             rf"\b(?:Inspector|Officer|Constable|Ranger|Witness|Suspect|Accused|Complainant|Victim)\s+({name})",
         ]
         candidates: List[str] = []

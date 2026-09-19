@@ -266,12 +266,19 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
     'tata 407',
     'existing mumbai network',
   ]);
+  const blockedNameWords = new Set([
+    'account', 'analysis', 'bank', 'branch', 'case', 'complaint', 'crime',
+    'department', 'district', 'evidence', 'fir', 'investigation', 'number',
+    'officer', 'phone', 'police', 'record', 'report', 'station', 'transaction',
+    'vehicle',
+  ]);
   const isPlausibleName = (value: string) => {
     const cleaned = value.trim().replace(/\s+/g, ' ');
     const words = cleaned.split(' ');
     if (words.length < 2 || words.length > 4) return false;
     if (!words.every((word) => /^\p{Lu}[\p{L}'-]*$/u.test(word))) return false;
-    return !nonPersonTerms.has(normalizePersonName(cleaned));
+    return !nonPersonTerms.has(normalizePersonName(cleaned)) &&
+      !words.some((word) => blockedNameWords.has(word.toLowerCase()));
   };
   const addMatch = (candidate: string, matchedRole = 'person of interest') => {
     const cleaned = candidate.trim().replace(/[’']s$/i, '').replace(/\s+/g, ' ');
@@ -285,10 +292,17 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
     }
   };
 
+  for (const match of text.matchAll(new RegExp(String.raw`\b(?:apprehended|arrested|detained)\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|at|in|from|near|during|after|before|with)\b|$)`, 'giu'))) {
+    if (match[1]) addMatch(match[1], 'suspect');
+  }
+
   collect(new RegExp(String.raw`\b(?:identifies|identified|names|named|mentions|records)\s+${title}(${name})\s+as\s+(?:the\s+)?(?:primary\s+|main\s+)?${role}\b`, 'giu'), 1, 2);
   collect(new RegExp(String.raw`\b${title}(${name})\s+(?:is|was)\s+(?:the\s+)?(?:primary\s+|main\s+)?${role}\b`, 'giu'), 1, 2);
   collect(new RegExp(String.raw`\b${role}\s+(?:named\s+|identified\s+as\s+)?${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|used|uses|resides|residing|with)\b|$)`, 'giu'), 2, 1);
   collect(new RegExp(String.raw`\b${role}\s*(?:name\s*)?(?:is|was|named)?\s*[:\-]\s*${title}(${name})(?=[,.;\n]|$)`, 'giu'), 2, 1);
+  collect(new RegExp(String.raw`\b${role}\s*(?:name\s*)?(?:(?:is|was|named|identified\s+as)\s*)?[,;]\s*${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|used|uses|owns|owned|resides|residing|with)\b|$)`, 'giu'), 2, 1);
+  collect(new RegExp(String.raw`\b${title}(${name})\s*[,;(\-]\s*${role}\b`, 'giu'), 1, 2);
+  collect(new RegExp(String.raw`\b(?:identified|recognized|recognised|named)\s+(?:the\s+)?(ringleader|suspect|accused|offender|perpetrator)\s+as\s+${title}(${name})(?=[,.;\n]|\s+(?:who|was|is|has|had|at|in|from|with)\b|$)`, 'giu'), 2, 1);
 
   // Narrative FIRs often identify people without an explicit role label. Only
   // use affirmative sentences and strong person-introduction contexts so a
@@ -309,6 +323,10 @@ function extractPeopleFromText(text: string): ExtractedTextPerson[] {
       new RegExp(String.raw`\b(?:with|to|from|through)\s+(${properName})(?:'s)?(?=[,.;]|\s|$)`, 'gu'),
       new RegExp(String.raw`\b(?:involving|linking|connecting)\s+(${properName})(?=,)\s*,\s*(${properName})(?=\s+and\s+)\s+and\s+(${properName})(?=[,.;]|$)`, 'gu'),
       new RegExp(String.raw`\b(?:involving|linking|connecting)\s+(${properName})(?=\s+and\s+)\s+and\s+(${properName})(?=[,.;]|$)`, 'gu'),
+      new RegExp(String.raw`\b(?:[Aa]pprehended|[Aa]rrested|[Dd]etained|[Ii]dentified|[Ii]nvolvement\s+of|[Ll]ed\s+by|[Dd]ebriefing\s+of|[Ii]nterview\s+of)\s+(${properName})(?=[,.;]|\s+(?:who|was|is|has|had|used|uses|owns|owned|at|in|from|near|during|after|before|with)\b|$)`, 'gu'),
+      new RegExp(String.raw`\b(?:[Tt]racking|[Ss]eeking|[Mm]onitoring|[Ss]earching\s+for|[Ll]ooking\s+for)\s+(${properName})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|with|and)\b|$)`, 'gu'),
+      new RegExp(String.raw`\b(${properName})\s+(?:used|uses|owned|owns|drove|drives|operated|operates|contacted|called|transferred|received|paid|resides|lives)\b`, 'gu'),
+      new RegExp(String.raw`\b(${properName})\s+(?:was|is)\s+(?:actively\s+|currently\s+)?(?:using|operating|driving|contacting|calling|transferring|receiving|residing|living)\b`, 'gu'),
     ];
 
     patterns.forEach((pattern) => {

@@ -5,6 +5,7 @@ import styles from './GraphPage.module.css';
 import { useInvestigation } from '../context/InvestigationContext';
 import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { casePersonGraph } from '../utils/casePersonGraph';
 
 const entityColors: Record<string, string> = {
   case: '#f59e0b', person: '#2563eb', phone: '#8b5cf6', vehicle: '#0f766e',
@@ -39,6 +40,7 @@ function endpointId(endpoint: GraphLinkDatum['source'] | undefined): string | un
 
 export function GraphPage() {
   const { dataset } = useInvestigation();
+  const relationshipGraph = useMemo(() => casePersonGraph(dataset.graphData), [dataset.graphData]);
   const [searchParams] = useSearchParams();
   const scopedCaseId = searchParams.get('caseId');
   const [caseFilter, setCaseFilter] = useState(scopedCaseId ?? '');
@@ -59,13 +61,13 @@ export function GraphPage() {
   }, [scopedCaseId]);
 
   const sourceOptions = useMemo(() => [...new Set([
-    ...dataset.graphData.nodes.map(node => node.provenance?.sourceDataset),
-    ...dataset.graphData.edges.map(edge => edge.provenance?.sourceDataset),
-  ].filter((value): value is string => Boolean(value)))].sort(), [dataset.graphData]);
+    ...relationshipGraph.nodes.map(node => node.provenance?.sourceDataset),
+    ...relationshipGraph.edges.map(edge => edge.provenance?.sourceDataset),
+  ].filter((value): value is string => Boolean(value)))].sort(), [relationshipGraph]);
   
   const graphData = useMemo(() => {
-    const datasetNodes = Array.isArray(dataset.graphData?.nodes) ? dataset.graphData.nodes : [];
-    const datasetEdges = Array.isArray(dataset.graphData?.edges) ? dataset.graphData.edges : [];
+    const datasetNodes = relationshipGraph.nodes;
+    const datasetEdges = relationshipGraph.edges;
     const nodeById = new Map(datasetNodes.map(node => [node.id, node]));
     const caseScopedIds = new Set(caseFilter ? [caseFilter] : datasetNodes.map(node => node.id));
     if (caseFilter) {
@@ -116,7 +118,7 @@ export function GraphPage() {
       }));
 
     return { nodes, links };
-  }, [caseFilter, dataset.graphData, dateFrom, dateTo, sourceFilter, typeFilter]);
+  }, [caseFilter, dateFrom, dateTo, relationshipGraph, sourceFilter, typeFilter]);
 
   const visibleTypes = useMemo(
     () => [...new Set(graphData.nodes.map(node => node.type))],
@@ -239,7 +241,7 @@ export function GraphPage() {
               </select>
               <select className={styles.filterSelect} value={typeFilter} onChange={event => setTypeFilter(event.target.value)} aria-label="Filter graph by entity type">
                 <option value="all">All entity types</option>
-                {[...new Set(dataset.graphData.nodes.map(node => node.type))].map(type => <option value={type} key={type}>{type}</option>)}
+                {[...new Set(relationshipGraph.nodes.map(node => node.type))].map(type => <option value={type} key={type}>{type}</option>)}
               </select>
               <select className={styles.filterSelect} value={sourceFilter} onChange={event => setSourceFilter(event.target.value)} aria-label="Filter graph by source">
                 <option value="all">All sources</option>
