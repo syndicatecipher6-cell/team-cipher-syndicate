@@ -82,10 +82,12 @@ class NLPEntityExtractor:
         features.extend(f"context_bigram:{left}_{right}" for left, right in zip(context, context[1:]))
         context_text = " ".join(context)
         role_cues = {
-            "suspect": r"\b(?:suspect|accused|ringleader|offender|perpetrator|apprehended|arrested|detained|tracking)\b",
-            "witness": r"\b(?:witness|eyewitness|observed|witnessed|saw|corroborated)\b",
-            "complainant": r"\b(?:complainant|complaint|lodged|personally reported|submitted a written complaint)\b",
-            "officer": r"\b(?:inspector|sub inspector|officer|constable|official capacity|assigned to)\b",
+            "suspect": r"\b(?:suspect|accused|ringleader|offender|perpetrator|apprehended|arrested|detained|tracking|cctv|charged|suspicion|leaving the premises)\b",
+            "witness": r"\b(?:witness|eyewitness|observed|witnessed|saw|corroborated|testimony|detailed account|came forward)\b",
+            "complainant": r"\b(?:complainant|complaint|lodged|personally reported|submitted a written complaint|registered the fir|written grievance|case was opened|approached the station)\b",
+            "officer": r"\b(?:inspector|sub inspector|officer|constable|official capacity|assigned to|seized|secured|investigating|oversaw|search operations)\b",
+            "victim": r"\b(?:victim|suffered|medical attention|severe losses|bore the brunt|exploited|harmed|injured)\b",
+            "person of interest": r"\b(?:person of interest|no affirmative evidence|no connection|questioned but released|supplementary reports)\b",
         }
         for role, pattern in role_cues.items():
             if re.search(pattern, context_text):
@@ -121,16 +123,52 @@ class NLPEntityExtractor:
     def _explicit_role(text: str, person_name: str) -> Optional[str]:
         name = re.escape(person_name)
         direct_patterns = (
-            ("officer", rf"\b(?:inspector|sub-inspector|officer|constable|ranger)\s+{name}\b"),
-            ("witness", rf"\b(?:witness|eyewitness|informant)\s+{name}\b|\b{name}\s+(?:saw|witnessed|observed)\b"),
+            (
+                "officer",
+                rf"\b(?:inspector|sub-inspector|investigating officer|officer|constable|ranger)\s+{name}\b|"
+                rf"\b(?:crime scene|premises|area)\s+was\s+secured\s+by\s+{name}\b|"
+                rf"\b{name}\s+(?:seized|secured|investigated|oversaw|conducted|recorded|arrested\s+the\s+suspects?)\b",
+            ),
+            (
+                "witness",
+                rf"\b(?:witness|eyewitness|informant)\s+{name}\b|"
+                rf"\b{name}\s+(?:saw|witnessed|observed|corroborated|provided\s+a\s+detailed\s+account|came\s+forward\s+as\s+(?:a\s+)?(?:key\s+)?witness)\b|"
+                rf"\b(?:testimony|statement|account)\s+of\s+{name}\b|"
+                rf"\baccording\s+to\s+{name}\s*,\s*who\s+witnessed\b",
+            ),
             (
                 "suspect",
                 rf"\b(?:suspect|accused|ringleader|offender|perpetrator)\s+{name}\b|"
                 rf"\b(?:apprehended|arrested|detained|identified)\s+{name}\b|"
                 rf"\b(?:identified|recognized|recognised|named)\s+(?:the\s+)?"
-                rf"(?:ringleader|suspect|accused|offender|perpetrator)\s+as\s+{name}\b",
+                rf"(?:ringleader|suspect|accused|offender|perpetrator)\s+as\s+{name}\b|"
+                rf"\b(?:primary|prime)\s+accused\s+(?:is|was)\s+{name}\b|"
+                rf"\bnamed\s+{name}\s+as\s+(?:the\s+)?(?:prime\s+|primary\s+)?suspect\b|"
+                rf"\bcctv\s+showed\s+{name}\s+leaving\b|"
+                rf"\b{name}\s+(?:was\s+(?:formally\s+)?charged|faces?\s+accusations?)\b",
             ),
-            ("complainant", rf"\bcomplainant\s+{name}\b|\b{name}\s+(?:personally\s+)?(?:reported|filed|lodged)\b"),
+            (
+                "complainant",
+                rf"\bcomplainant\s*,?\s*{name}\b|\b{name}\s+(?:personally\s+)?(?:reported|filed|lodged|registered\s+the\s+fir|approached\s+the\s+station\s+to\s+file\s+a\s+complaint)\b|"
+                rf"\b(?:written\s+)?(?:complaint|grievance|report)\s+(?:was\s+)?(?:filed|lodged|submitted)?\s*by\s+{name}\b|"
+                rf"\bvictimized\s+party(?:'s)?\s+representative\s*,\s*{name}\s*,\s*filed\s+the\s+formal\s+complaint\b",
+            ),
+            (
+                "victim",
+                rf"\bvictim\s*,?\s*{name}\b|\bmedical\s+attention\s+was\s+provided\s+to\s+{name}\b|"
+                rf"\b{name}\s+(?:suffered|sustained\s+damages|bore\s+the\s+brunt|was\s+harmed|was\s+injured)\b|"
+                rf"\bperpetrators\s+exploited\s+{name}\b|"
+                rf"\brestitution\s+is\s+sought\s+for\s+{name}\s*,\s*the\s+primary\s+victim\b",
+            ),
+            (
+                "person of interest",
+                rf"\b{name}\s+is\s+a\s+person\s+of\s+interest\b|"
+                rf"\bno\s+affirmative\s+evidence\s+linked\s+{name}\b|"
+                rf"\binvestigated\s+{name}\s+but\s+found\s+no\s+connection\b|"
+                rf"\b{name}\s+was\s+(?:questioned\s+but\s+released|mentioned\s+in\s+supplementary\s+reports)\b|"
+                rf"\bthe\s+name\s+{name}\s+surfaced\s+during\s+inquiries\s*,?\s*though\s+no\s+direct\s+involvement\b|"
+                rf"\b(?:detectives|investigators|police)\s+ruled\s+out\s+{name}\s+after\s+verifying\s+(?:their|an?)\s+alibi\b",
+            ),
         )
         for role, pattern in direct_patterns:
             if re.search(pattern, text, flags=re.IGNORECASE):
@@ -159,7 +197,9 @@ class NLPEntityExtractor:
     @staticmethod
     def _is_plausible_person(value: str) -> bool:
         cleaned = re.sub(r"\s+", " ", value).strip(" .,;:-")
-        words = cleaned.split()
+        title_match = re.match(r"^(?:mr|mrs|ms|dr|shri|smt)\.?(?:\s+|$)", cleaned, flags=re.IGNORECASE)
+        untitled = cleaned[title_match.end():] if title_match else cleaned
+        words = untitled.split()
         crime_names = {
             "abduction", "bootlegging", "cattle smuggling", "contraband smuggling",
             "counterfeit currency", "cyber fraud", "hawala transactions",
@@ -168,16 +208,19 @@ class NLPEntityExtractor:
         blocked_words = {
             "account", "bank", "branch", "company", "corporation", "department",
             "complainant", "creta", "district", "enfield", "fraud", "inspector",
-            "limited", "mall", "market", "nagar", "officer", "police", "private",
-            "pulsar", "road", "scorpio", "street", "suspect", "swift", "transactions",
-            "victim", "witness",
+            "honda", "hyundai", "limited", "mall", "market", "nagar", "nexon",
+            "officer", "police", "private", "pulsar", "road", "scorpio", "street",
+            "suspect", "swift", "tata", "transactions", "victim", "witness",
         }
-        return (
+        if not (
             2 <= len(words) <= 4
-            and cleaned.lower() not in crime_names
+            and untitled.lower() not in crime_names
             and not any(word.lower() in blocked_words for word in words)
-            and all(re.fullmatch(r"[A-Z][\w'-]*", word, flags=re.UNICODE) for word in words)
-        )
+        ):
+            return False
+        if title_match is not None:
+            return all(re.fullmatch(r"[^\W\d_][\w'-]*", word, flags=re.UNICODE) for word in words)
+        return all(re.fullmatch(r"[A-Z][\w'-]*", word, flags=re.UNICODE) for word in words)
 
     @classmethod
     def _has_person_context(cls, text: str, value: str) -> bool:
@@ -193,8 +236,51 @@ class NLPEntityExtractor:
 
     @classmethod
     def _rule_person_candidates(cls, text: str) -> List[str]:
-        name = r"[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){1,3}"
+        titled_name = r"(?:Mr|Mrs|Ms|Dr|Shri|Smt)\.?\s+[^\W\d_][\w'-]*(?:\s+[^\W\d_][\w'-]*){1,3}"
+        capitalized_name = r"[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*){1,3}"
+        name = rf"(?:{titled_name}|{capitalized_name})"
         patterns = [
+            # High precision role-bearing FIR phrases. These are deliberately
+            # bounded by surrounding wording so four-part Indian names and
+            # honorifics are captured whole instead of as partial names.
+            rf"(?i:\bwitness\s+)({name})(?i:\s+provided\s+a\s+detailed\s+account)",
+            rf"(?i:\bstatement\s+was\s+recorded\s+from\s+)({name})(?i:\s+who\s+observed)",
+            rf"\b({name})(?i:\s+came\s+forward\s+as\s+(?:a\s+)?(?:key\s+)?witness\b)",
+            rf"(?i:\beyewitness\s+)({name})(?i:\s+corroborated\b)",
+            rf"(?i:\baccording\s+to\s+)({name})(?i:\s*,\s*who\s+witnessed\b)",
+            rf"(?i:\btestimony\s+of\s+)({name})(?=[,.;]|$)",
+            rf"\b({name})(?i:\s+testified\s+regarding\b)",
+            rf"\b({name})(?i:\s+is\s+a\s+person\s+of\s+interest\b)",
+            rf"(?i:\bno\s+affirmative\s+evidence\s+linked\s+)({name})(?i:\s+to\b)",
+            rf"(?i:\bwe\s+investigated\s+)({name})(?i:\s+but\s+found\s+no\s+connection\b)",
+            rf"(?i:\bbackground\s+checks\s+were\s+run\s+on\s+)({name})(?i:\s*,\s*yielding\s+no\s+conclusive\s+link\b)",
+            rf"\b({name})(?i:\s+was\s+questioned\s+but\s+released\b)",
+            rf"(?i:\b(?:detectives|investigators|police)\s+ruled\s+out\s+)({name})(?i:\s+after\s+verifying\b)",
+            rf"(?i:\bthe\s+name\s+)({name})(?i:\s+surfaced\s+during\s+inquiries\b)",
+            rf"(?i:\b(?:officer|investigating\s+officer)\s+)({name})(?i:\s+(?:is\s+actively\s+investigating|oversaw)\b)",
+            rf"(?i:\bsub-inspector\s+)({name})(?i:\s+seized\b)",
+            rf"(?i:\bcrime\s+scene\s+was\s+secured\s+by\s+)({name})(?=[,.;]|$)",
+            rf"(?i:\braid\s+was\s+led\s+by\s+)({name})(?=[,.;]|$)",
+            rf"\b({name})(?i:\s+(?:recorded\s+the\s+statements|arrested\s+the\s+suspects?)\b)",
+            rf"(?i:\bcctv\s+showed\s+)({name})(?i:\s+leaving\s+the\s+premises\b)",
+            rf"\b({name})(?i:\s*,\s*identified\s+as\s+a\s+suspect\s*,\s*was\s+apprehended\b)",
+            rf"(?i:\bsuspect\s+)({name})(?i:\s+was\s+(?:formally\s+)?charged\b)",
+            rf"\b({name})(?i:\s+faces?\s+accusations?\s+of\b)",
+            rf"(?i:\bprimary\s+accused\s+(?:is|was)\s+)({name})(?=[,.;]|$)",
+            rf"(?i:\binvestigating\s+officers?\s+named\s+)({name})(?i:\s+as\s+(?:the\s+)?(?:prime|primary)\s+suspect\b)",
+            rf"(?i:\b(?:authorities|officers|police)\s+detained\s+)({name})(?i:\s+under\s+suspicion\b)",
+            rf"(?i:\bmedical\s+attention\s+was\s+provided\s+to\s+)({name})(?=[,.;]|$)",
+            rf"(?i:\bthe\s+victim\s*,\s*)({name})(?i:\s*,\s*suffered\b)",
+            rf"\b({name})(?i:\s+(?:was\s+directly\s+targeted|sustained\s+damages|bore\s+the\s+brunt)\b)",
+            rf"(?i:\bperpetrators\s+exploited\s+)({name})(?=[,.;]|$)",
+            rf"(?i:\brestitution\s+is\s+sought\s+for\s+)({name})(?i:\s*,\s*the\s+primary\s+victim\b)",
+            rf"(?i:\bcomplainant\s*,\s*)({name})(?i:\s*,\s*registered\s+the\s+fir\b)",
+            rf"\b({name})(?i:\s+approached\s+the\s+station\s+to\s+file\s+a\s+complaint\b)",
+            rf"(?i:\bwritten\s+grievance\s+by\s+)({name})(?i:\s*,\s*the\s+case\s+was\s+opened\b)",
+            rf"(?i:\battention\s+by\s+complainant\s+)({name})(?=[,.;]|$)",
+            rf"(?i:\breport\s+submitted\s+by\s+)({name})(?i:\s*,\s*an\s+inquiry\s+began\b)",
+            rf"\b({name})(?i:\s+initiated\s+the\s+legal\s+proceedings\b)",
+            rf"(?i:\bvictimized\s+party(?:'s)?\s+representative\s*,\s*)({name})(?i:\s*,\s*filed\s+the\s+formal\s+complaint\b)",
             rf"\b(?:apprehended|arrested|detained|identified|involving|involvement of|led by|against)\s+({name})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|near|during|after|before|with)\b|$)",
             rf"\b(?:identified|recognized|recognised|named)\s+(?:the\s+)?(?:ringleader|suspect|accused|offender|perpetrator)\s+as\s+({name})(?=[,.;]|\s+(?:who|was|is|has|had|at|in|from|with)\b|$)",
             rf"\b(?:debriefing of|interview of)\s+({name})",
@@ -303,6 +389,44 @@ class NLPEntityExtractor:
         # Deduplicate
         for k in results:
             results[k] = list(dict.fromkeys(results[k]))
+
+        # A broad NER engine can return a short fragment of a name that a
+        # role-bounded rule also captured in full (for example "Neha Raj"
+        # beside "Dr. Neha Raj Kumar Gowda"). Keep the most complete mention;
+        # fragments would otherwise become fake people and graph nodes.
+        def person_tokens(value: str) -> List[str]:
+            normalized = re.sub(r"[^\w' -]+", " ", value, flags=re.UNICODE).lower()
+            tokens = normalized.split()
+            if tokens and tokens[0] in {"mr", "mrs", "ms", "dr", "shri", "smt"}:
+                tokens = tokens[1:]
+            return tokens
+
+        people = results["persons"]
+        tokenized = [person_tokens(value) for value in people]
+        has_title = [
+            bool(re.match(r"^(?:mr|mrs|ms|dr|shri|smt)\.?(?:\s+|$)", value, flags=re.IGNORECASE))
+            for value in people
+        ]
+        results["persons"] = [
+            value
+            for index, value in enumerate(people)
+            if not any(
+                (
+                    len(tokenized[other]) > len(tokenized[index])
+                    and any(
+                        tokenized[other][start:start + len(tokenized[index])] == tokenized[index]
+                        for start in range(len(tokenized[other]) - len(tokenized[index]) + 1)
+                    )
+                )
+                or (
+                    tokenized[other] == tokenized[index]
+                    and has_title[other]
+                    and not has_title[index]
+                )
+                for other in range(len(people))
+                if other != index and tokenized[index]
+            )
+        ]
 
         aliases = {
             match.group(1).lower()

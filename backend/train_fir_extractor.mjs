@@ -91,10 +91,12 @@ function roleFeatures(text, personName) {
   }
   const contextText = context.join(' ');
   const roleCues = {
-    suspect: /\b(?:suspect|accused|ringleader|offender|perpetrator|apprehended|arrested|detained|tracking)\b/,
-    witness: /\b(?:witness|eyewitness|observed|witnessed|saw|corroborated)\b/,
-    complainant: /\b(?:complainant|complaint|lodged|personally reported|submitted a written complaint)\b/,
-    officer: /\b(?:inspector|sub inspector|officer|constable|official capacity|assigned to)\b/,
+    suspect: /\b(?:suspect|accused|ringleader|offender|perpetrator|apprehended|arrested|detained|tracking|cctv|charged|suspicion|leaving the premises)\b/,
+    witness: /\b(?:witness|eyewitness|observed|witnessed|saw|corroborated|testimony|detailed account|came forward)\b/,
+    complainant: /\b(?:complainant|complaint|lodged|personally reported|submitted a written complaint|registered the fir|written grievance|case was opened|approached the station)\b/,
+    officer: /\b(?:inspector|sub inspector|officer|constable|official capacity|assigned to|seized|secured|investigating|oversaw|search operations)\b/,
+    victim: /\b(?:victim|suffered|medical attention|severe losses|bore the brunt|exploited|harmed|injured)\b/,
+    'person of interest': /\b(?:person of interest|no affirmative evidence|no connection|questioned but released|supplementary reports)\b/,
   };
   for (const [role, pattern] of Object.entries(roleCues)) {
     if (pattern.test(contextText)) features.push(...Array(12).fill(`role_cue:${role}`));
@@ -261,6 +263,26 @@ function narrativeAugmentations() {
       '{name} recorded the statement in an official capacity.',
       'Officer name: {name}.',
       'Sub-inspector {name} conducted the search.',
+    ],
+    victim: [
+      'The victim, {name}, suffered losses in the offence.',
+      'Medical attention was provided to {name}.',
+      '{name} bore the brunt of the reported crime.',
+      'The perpetrators exploited {name}.',
+      '{name} was harmed during the incident.',
+      'Investigators recorded injuries suffered by {name}.',
+      'Victim name: {name}.',
+      '{name}, the victim, described the resulting loss.',
+    ],
+    'person of interest': [
+      '{name} is a person of interest in the inquiry.',
+      'No affirmative evidence linked {name} to the offence.',
+      '{name} was questioned but released.',
+      'Investigators found no confirmed connection with {name}.',
+      '{name} was mentioned in supplementary reports.',
+      'Police are reviewing the possible involvement of {name}.',
+      'Person of interest: {name}.',
+      '{name} remains relevant to the inquiry but is not accused.',
     ],
   };
   const roles = Object.keys(templates);

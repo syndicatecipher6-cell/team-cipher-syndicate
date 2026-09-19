@@ -27,8 +27,29 @@ class TrainedFirExtractorTests(unittest.TestCase):
 
     def test_model_artifact_is_loaded(self):
         self.assertIsNotNone(nlp_extractor.trained_model)
-        self.assertEqual(1000, nlp_extractor.trained_model["source"]["baseRows"])
-        self.assertEqual(320, nlp_extractor.trained_model["source"]["narrativeAugmentationRows"])
+        self.assertEqual(3000, nlp_extractor.trained_model["source"]["baseRows"])
+        self.assertEqual(480, nlp_extractor.trained_model["source"]["narrativeAugmentationRows"])
+
+    def test_six_role_narrative_extracts_complete_names_and_roles(self):
+        text = (
+            "Following the report submitted by Dr. Neha Raj Kumar Gowda, an inquiry began. "
+            "Investigating officer Ravi Singh Devi Roy oversaw the search operations. "
+            "According to Vijay Kumar Chauhan, who witnessed the robbery, the perpetrators fled. "
+            "Ashok Pratap Devi Rajput faces accusations of Organized Robbery. "
+            "Restitution is sought for Dinesh Reddy, the primary victim of the robbery. "
+            "Detectives ruled out Fatima Kaur Gowda after verifying their alibi."
+        )
+
+        result = nlp_extractor.extract_entities(text)
+        roles = {item["name"]: item["role"] for item in result["person_roles"]}
+
+        self.assertEqual("complainant", roles["Dr. Neha Raj Kumar Gowda"])
+        self.assertEqual("officer", roles["Ravi Singh Devi Roy"])
+        self.assertEqual("witness", roles["Vijay Kumar Chauhan"])
+        self.assertEqual("suspect", roles["Ashok Pratap Devi Rajput"])
+        self.assertEqual("victim", roles["Dinesh Reddy"])
+        self.assertEqual("person of interest", roles["Fatima Kaur Gowda"])
+        self.assertNotIn("Neha Raj", result["persons"])
 
     def test_linked_cases_extract_the_same_suspect_from_narrative_wording(self):
         first = (
