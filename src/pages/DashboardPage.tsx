@@ -63,7 +63,7 @@ export function DashboardPage() {
     <>
       <PageHeader
         eyebrow="Investigation workspace"
-        title="Good Morning, Investigator"
+        title="Investigation Overview"
         description="Review investigations, connections, and emerging leads from uploaded records."
         actions={(
           <>
